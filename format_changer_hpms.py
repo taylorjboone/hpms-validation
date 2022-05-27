@@ -1,0 +1,146 @@
+from fileinput import filename
+import pandas as pd
+from os import listdir
+from os.path import isfile, join
+import os
+
+pavement_list=['June_Submission\\HPMS_2021_NON_INTERSTATE_NHS_CRACKING_PERCENT.csv','June_Submission\\HPMS_2021_NON_INTERSTATE_NHS_FAULTING.csv','June_Submission\\HPMS_2021_NON_INTERSTATE_NHS_IRI.csv','June_Submission\\HPMS_2021_NON_INTERSTATE_NHS_RUTTING.csv']
+mehlist=['June_Submission\\year_last_improved.csv','June_Submission\\year_last_construct.csv']
+month_dict = {'Jan-': '1/', 'Feb-': '2/', 'Mar-': '3/', 'Apr-': '4/', 'May-': '5/', 'Jun-': '6/', 'Jul-': '7/', 'Aug-': '8/', 'Sep-': '9/', 'Oct-': '10/', 'Nov-': '11/', 'Dec-': '12/'}
+correct_format={'County_Code':'CountyID','Pct_MC':'PctMotorcycles','Pct_Lgt_Trucks':'PctLightTrucks','Pct_SU_Trucks':'PctSingleUnit','Pct_CU_Trucks':'PctCombination','SectionLength':'Section_Length','SECTION_LENGTH':'Section_Length','YEAR_RECORD':'BeginDate','END_POINT':'EndPoint','STATE_CODE':'StateID','ROUTE_ID':'RouteID','VALUE_DATE':'ValueDate','DATA_ITEM':'DataItem','COMMENTS':'Comments','Value_Numeric':'ValueNumeric','VALUE_NUMERIC':'ValueNumeric','Year_Record':'BeginDate','End_Point':'EndPoint','State_Code':'StateID','Value_Date':'ValueDate','Data_Item':'DataItem','Route_ID':'RouteID','Urban_Code':'UrbanID','Value_Text':'ValueText','VALUE_TEXT':'ValueText','BEGIN_POINT':'BeginPoint','Begin_Point':'BeginPoint'}
+widening_potential_dict={4:3, 1:2, 0:1, 9:4, 8:4, 7:4, 6:4, 5:4,2:2,3:3}
+mypath='June_Submission'
+
+onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f)) if f.endswith('csv')]
+print('Dictionaries created')
+
+def check_upper(c):
+    if c >= 'A' and c <= 'Z':
+        return True
+    else:
+        return False
+
+
+
+# we need 'BaseType' to be 'BASE_TYPE'
+# t1 = 'YearLastImprove'
+# t2 = 'BaseType'
+# t3 = 'Rutting'
+# print(fix_this(t1))
+# print(fix_this(t2))
+# print(fix_this(t3))
+def fix_this(x):
+    if not '_' in x:
+        splits = []
+        for p,c in enumerate(x):
+            if check_upper(c): 
+                splits.append(p)
+        if len(splits) == 1 or len(splits) == len(x):
+            return x.upper()
+        # print(splits)
+        oldsplit = 0 
+        parts = []
+        for split in splits[1:]:
+            part = x[oldsplit:split].upper()
+            parts.append(part)
+            oldsplit = split 
+        parts.append(x[oldsplit:].upper())
+        return '_'.join(parts)
+    else:
+        return x.upper()
+
+
+# fixes data frame item name 
+def fix_item_name(df):
+    val = df.iloc[0].DataItem
+    val = fix_this(val)
+    df['DataItem'] = val 
+    return df 
+    # print(fix_this(val))
+
+def map_me(x):
+    myb = str(x).isdigit() or '.' in str(x) or str(x) == 'nan'
+    # print(myb,x)
+
+    return myb
+
+print('Functions defined')
+for a in onlyfiles:
+    print(a)
+
+
+    b=pd.read_csv(a,sep='|')
+    b = b.rename(columns=correct_format)
+    b['BeginDate']='12/31/2021'
+    if 'Section_Length' in b.columns:
+        b=b.drop('Section_Length',axis=1)
+    if 'State_Portion_Pop' in b.columns:
+        b=b.drop('State_Portion_Pop',axis=1)
+    if 'State_Portion_Land' in b.columns:
+        b=b.drop('State_Portion_Land',axis=1)
+    if a in pavement_list:
+        b=b[b['ValueDate'].notna()]
+        for k, v in month_dict.items():
+            for line in b['ValueDate']:
+                
+                if k in line:
+                    string = line.replace(k, v + '20')
+                    b['ValueDate'].loc[b['ValueDate'] == line] = string                   
+    # print(b.columns)
+
+    if 'DataItem' in b.columns and a not in ['June_Submission\\HPMS_2021_SAMPLES_GRADES.csv', 'June_Submission\\HPMS_2021_SAMPLES_CURVES.csv']: 
+        b = fix_item_name(b)
+    
+    if a in  ['June_Submission\\HPMS_2021_SAMPLES_GRADES.csv', 'June_Submission\\HPMS_2021_SAMPLES_CURVES.csv']:
+        b['DataItem']=b['DataItem'].apply(lambda x: x.upper())
+
+    
+    if 'ValueNumeric' in b.columns and a not in mehlist:
+        b = b[b['ValueNumeric'] != ' ']
+        b = b[b['ValueNumeric'].notna()]
+        b=b.drop_duplicates()
+
+    if a in ['June_Submission\\HPMS_2021_SAMPLES_SHOULDER_TYPE.csv']:
+        b['ValueNumeric']=b['ValueNumeric'].replace(7,1)
+    
+    if a in ['June_Submission\\HPMS_2021_WV_DataItem49_SURFACE_TYPE.csv']:
+        b['ValueDate']=''
+        
+    if a in ['June_Submission\\base_type.csv']:
+        b['ValueNumeric']=b['ValueNumeric'].replace('Base 2',2)
+        b['ValueNumeric']=b['ValueNumeric'].replace('Asphalt',3)
+        b['ValueNumeric']=b['ValueNumeric'].replace('Concrete',3)
+
+    if a in ['June_Submission\\DataItem42-Widening_Potential.csv']:
+        b['ValueNumeric'] = b.ValueNumeric.map(lambda x:widening_potential_dict[x])
+        # for k, v in widening_potential_dict.items():
+        #     b['ValueNumeric'] = b['ValueNumeric'].replace(k, v)
+
+    if a in ['June_Submission\\thick_rigid.csv']:
+        b['DataItem']='THICKNESS_RIGID'
+
+    if a in ['June_Submission\\base_thick.csv']:
+        b['DataItem']='BASE_THICKNESS'
+
+    if a in['June_Submission\\thick_flex.csv']:
+        b['Dataitem']='THICKNESS_FLEXIBLE'
+
+    if a in ['June_Submission\\DataItem63-County_Code.csv']:
+        b['DataItem']='COUNTY_ID'
+    if a in ['June_Submission\\DataItem66-Truck.csv']:
+        b['DataItem']='NN'
+    
+
+
+        # print(b[b.ValueNumeric.map(lambda x: (str(x).isdigit() and not '.' in str(x)))==False])
+        # print(b[b.ValueNumeric.map(map_me)==False])
+        #print(b[(b.ValueNumeric.isna())&(b.ValueText.isna())])
+        # print(b)
+        
+
+    bs=a.split('\\')[-1]
+    c=bs.split('.')[0]
+    d='modified_june_submission_data\\' + c + '_test.csv'
+    # q='modified_june_submission_data\\' + a.split('\\')[-1] + ''
+    b.to_csv(d,sep='|',index=False)
+    
