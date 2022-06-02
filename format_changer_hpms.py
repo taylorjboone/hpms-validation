@@ -81,7 +81,7 @@ for a in onlyfiles:
     if a in pavement_list:
         b=b[b['ValueDate'].notna()]
         for k, v in month_dict.items():
-            for line in b['ValueDate']:
+            for line in b['ValueDate']: 
                 
                 if k in line:
                     string = line.replace(k, v + '20')
@@ -118,12 +118,20 @@ for a in onlyfiles:
 
     if a in ['June_Submission\\thick_rigid.csv']:
         b['DataItem']='THICKNESS_RIGID'
+        b=b[b['ValueNumeric']!=0]
 
     if a in ['June_Submission\\base_thick.csv']:
         b['DataItem']='BASE_THICKNESS'
 
     if a in['June_Submission\\thick_flex.csv']:
-        b['Dataitem']='THICKNESS_FLEXIBLE'
+        b['DataItem']='THICKNESS_FLEXIBLE'
+        b=b[b['ValueNumeric']!=0]
+
+    if a in['June_Submission\\year_last_construct.csv']:
+        b['DataItem'] = 'YEAR_LAST_CONSTRUCTION'
+
+    if a in['June_Submission\\year_last_improved.csv']:
+        b['DataItem'] = 'YEAR_LAST_IMPROVEMENT'
 
     if a in ['June_Submission\\DataItem63-County_Code.csv']:
         b['DataItem']='COUNTY_ID'
