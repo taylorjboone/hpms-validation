@@ -14,6 +14,7 @@ widening_potential_dict={4:3, 1:2, 0:1, 9:4, 8:4, 7:4, 6:4, 5:4,2:2,3:3}
 mypath='June_Submission'
 
 onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f)) if f.endswith('csv')]
+# fsystem_dict = {1: 1, 11: 1, 4: 2, 12: 2, 2: 3, 14: 3, 6: 4, 16: 4, 7: 5, 17: 5, 8: 6, 18: 6, 9: 7, 19: 7}
 
 def check_upper(c):
     if c >= 'A' and c <= 'Z':
