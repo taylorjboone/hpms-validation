@@ -127,6 +127,7 @@ def pm2_spatial_join():
     df['iri_milepoint_comparison'].mask(df['iri_milepoint_comparison'], other = False , inplace = True) #use bennett code to do comparison between the bmp and emp of all pavement#
 
 def traffic_spatial_join():
+    # Creates a column for each rule, outputs a False for each row that doesn't pass the rule for a column
     df['sjt01']=True
     df['sjt01'].mask(df['aadt_single_unit'] < ( df['aadt'] * 0.4 ) , other = False , inplace = True )
     
@@ -173,47 +174,6 @@ def traffic_spatial_join():
     df['sjt15'].mask(  ( ( df['future_aadt'] > df['aadt'] ) & (df['future_aadt'] < (df['aadt'] * 4 ) ) & ( df['value_date'].isna() ) ) | ( df['future_aadt'] < (df['aadt'] * 0.2 ( df['value_date'] - df['bmp'] ) ) ), other = False , inplace = True )
 
 
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-print('meh')
 # List of error messages to output in console
 sji01_error = '''################################################################################################################################################################
 Inventory Spatial Join Error SJ-I-01
