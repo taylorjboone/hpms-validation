@@ -1,3 +1,4 @@
+from operator import truediv
 import pandas as pd
 import geopandas as gpd
 
@@ -126,46 +127,53 @@ def pm2_spatial_join():
     df['iri_milepoint_comparison'].mask(df['iri_milepoint_comparison'], other = False , inplace = True) #use bennett code to do comparison between the bmp and emp of all pavement#
 
 def traffic_spatial_join():
+    # Creates a column for each rule, outputs a False for each row that doesn't pass the rule for a column
     df['sjt01']=True
     df['sjt01'].mask(df['aadt_single_unit'] < ( df['aadt'] * 0.4 ) , other = False , inplace = True )
+    
     df['sjt02']=True
-    df['sjt02'].mask((df['aadt']))
+    df['sjt02'].mask((df['aadt'] > 500 ) & (df['aadt_single_unit'] > 0))
+    
+    df['sjt03']=True
+    df['sjt03'].mask( ( (df['aadt_single_unit']) + (df['aadt_combination']) < (df['aadt'] * 0.8) ), other=False, Inplace=True )
+    
+    df['sjt04']=True
+    df['sjt04'].mask( ( df['aadt_single_unit'] * 0.01 ) < ( df['aadt'] * ( df['pct_dh_single_unit'] / 100 ) ) < ( df['aadt_single_unit'] * 0.05 ) , other= False , inplace=True )
+    
+    df['sjt05']=True
+    df['sjt05'].mask( ( df['pct_dh_single_unit'] > 0 ) & ( df['pct_dh_single_unit'] < 0.25 ) , other = False , inplace = True )
+    
+    df['sjt06']=True
+    df['sjt06'].mask( (df['aadt_single_unit'] < 50 ) & (df['pct_dh_single_unit'] == 0 ) , other = False , inplace = True )
+    
+    df['sjt07']=True
+    df['sjt07'].mask( ( df['aadt_combination'] > ( df['aadt'] * 0.4 ) ) , other = False , inplace = True )
+    
+    df['sjt08']=True
+    df['sjt08'].mask( (df['addt'] > 500) & (df['aadt_combination'] > 0 ) , other = False , inplace = True )
+    
+    df['sjt09']=True
+    df['sjt09'].mask( (df['aadt_combination'] * 0.01 ) < ( df['aadt'] * (df['pct_dh_combination'] / 100 ) ) < (df['aadt_combination'] * 0.5 ), other = False , inplace = True )
+    
+    df['sjt10']=True
+    df['sjt10'].mask( ( df['pct_dh_combination'] > 0 ) & ( df['pct_dh_combination'] < 0.25 ), other = False , inplace = True  )
+    
+    df['sjt11']=True
+    df['sjt11'].mask( (df['aadt_combination'] < 50) & (df['pct_dh_combination'] == 0) , other = False , inplace = True )
+    
+    df['sjt12']=True
+    df['sjt12'].mask( ( df['k_factor'] > 4 ) & ( df['k_factor'] < 30 ) , other = False , inplace = True )
+    
+    df['sjt13']=True
+    df['sjt13'].mask( ( df['dir_factor']==100 ) & ( df['facility_type'] == 2 ), other = False , inplace = True )
+    
+    df['sjt14']=True
+    df['sjt14'].mask( ( df['dir_factor'] >= 50 ) & (df['dir_factor'] <= 75 ), other = False , inplace = True )
+    
+    df['sjt15']=True
+    df['sjt15'].mask(  ( ( df['future_aadt'] > df['aadt'] ) & (df['future_aadt'] < (df['aadt'] * 4 ) ) & ( df['value_date'].isna() ) ) | ( df['future_aadt'] < (df['aadt'] * 0.2 ( df['value_date'] - df['bmp'] ) ) ), other = False , inplace = True )
 
 
-
-
-    
-
-
-
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-print('meh')
 # List of error messages to output in console
 sji01_error = '''################################################################################################################################################################
 Inventory Spatial Join Error SJ-I-01
