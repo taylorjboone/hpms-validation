@@ -975,6 +975,19 @@ def at_grade_others(x,check_geom):
     add_error_df(tmpdf2, "At Grade Others section length is zero")  
 
 
+    data = read_hpms_csv(x)
+    data2=add_column_section_length(data)
+    # print(data)
+    if check_geom:
+        geom_check = add_geom_validation_df(
+            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+        add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Surface Type geometry check invalid!')
+    tmpdf = data2[(data2['Value_Numeric'].isna()) | ~data2['Value_Numeric'].isin(surface_type_list)]
+    tmpdf2 = data2[data2['Section_Length'] == 0]
+    add_error_df(tmpdf, "Surface Type value numeric is nan or not in list")
+    add_error_df(tmpdf2, "Surface Type section length is zero")  
+
 
 
 
@@ -1031,6 +1044,7 @@ validation_dict = {
     'DataItem45_Grade_Classifcation.csv' : [grades,'Grade Classification'],
     'DataItem46-Pct_Pass_Sight.csv' : [pct_pass_sight,'Peak Passing Sight'],
     'DataItem47_IRI_non_interstate_NHS.csv' : [iri,'IRI'],
+    'DataItem49_Surface_Type.csv' : [surface_type,'Surface Type'],
     'DataItem50_Rutting_non_interstate_NHS.csv' : [rutting,'Rutting'],
     'DataItem51_Faulting_non_interstate_NHS.csv' : [faulting,'Faulting'],
     'DataItem52_Cracking_Percent_non_interstate_NHS.csv' : [cracking_percent,'Cracking Percent'],
