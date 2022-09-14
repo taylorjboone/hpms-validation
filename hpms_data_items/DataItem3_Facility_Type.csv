@@ -1,4 +1,4 @@
-Year_Record|State_Code|Route_ID|Begin_Point|End_Point|Data_Item|Section_Length|Value_Numeric|Value_Text|Value_Date|Comments
+Year_Record|State_Code|Route_ID|Begin_Point|End_Point|DataItem|Section_Length|Value_Numeric|Value_Text|Value_Date|Comments
 2021|54|01200330000EB|0.0|1.87|Facility_Type|1.87|2|||
 2021|54|01200330000EB|1.87|4.11|Facility_Type|2.24|2|||
 2021|54|01200330000EB|4.11|4.43|Facility_Type|0.32|2|||

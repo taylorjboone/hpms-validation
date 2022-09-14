@@ -1,4 +1,4 @@
-Year_Record|State_Code|Route_ID|Begin_Point|End_Point|Data_Item|Section_Length|Value_Numeric|Value_Text|Value_Date|Comments
+Year_Record|State_Code|Route_ID|Begin_Point|End_Point|Data_Item|Section_Length|ValueNumeric|Value_Text|Value_Date|Comments
 2021|54|01200330000EB|0.000|1.870|Pct_Peak_Combination|1.870|0.461|||
 2021|54|01201190000NB|6.950|9.290|Pct_Peak_Combination|2.340|0.156|||
 2021|54|01201190000NB|10.660|11.500|Pct_Peak_Combination|0.840|0.054|||
