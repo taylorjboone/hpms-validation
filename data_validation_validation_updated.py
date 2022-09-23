@@ -46,13 +46,53 @@ is_restricted_list=[1]
 access_control_list=[1,2,3]
 route_qualifier_list=[1,2,3,4,5,6,7,8,9,10]
 route_signing_list=[1,2,3,4,5,6,7,8,9,10]
-
+pair_list=[]
 
 mypath = 'hpms_data_items'
 
 
 
 total_errors = pd.DataFrame()
+
+
+def get_indexes(x):
+    n=0
+    
+    for n in range(len(x)):
+        for b in range(len(x)):
+            
+
+            pair=[n,b]
+            if pair not in pair_list and n!=b and n<b:
+                pair_list.append(pair)
+                # print(pair_list)
+    return pair_list
+
+
+def overlap_intersect_check(x):
+    indexes=get_indexes(x)
+    # print(indexes)
+    for i1,i2 in indexes:
+        # print(x[i1],x[i2])
+        s=x[i1]
+        s2=x[i2]
+        bmp1,emp1=s[0],s[1]
+        bmp2,emp2=s2[0],s2[1]
+        if _overlap(bmp1,emp1,bmp2,emp2) == True:
+            return [s,s2],True
+    return [],False
+               
+def _overlap(bmp1,emp1,bmp2,emp2,debug=False):
+    bmp_overlap1 = bmp2 < bmp1 and emp2 > bmp1
+    emp_overlap1 = bmp2 < emp1 and emp2 > emp1
+    bmp_overlap2 = bmp1 < bmp2 and emp1 > bmp2
+    emp_overlap2 = bmp1 < emp2 and emp1 > emp2
+
+    if debug: print(bmp_overlap1,emp_overlap1,bmp_overlap2,emp_overlap2,[bmp1,emp1,bmp2,emp2])
+    return (bmp_overlap1 or 
+     emp_overlap1 or 
+     bmp_overlap2 or 
+     emp_overlap2)
 
 def add_column_section_length(df):
     if 'Section_Length' not in df.columns:
@@ -93,6 +133,7 @@ def output_geom_file(geom_check, fn):
 def check_fsystem_valid(x, check_geom):
     data = read_hpms_csv(x)
     data2=add_column_section_length(data)
+    
     # print(data2)
     if check_geom:
         geom_check = add_geom_validation_df(
@@ -114,6 +155,7 @@ def check_fsystem_valid(x, check_geom):
 
 def check_urban_code(x, check_geom):
     data = read_hpms_csv(x)
+    # data=overlap_intersect_check(data)
     
     if check_geom:
         geom_check = add_geom_validation_df(
@@ -1003,64 +1045,64 @@ onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 # the key is the filename the value is the function
 validation_dict = {
     'DataItem1_F_System.csv': [check_fsystem_valid,'F_System'],
-    'DataItem2_Urban_Code.csv': [check_urban_code,'Urban_Code'],
-    'DataItem3_Facility_Type.csv': [check_facility_type,'Facility_Type'],
-    'DataItem5-Access_Control.csv' :[access_control,'Access_Control'],
-    'DataItem6_Ownership.csv': [check_ownership,'Ownership'],
-    'DataItem7_Through_Lanes.csv': [check_through_lanes,'Through_Lanes'],
-    'DataItem10_Peak_Lanes.csv' : [peak_lanes,'PEAK_LANES'],
-    'DataItem11_Counter_Peak_Lanes.csv' : [counter_peak_lanes,'Counter_Peak_Lanes'],
-    'DataItem12-Turn_Lanes_R.csv' : [turn_lanes_r,'Turn_Lanes_R'],
-    'DataItem13-Turn_Lanes_L.csv' : [turn_lanes_l,'Turn_Lanes_L'],
-    'DataItem14_SpeedLimit.csv' : [speed_limit,'Speed_Limit'],
-    'DataItem15_Toll_ID.csv' : [toll_id,'Toll_ID'],
-    'DataItem17-RouteNumber.csv' : [route_number,'Route_Number'],
-    'DataItem18-Route_Signing.csv' : [route_signing,'Route Signing'],
-    'DataItem19-Route_Qualifier.csv' : [route_qualifier,'Route Qualifier'],
-    'DataItem20-Alternative_Route_Name.csv' : [alternative_route_name,'Alternative Route Name'],
-    'DataItem21-AADT.csv':[check_aadt,'AADT'],
-    'DataItem22-AADT_Single_Unit.csv':[check_aadt_single_unit,'AADT_Single_Unit'],
-    'DataItem23-Pct_Peak_Single.csv':[check_Pct_Peak_Single,'Pct_Peak_Single'],
-    'DataItem24-AADT_Combination.csv':[check_AADT_Combination,'AADT_Combination'],
-    'DataItem25-Pct_Peak_Combination.csv':[check_pct_peak_combination,'Pct_Peak_Combination'],
-    'DataItem26-K_Factor.csv' : [check_k_factor,'K_Factor'],
-    'DataItem27-Dir_Factor.csv' : [dir_factor,'Dir Factor'],
-    'DataItem28-Future_AADT.csv' : [future_aadt,'Future AADT'],
-    'DataItem29-Signal_Type.csv' : [signal_type,'Signal_Type'],
-    'DataItem30-Pct_Green_Time.csv' : [pct_green_time,'Percent_Green_Time'],
-    'DataItem31-Number_Signals.csv' : [number_signals,'Number_signals'],
-    'DataItem32-Stop_Signs.csv' : [stop_signs,'Stop_Signs'],
-    'DataItem33-At_Grade_Other_test.csv' : [at_grade_others,'At_Grade_Others'],
-    'DataItem34_Lane_Width.csv' : [lane_width,'Lane Width'],
-    'DataItem35_Median_Type.csv' : [median_type,'Median Type'],
-    'DataItem36_Median_Width.csv' : [median_width,'Median Width'],
-    'DataItem37_Shoulder_Type.csv' : [shoulder_type,'Shoulder Type'],
-    'DataItem38_Right_Shoulder_Width.csv' : [shoulder_width_r,'Shoulder Width Right'],
-    'DataItem39_Left_Shoulder_Width.csv' : [shoulder_width_l,'Shoulder Width Left'],
-    'DataItem40-Peak_Parking.csv' : [peak_parking,'Peak Parking'],
-    'DataItem42-Widening_Potential.csv' : [widening_potential,'Widening Potential'],
-    'DataItem43_Curve_Classification.csv' : [curves,'Curve Classification'],
-    'DataItem44-Terrain_Type.csv' : [terrain_types,'Terrain Types'],
-    'DataItem45_Grade_Classifcation.csv' : [grades,'Grade Classification'],
-    'DataItem46-Pct_Pass_Sight.csv' : [pct_pass_sight,'Peak Passing Sight'],
-    'DataItem47_IRI_non_interstate_NHS.csv' : [iri,'IRI'],
-    'DataItem49_Surface_Type.csv' : [surface_type,'Surface Type'],
-    'DataItem50_Rutting_non_interstate_NHS.csv' : [rutting,'Rutting'],
-    'DataItem51_Faulting_non_interstate_NHS.csv' : [faulting,'Faulting'],
-    'DataItem52_Cracking_Percent_non_interstate_NHS.csv' : [cracking_percent,'Cracking Percent'],
-    'DataItem54_Year_of_Last_Improvement.csv' : [year_last_improvement,'Year Last Improvement'],
-    'DataItem55_Year_of_Last_Construction.csv' : [year_last_construction,'Year Last Construction'],
-    'DataItem56_Last_Overlay_Thickness.csv' : [last_overlay_thickness,'Last Overlay Thickness'],
-    'DataItem57_Thickness_Rigid.csv' : [thickness_rigid,'Thickness Rigid'],
-    'DataItem58_Thickness_Flexible.csv' : [thickness_flexible,'Thickness Flexible'],
-    'DataItem59_Base_Type.csv' : [base_type,'Base Type'],
-    'DataItem60_Base_Thickness.csv':[base_thickness,'BASE_THICKNESS'],
-    'DataItem63-County_Code.csv':[county_id,'County_ID'],
-    'DataItem64_NHS.csv':[nhs_new_check,'NHS'],
-    'DataItem65-STRAHNET_Type.csv':[strahnet_type,'Strahnet_Type'],
-    'DataItem66-NN.csv':[nn,'NN'],
-    'DataItem70_Dir_Through_Lanes.csv':[check_dir_through_lanes,'Dir_Through_Lanes'],
-    'HPMS_2021_SAMPLES_LANE_WIDTH.csv':[lane_width,'Lane_Width'],
+    # 'DataItem2_Urban_Code.csv': [check_urban_code,'Urban_Code'],
+    # 'DataItem3_Facility_Type.csv': [check_facility_type,'Facility_Type'],
+    # 'DataItem5-Access_Control.csv' :[access_control,'Access_Control'],
+    # 'DataItem6_Ownership.csv': [check_ownership,'Ownership'],
+    # 'DataItem7_Through_Lanes.csv': [check_through_lanes,'Through_Lanes'],
+    # 'DataItem10_Peak_Lanes.csv' : [peak_lanes,'PEAK_LANES'],
+    # 'DataItem11_Counter_Peak_Lanes.csv' : [counter_peak_lanes,'Counter_Peak_Lanes'],
+    # 'DataItem12-Turn_Lanes_R.csv' : [turn_lanes_r,'Turn_Lanes_R'],
+    # 'DataItem13-Turn_Lanes_L.csv' : [turn_lanes_l,'Turn_Lanes_L'],
+    # 'DataItem14_SpeedLimit.csv' : [speed_limit,'Speed_Limit'],
+    # 'DataItem15_Toll_ID.csv' : [toll_id,'Toll_ID'],
+    # 'DataItem17-RouteNumber.csv' : [route_number,'Route_Number'],
+    # 'DataItem18-Route_Signing.csv' : [route_signing,'Route Signing'],
+    # 'DataItem19-Route_Qualifier.csv' : [route_qualifier,'Route Qualifier'],
+    # 'DataItem20-Alternative_Route_Name.csv' : [alternative_route_name,'Alternative Route Name'],
+    # 'DataItem21-AADT.csv':[check_aadt,'AADT'],
+    # 'DataItem22-AADT_Single_Unit.csv':[check_aadt_single_unit,'AADT_Single_Unit'],
+    # 'DataItem23-Pct_Peak_Single.csv':[check_Pct_Peak_Single,'Pct_Peak_Single'],
+    # 'DataItem24-AADT_Combination.csv':[check_AADT_Combination,'AADT_Combination'],
+    # 'DataItem25-Pct_Peak_Combination.csv':[check_pct_peak_combination,'Pct_Peak_Combination'],
+    # 'DataItem26-K_Factor.csv' : [check_k_factor,'K_Factor'],
+    # 'DataItem27-Dir_Factor.csv' : [dir_factor,'Dir Factor'],
+    # 'DataItem28-Future_AADT.csv' : [future_aadt,'Future AADT'],
+    # 'DataItem29-Signal_Type.csv' : [signal_type,'Signal_Type'],
+    # 'DataItem30-Pct_Green_Time.csv' : [pct_green_time,'Percent_Green_Time'],
+    # 'DataItem31-Number_Signals.csv' : [number_signals,'Number_signals'],
+    # 'DataItem32-Stop_Signs.csv' : [stop_signs,'Stop_Signs'],
+    # 'DataItem33-At_Grade_Other_test.csv' : [at_grade_others,'At_Grade_Others'],
+    # 'DataItem34_Lane_Width.csv' : [lane_width,'Lane Width'],
+    # 'DataItem35_Median_Type.csv' : [median_type,'Median Type'],
+    # 'DataItem36_Median_Width.csv' : [median_width,'Median Width'],
+    # 'DataItem37_Shoulder_Type.csv' : [shoulder_type,'Shoulder Type'],
+    # 'DataItem38_Right_Shoulder_Width.csv' : [shoulder_width_r,'Shoulder Width Right'],
+    # 'DataItem39_Left_Shoulder_Width.csv' : [shoulder_width_l,'Shoulder Width Left'],
+    # 'DataItem40-Peak_Parking.csv' : [peak_parking,'Peak Parking'],
+    # 'DataItem42-Widening_Potential.csv' : [widening_potential,'Widening Potential'],
+    # 'DataItem43_Curve_Classification.csv' : [curves,'Curve Classification'],
+    # 'DataItem44-Terrain_Type.csv' : [terrain_types,'Terrain Types'],
+    # 'DataItem45_Grade_Classifcation.csv' : [grades,'Grade Classification'],
+    # 'DataItem46-Pct_Pass_Sight.csv' : [pct_pass_sight,'Peak Passing Sight'],
+    # 'DataItem47_IRI_non_interstate_NHS.csv' : [iri,'IRI'],
+    # 'DataItem49_Surface_Type.csv' : [surface_type,'Surface Type'],
+    # 'DataItem50_Rutting_non_interstate_NHS.csv' : [rutting,'Rutting'],
+    # 'DataItem51_Faulting_non_interstate_NHS.csv' : [faulting,'Faulting'],
+    # 'DataItem52_Cracking_Percent_non_interstate_NHS.csv' : [cracking_percent,'Cracking Percent'],
+    # 'DataItem54_Year_of_Last_Improvement.csv' : [year_last_improvement,'Year Last Improvement'],
+    # 'DataItem55_Year_of_Last_Construction.csv' : [year_last_construction,'Year Last Construction'],
+    # 'DataItem56_Last_Overlay_Thickness.csv' : [last_overlay_thickness,'Last Overlay Thickness'],
+    # 'DataItem57_Thickness_Rigid.csv' : [thickness_rigid,'Thickness Rigid'],
+    # 'DataItem58_Thickness_Flexible.csv' : [thickness_flexible,'Thickness Flexible'],
+    # 'DataItem59_Base_Type.csv' : [base_type,'Base Type'],
+    # 'DataItem60_Base_Thickness.csv':[base_thickness,'BASE_THICKNESS'],
+    # 'DataItem63-County_Code.csv':[county_id,'County_ID'],
+    # 'DataItem64_NHS.csv':[nhs_new_check,'NHS'],
+    # 'DataItem65-STRAHNET_Type.csv':[strahnet_type,'Strahnet_Type'],
+    # 'DataItem66-NN.csv':[nn,'NN'],
+    # 'DataItem70_Dir_Through_Lanes.csv':[check_dir_through_lanes,'Dir_Through_Lanes'],
+    # 'HPMS_2021_SAMPLES_LANE_WIDTH.csv':[lane_width,'Lane_Width'],
 }
 
 def check_columns(fn,col):

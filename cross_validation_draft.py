@@ -173,6 +173,23 @@ def traffic_spatial_join():
     df['sjt15']=True
     df['sjt15'].mask(  ( ( df['future_aadt'] > df['aadt'] ) & (df['future_aadt'] < (df['aadt'] * 4 ) ) & ( df['value_date'].isna() ) ) | ( df['future_aadt'] < (df['aadt'] * 0.2 ( df['value_date'] - df['bmp'] ) ) ), other = False , inplace = True )
 
+def full_spatial_join():
+    df['sjf01']=True
+    df['sjf01'].mask(df['F_System'])
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    print('meh')
 
 # List of error messages to output in console
 sji01_error = '''################################################################################################################################################################
