@@ -7,6 +7,8 @@ from os import listdir
 from os.path import isfile, join
 import numpy as np
 import pyodbc
+from temp import Overlapping
+
 # import format_changer_cleaned
 
 sql_conn =  pyodbc.connect('''DRIVER={ODBC Driver 17 for SQL Server};
@@ -70,17 +72,22 @@ def get_indexes(x):
 
 
 def overlap_intersect_check(x):
+    v=False
+    off_list=[]
     indexes=get_indexes(x)
     # print(indexes)
     for i1,i2 in indexes:
         # print(x[i1],x[i2])
+        
         s=x[i1]
         s2=x[i2]
         bmp1,emp1=s[0],s[1]
         bmp2,emp2=s2[0],s2[1]
         if _overlap(bmp1,emp1,bmp2,emp2) == True:
-            return [s,s2],True
-    return [],False
+            v=True
+            off_list.append(i1)
+            off_list.append(i2)
+    return off_list,v
                
 def _overlap(bmp1,emp1,bmp2,emp2,debug=False):
     bmp_overlap1 = bmp2 < bmp1 and emp2 > bmp1
@@ -93,6 +100,13 @@ def _overlap(bmp1,emp1,bmp2,emp2,debug=False):
      emp_overlap1 or 
      bmp_overlap2 or 
      emp_overlap2)
+
+
+# def overlap_checking(df): 
+#     return Overlapping(df)
+
+
+
 
 def add_column_section_length(df):
     if 'Section_Length' not in df.columns:
@@ -134,19 +148,17 @@ def check_fsystem_valid(x, check_geom):
     data = read_hpms_csv(x)
     data2=add_column_section_length(data)
     
+    
     # print(data2)
     if check_geom:
         geom_check = add_geom_validation_df(
             data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
         add_error_df(geom_check[geom_check.IsValid ==
                      False], 'fsystem geometry check invalid!')
-
-    # print('F_System',geom_check[geom_check.IsValid==False])
-
-    # output_geom_file(geom_check,x)
     tmpdf = data2[~data2['Value_Numeric'].isin(functional_class_list)]
     add_error_df(tmpdf, "Check value numeric for fsystem valid")
     tmpdf2 = data2[data2['Section_Length'] == 0]
+    print(overlap_intersect_check(data2))
     add_error_df(
         tmpdf2, "Check value numeric for fsystem section length is zero")
 
