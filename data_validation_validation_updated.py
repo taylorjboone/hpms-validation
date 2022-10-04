@@ -7,7 +7,6 @@ from os import listdir
 from os.path import isfile, join
 import numpy as np
 import pyodbc
-from temp import Overlapping
 
 # import format_changer_cleaned
 
@@ -48,7 +47,7 @@ is_restricted_list=[1]
 access_control_list=[1,2,3]
 route_qualifier_list=[1,2,3,4,5,6,7,8,9,10]
 route_signing_list=[1,2,3,4,5,6,7,8,9,10]
-pair_list=[]
+off_list=[]
 
 mypath = 'hpms_data_items'
 
@@ -58,8 +57,7 @@ total_errors = pd.DataFrame()
 
 
 def get_indexes(x):
-    n=0
-    
+    pair_list=[]
     for n in range(len(x)):
         for b in range(len(x)):
             
@@ -67,26 +65,28 @@ def get_indexes(x):
             pair=[n,b]
             if pair not in pair_list and n!=b and n<b:
                 pair_list.append(pair)
-                # print(pair_list)
+
+    print(pair_list)
     return pair_list
 
 
 def overlap_intersect_check(x):
     v=False
-    off_list=[]
     indexes=get_indexes(x)
     # print(indexes)
     for i1,i2 in indexes:
         # print(x[i1],x[i2])
         
-        s=x[i1]
-        s2=x[i2]
-        bmp1,emp1=s[0],s[1]
-        bmp2,emp2=s2[0],s2[1]
+        # s=x[i1]
+        # s2=x[i2]
+
+        s = x[['Route_ID', 'Begin_Point', 'End_Point']].iloc[i1]
+        s2 = x[['Begin_Point', 'End_Point']].iloc[i2]
+        rid,bmp1,emp1=s['Route_ID'],s['Begin_Point'],s['End_Point']
+        bmp2,emp2=s2['Begin_Point'],s2['End_Point']
         if _overlap(bmp1,emp1,bmp2,emp2) == True:
             v=True
-            off_list.append(i1)
-            off_list.append(i2)
+            off_list.append({rid:[[bmp1, emp1],[bmp2, emp2]]})
     return off_list,v
                
 def _overlap(bmp1,emp1,bmp2,emp2,debug=False):
@@ -100,6 +100,13 @@ def _overlap(bmp1,emp1,bmp2,emp2,debug=False):
      emp_overlap1 or 
      bmp_overlap2 or 
      emp_overlap2)
+
+def rid_overlap(df):
+    for rid in df['Route_ID'].unique():
+        tmp = df[df['Route_ID'] == rid]
+        print(tmp)
+        print(overlap_intersect_check(tmp))
+        # TODO add overlaps to error df
 
 
 # def overlap_checking(df): 
@@ -158,7 +165,7 @@ def check_fsystem_valid(x, check_geom):
     tmpdf = data2[~data2['Value_Numeric'].isin(functional_class_list)]
     add_error_df(tmpdf, "Check value numeric for fsystem valid")
     tmpdf2 = data2[data2['Section_Length'] == 0]
-    print(overlap_intersect_check(data2))
+    print(rid_overlap(data2))
     add_error_df(
         tmpdf2, "Check value numeric for fsystem section length is zero")
 
@@ -1114,7 +1121,7 @@ validation_dict = {
     # 'DataItem65-STRAHNET_Type.csv':[strahnet_type,'Strahnet_Type'],
     # 'DataItem66-NN.csv':[nn,'NN'],
     # 'DataItem70_Dir_Through_Lanes.csv':[check_dir_through_lanes,'Dir_Through_Lanes'],
-    # 'HPMS_2021_SAMPLES_LANE_WIDTH.csv':[lane_width,'Lane_Width'],
+    # 'HPMS_2021_SAMPLES_LANE_WIDTH.csv':[lane_width,'Lane_Width']
 }
 
 def check_columns(fn,col):
