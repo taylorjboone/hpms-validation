@@ -7,7 +7,7 @@ user_dir = os.path.expanduser('~')
 
 # input_file = user_dir + r'/Downloads/ril_7_6_2022.xlsx'
 # df = pd.read_excel(input_file, usecols=['RouteID', 'BMP', 'EMP', '65_STATE_FUNCTIONAL_CLASS', '20_FACILITY', 'Label', '39_OWNERSHIP', '83_URBAN_CODE', '36_NHS', '115_STRAHNET', '17_DES_TRUCK_ROUTE'])
-input_file = user_dir + r'/Downloads/ril.csv'
+input_file = user_dir + r'/Downloads/big_ril.csv'
 df = pd.read_csv(input_file)
 
 def load_defaults():
@@ -36,7 +36,7 @@ arnold = pd.DataFrame()
 arnold['RouteID'] = df['RouteID']
 
 
-def inventory_spatial_validation():
+def inventory_spatial_join():
     load_defaults()
 
     # Creates a column for each rule, outputs a False for each row that doesn't pass the rule for a column
@@ -51,23 +51,40 @@ def inventory_spatial_validation():
         'sji08': (((df['65_STATE_FUNCTIONAL_CLASS'] == 1) & (df['36_NHS'] == 1)) | (df['65_STATE_FUNCTIONAL_CLASS'] != 1)),
         'sji09': (((df['RouteNumber'].notna()) & (df['RouteSigning'].notna())) | (df['RouteNumber'].isna())),
         'sji10': (((df['RouteNumber'].notna()) & (df['RouteQualifier'].notna())) | (df['RouteNumber'].isna())),
-        'sji11': (((df['65_STATE_FUNCTIONAL_CLASS'] == 1) & (df['115_STRAHNET'] == 1)) | (df['65_STATE_FUNCTIONAL_CLASS'] != 1))
+        'sji11': (((df['65_STATE_FUNCTIONAL_CLASS'] == 1) & (df['115_STRAHNET'] == 1)) | (df['65_STATE_FUNCTIONAL_CLASS'] != 1)),
+        'sji12': (((df['115_STRAHNET'].isin([1,2])) & (df['36_NHS'] == 1)) | (~df['115_STRAHNET'].isin([1,2]))),
+        'sji13': (((df['65_STATE_FUNCTIONAL_CLASS'] == 1) & (df['17_DES_TRUCK_ROUTE'] == 1)) | (df['65_STATE_FUNCTIONAL_CLASS'] != 1))
     }
 
+    tmp = df.copy()
     for k,v in spatial_join_checks.items():
-        df[k] = v
-    tmp = pd.DataFrame()
+        tmp[k] = v
+    tmp2 = pd.DataFrame()
     for rule in spatial_join_checks.keys():
-        tmp = tmp.append(df[df[rule] == False])
-    return tmp.drop_duplicates()
+        tmp2 = tmp2.append(tmp[tmp[rule] == False])
+    return tmp2.drop_duplicates()
+
+
+def traffic_spatial_join():
+    load_defaults()
+
+    spatial_join_checks = {
+        'sjt01': ((df['77_AADT_SINGLE'].isna()) | (df['77_AADT_SINGLE'] > (0.4 * df['2_AADT']))),
+        'sjt02': ((df['77_AADT_SINGLE'].isna()) | (((df['2_AADT'] > 500) & (df['77_AADT_SINGLE'] > 0)) | (df['2_AADT'] <= 500)))
+    }
+
+    tmp = df.copy()
+    for k,v in spatial_join_checks.items():
+        tmp[k] = v
+    tmp2 = pd.DataFrame()
+    for rule in spatial_join_checks.keys():
+        tmp2 = tmp2.append(tmp[tmp[rule] == False])
+    return tmp2.drop_duplicates()
 
 
 
-print(inventory_spatial_validation())
-
-
-
-
+print(inventory_spatial_join())
+print(traffic_spatial_join())
 
 
 
