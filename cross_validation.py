@@ -40,17 +40,21 @@ def load_defaults():
         df['RouteSigning'] = df['RouteID'].str[2]
         print('Added RouteSigning column')
 
+    # Converts 1-19 F System to FHWA 1-7 F System
     if not '65_STATE_FUNCTIONAL_CLASS' in cols:
         df['65_STATE_FUNCTIONAL_CLASS'] = df['35_NAT_FUNCTIONAL_CLASS'].map(lambda x: get_f_system(x))
         print('Added State Functional Class column')
-
-    
 
     # If RouteQualifier column is missing, adds and populates RouteQualifier pulled from RouteID
     qualifier_dict = {'00':1,'01':2, '02':1, '03':5, '04':1, '05':1, '06':1, '07':1, '08':3, '09':3, '10':3, '11':3, '12':3, '13':9, '14':4, '15':6, '16':10, '17':10, '18':10, '19':10, '20':1, '21':10, '22':10, '23':10, '24':7, '25':10, '26':10, '27':10, '28':10, '51':10, '99':10}
     if not 'RouteQualifier' in cols:
         df['RouteQualifier'] = df['RouteID'].str[9:11]
         df['RouteQualifier'] = df['RouteQualifier'].map(lambda x: qualifier_dict[x])
+
+    # Creates Dir through lanes from existing events
+    if not 'Dir_Through_Lanes' in cols:
+        df['Dir_Through_Lanes'].loc[df['97_ORIG_SURVEY_DIRECTION'] == '0'] = df['43_PEAK_LANES']
+        df['Dir_Through_Lanes'].loc[df['97_ORIG_SURVEY_DIRECTION'].isin(['1','A'])] = df['43_COUNTER_PEAK_LANES']
 
 
 
@@ -113,26 +117,3 @@ def traffic_spatial_join():
 
 print(inventory_spatial_join())
 print(traffic_spatial_join())
-
-
-
-
-
-    # df['sji01'] = True
-    # df['sji01'].loc[(df['65_STATE_FUNCTIONAL_CLASS'].isna()) | (df['65_STATE_FUNCTIONAL_CLASS'].notna() & df['Label'].isna())] = False
-
-    # df['sji02'] = True
-    # df['sji02'].loc[(df['65_STATE_FUNCTIONAL_CLASS'].isna() | (df['20_FACILITY'].notna() & df['Label'].isna()))] = False
-
-    # df['sji03'] = True
-    # df['sji03'].loc[(df['39_OWNERSHIP'].isna() | (df['39_OWNERSHIP'].notna() & df['Label'].isna()))]
-
-    # df['sji04'] = True
-    # df['sji04'].loc[(df['83_URBAN_CODE'].isna() | (df['83_URBAN_CODE'].notna() & df['Label'].isna()))]
-
-    # df['sji05'] = True
-    # df['sji05'].loc[(df['20_FACILITY'].notna() | df['65_STATE_FUNCTIONAL_CLASS'].isna())]
-
-    # df['sji06'] = True
-    # df['sji06'].loc[(df['65_STATE_FUNCTIONAL_CLASS'].notna() | (df['20_FACILITY'].isna()))]
-
