@@ -12,16 +12,17 @@ layers_dict = {
     "4":["ALT_ROUTE_NAME"],
     "5":["AT_GRADE_OTHER"],
     "6":["AVG_LANE_WIDTH_FT"],
+    '8':['BASE_TYPE'],
     "12":["COUNTY"],
-    "14":["CRACKING_PERCENT"],
+    "14":["CRACKING_PERCENT","CRACK_PRCNT_DATE"],
     "16":["CURVE_CLASS"],
     "17":["DES_TRUCK_ROUTE"],
     "18":["DISTRICT"],
     "20":["FACILITY"],
-    "21":["FAULTING"],
+    "21":["FAULTING","FAULTING_DATE"],
     "25":["GRADE_CLASS"],
     "29":["HPMS_SAMPLE_NO", "FIELD_ESTABLISH_DATE"],
-    "30":["IRI_VALUE"],
+    "30":["IRI_VALUE","IRI_DATE"],
     "32":["RH_TO_DATE","RH_FROM_DATE","FIELD_ESTABLISH_DATE"],
     "34":["HPMS_MEDIAN_BARRIER_TYPE","MEDIAN_WIDTH_FT"],
     "35":["NAT_FUNCTIONAL_CLASS"],
@@ -33,7 +34,7 @@ layers_dict = {
     "43":["PEAK_LANES","COUNTER_PEAK_LANES"],
     "44":["PEAK_PARKING"],
     "45":["PSR"],
-    "52":["RUTTING"],
+    "52":["RUTTING","RUTTING_DATE"],
     "56":["SHOULDER_TYPE_RT"],
     "57":["SHOULDER_WIDTH_LFT_FT"],
     "58":["SHOULDER_WIDTH_RT_FT"],
@@ -51,12 +52,14 @@ layers_dict = {
     "83":["URBAN_CODE"],
     "84":["WIDENING_OBSTACLE"],
     "85":["WIDENING_POTENTIAL"],
+    "88":["YEAR_LAST_IMPROV"],
     "97":["ORIG_SURVEY_DIRECTION"],
     "115":["STRAHNET"]
-    }
+}
 
 if not os.path.exists('temp'):
     os.mkdir('temp')
+
 json_object = json.dumps(layers_dict)
 with open("temp/carry.json", 'w') as outfile:
     outfile.write(json_object)
