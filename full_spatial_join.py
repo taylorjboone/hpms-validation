@@ -125,6 +125,17 @@ def check_rule_sjf47(df):
         print('Sums are equal')
         return True
 
+# def create_x_rule_89(df):
+#     for a in df["LANE_WIDTH"]:
+#         if a == 10:
+#             return 65
+#         if a == 11:
+#             return 59
+#         if a == 12:
+#             return 54
+#         else:
+#             return -1
+
 
 
 
@@ -252,7 +263,6 @@ def load_defaults(df):
 def full_spatial_join(df):
     df = load_defaults(df)
     df = df.rename(columns=convert_dict)
-    print(df['LANE_WIDTH'])
     error_dict = {
         'sjf01':((df['F_SYSTEM'].notna()) & (df['FACILITY_TYPE'].isin(facility_list))),
         'sjf02':(((df['URBAN_ID'].notna()) & (df['FACILITY_TYPE'].isin(facility_list2)) & \
@@ -336,7 +346,6 @@ def full_spatial_join(df):
         'sjf75':((df['MEDIAN_TYPE'].isin([2,3,4,5,6])) & (df['MEDIAN_WIDTH'] > 0)),
         'sjf76':(df['MEDIAN_WIDTH'].isna())|((df['FACILITY_TYPE'].isin([1,4]))|(df['MEDIAN_TYPE']==1)),
         'sjf77':(df['SHOULDER_WIDTH_L'] < df['MEDIAN_WIDTH']),
-        # Can only be tested when used with pavement file
         'sjf78':(df['IRI'].isna())|(((df['ValueDate'].notna()) & (df['BeginDate'].notna())) & ((df['is_sample'].isna())|(df['ValueText'].isna())) & (df['F_SYSTEM'] > 1) & (df['NHS'].isin([1,2,3,4,5,6,7,8,9]))),
         'sjf79':(df['RUTTING'].isna())|(((df['ValueDate'].notna()) & (df['BeginDate'].notna())) & ((df['is_sample'].isna())|(df['ValueText'].isna())) & (df['F_SYSTEM'] > 1) & (df['NHS'].isin([1,2,3,4,5,6,7,8,9]))),
         'sjf80':(df['FAULTING'].isna())|(((df['ValueDate'].notna()) & (df['BeginDate'].notna())) & ((df['is_sample'].isna())|(df['ValueText'].isna())) & (df['F_SYSTEM'] > 1) & (df['NHS'].isin([1,2,3,4,5,6,7,8,9]))), 
@@ -348,7 +357,7 @@ def full_spatial_join(df):
         'sjf86':( ( (df['F_SYSTEM']==1) & (df['IRI'].isna()) ) & ( (df['PSR']>0) & (df['ValueText']=='A') )),
         'sjf87':(df['RUTTING'] < 1),
         'sjf88':(df['FAULTING'] <=1),
-        'sjf89':((df['SURFACE_TYPE'].isin([2,6,7,8]))), #Not sure how to write this  
+        'sjf89': ((~df['SURFACE_TYPE'].isin([2,6,7,8])) | (((df['LANE_WIDTH'] == 10) & (df['CRACKING_PERCENT'] < 65)) | ((df['LANE_WIDTH'] == 11) & (df['CRACKING_PERCENT'] < 59)) | ((df['LANE_WIDTH'] == 12) & (df['CRACKING_PERCENT'] < 54)))),  
         'sjf90':((df['SURFACE_TYPE'].isin([3,4,5,9,10])) & (df['CRACKING_PERCENT']<75)),
         'sjf91':(df['ValueDate']<=df['BeginDate']),
         'sjf92':((df['THICKNESS_RIGID'].isna()) & (df['SURFACE_TYPE'].isin([2,6]) ) ),
@@ -358,7 +367,7 @@ def full_spatial_join(df):
         'sjf96':(df['Dir_Through_Lanes']<=df['THROUGH_LANES']),
         'sjf97':(df['TRAVEL_TIME_CODE'].notna() & df['NHS'].notna()),
         'sjf98':( (df['MAINTENANCE_OPERATIONS']) != (df['OWNERSHIP']) ),
-        'sjf99':('Need Help'),
+        'sjf99':(True),#TODO Figure out how to write this, seems to need to remember older results
         'sjf100':(df['is_sample'].isna())|((df['is_sample'].notna()) &  ( df['FACILITY_TYPE'].isin([1,2]) ) & ((df['F_SYSTEM'].isin([1,2,3,4,5]) ) |(df['F_SYSTEM']==6)) & (df['URBAN_ID']<99999)),
     }
     tmp = df.copy(deep=True)
