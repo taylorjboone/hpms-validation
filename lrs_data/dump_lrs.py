@@ -63,7 +63,7 @@ with open("temp/carry.json", 'w') as outfile:
 
 layers = ','.join(layers_dict.keys())
 
-command = f'lrsops dumpsplit --outputdir temp -l {layers} --carry_json temp/carry.json -o temp/out.csv'
+command = f'lrsops dumpsplit -ignore-objectid --outputdir temp -l {layers} --carry_json temp/carry.json -o temp/out.csv'
 os.system(command)
 
 df = pd.read_csv(r'temp/out.csv')
