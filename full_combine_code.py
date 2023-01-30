@@ -5,6 +5,8 @@ from datetime import date,timedelta
 from dateutil.relativedelta import relativedelta
 import random
 import numpy as np
+from os import listdir
+from os.path import isfile, join 
 from data_validation_validation import DomainCheck
 from pm2_validations_draft import pm2_spatial_join
 from full_spatial_join import full_spatial_join_check
@@ -135,6 +137,21 @@ class Validations:
 
     def domain_check(self):
         domain=DomainCheck(self.df)
+    def file_sep(self):
+        mypath = "C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\hpms_data_items\\"
+        onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+        file_list = []
+        for a in onlyfiles:
+            k, v = a.split(".")
+            file_list.append(k) 
+        for b in file_list:
+            val_dict = {b: onlyfiles}
+            print(val_dict)
+        
+        
+        
+        val_dict = dict(zip(file_list, onlyfiles))
+
 
 validations = Validations('test_data.csv')
 validations.dummy_d()
