@@ -41,15 +41,17 @@ def _overlap(bmp1,emp1,bmp2,emp2,debug=False):
     emp_overlap2 = bmp1 < emp2 and emp1 > emp2
 
     if debug: print(bmp_overlap1,emp_overlap1,bmp_overlap2,emp_overlap2,[bmp1,emp1,bmp2,emp2])
-    return (bmp_overlap1 or 
-     emp_overlap1 or 
-     bmp_overlap2 or 
-     emp_overlap2)
+    return (
+        bmp_overlap1 or 
+        emp_overlap1 or 
+        bmp_overlap2 or 
+        emp_overlap2
+    )
 
 
 
-df=pd.read_csv(r'C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items\DataItem10_Peak_Lanes.csv',sep='|')
-meh= [df['BeginPoint'],df['EndPoint']]
+df = pd.read_csv(r'C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items\DataItem10_Peak_Lanes.csv',sep='|')
+meh = [df['BeginPoint'],df['EndPoint']]
 # print(meh)
-test=overlap_intersect_check(meh)
+test = overlap_intersect_check(meh)
 print(test)
