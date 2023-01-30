@@ -151,6 +151,7 @@ def output_geom_file(geom_check, fn):
 # def read_hpms_csv(x): return pd.read_csv(mypath + "/" + x, sep='|')
 
 #Beginning of HPMS Validations 
+
 def check_fsystem_valid(x, check_geom):
     data = read_hpms_csv(x)
     data2=add_column_section_length(data)
