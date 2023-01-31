@@ -156,17 +156,17 @@ def traffic_spatial_join(df):
     return tmp2.drop_duplicates()
 
 
-input_file = 'lrs_data/lrs_dump_12-05-22.csv'
-data = pd.read_csv(input_file)
+# input_file = 'lrs_data/lrs_dump_12-05-22.csv'
+# data = pd.read_csv(input_file)
 
-data = load_defaults(data)
+# data = load_defaults(data)
 
-# Temporary Arnold dataframe until the real one is added
-arnold = pd.DataFrame()
-arnold['RouteID'] = data['RouteID']
+# # Temporary Arnold dataframe until the real one is added
+# arnold = pd.DataFrame()
+# arnold['RouteID'] = data['RouteID']
 
-inventory = inventory_spatial_join(data)
-traffic = traffic_spatial_join(data)
+# inventory = inventory_spatial_join(data)
+# traffic = traffic_spatial_join(data)
 
-print(inventory)
-print(traffic)
+# print(inventory)
+# print(traffic)

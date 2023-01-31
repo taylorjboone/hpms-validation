@@ -7,9 +7,9 @@ import random
 import numpy as np
 from os import listdir
 from os.path import isfile, join 
-from domain_validation import DomainCheck
+from domain_check_class_draft import DomainCheck
 from pm2_validations import pm2_spatial_join
-from full_spatial_join_completed import full_spatial_join_check
+from full_spatial_join_completed import full_spatial_join
 
 
 
@@ -133,16 +133,17 @@ class Validations:
     
     def check_full_spatial(self):
         print('**************',self.df)
-        full_spatial_join_check(self.df)
+        full_spatial_join(self.df)
 
     def domain_check(self):
-        domain=DomainCheck(self.df)
+        domain = DomainCheck(self.df)
+        
     def file_sep(self):
-        mypath = "C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\hpms_data_items\\"
+        mypath = "\\hpms-validation\\hpms_data_items\\"
         onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
         file_list = []
         for a in onlyfiles:
-            k, v = a.split(".")
+            k,v = a.split(".")
             file_list.append(k) 
         for b in file_list:
             val_dict = {b: onlyfiles}
@@ -153,8 +154,8 @@ class Validations:
         val_dict = dict(zip(file_list, onlyfiles))
 
 
-validations = Validations('test_data.csv')
-validations.dummy_d()
-validations.check_full_spatial()
+# validations = Validations('test_data.csv')
+# validations.dummy_d()
+# validations.check_full_spatial()
 
 # domain=DomainCheck()

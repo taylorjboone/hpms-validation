@@ -23,7 +23,7 @@ def pm2_spatial_join(df):
     errors = df.loc[((df['30_IRI_VALUE'] != df['21_FAULTING']) & (df['30_IRI_VALUE'] != df['14_CRACKING_PERCENT']) & (df['30_IRI_VALUE'] != df['52_RUTTING']))]
     return errors.to_excel('pm2_errors.xlsx',index=False)
 
-group = pm2_spatial_join(df)
+# group = pm2_spatial_join(df)
 
         
 

@@ -384,6 +384,6 @@ def full_spatial_join(df):
     tmp = tmp.mask(tmp[rules].all(axis='columns')).dropna(how='all')
     return tmp
     
-print(full_spatial_join(df))
+# print(full_spatial_join(df))
 # full_spatial_join(df)
 # group = full_spatial_join(df)d

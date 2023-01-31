@@ -1,6 +1,5 @@
 from distutils.log import error
 import os
-from matplotlib import scale
 import pandas as pd
 from wvdot_utils import add_routeid_df, add_geom_validation_df
 from os import listdir
@@ -1038,7 +1037,7 @@ def at_grade_others(x,check_geom):
 
 
     data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
+    data2 = add_column_section_length(data)
     # print(data)
     if check_geom:
         geom_check = add_geom_validation_df(
@@ -1064,7 +1063,7 @@ onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 
 # the key is the filename the value is the function
 validation_dict = {
-    'DataItem1_F_System.csv': [check_fsystem_valid,'F_System'],
+    # 'DataItem1_F_System.csv': [check_fsystem_valid,'F_System'],
     # 'DataItem2_Urban_Code.csv': [check_urban_code,'Urban_Code'],
     # 'DataItem3_Facility_Type.csv': [check_facility_type,'Facility_Type'],
     # 'DataItem5-Access_Control.csv' :[access_control,'Access_Control'],
@@ -1140,7 +1139,7 @@ def check_all(check_geom=True):
             myfunc(fn, check_geom=check_geom)
 
 
-check_all(check_geom=True)
+# check_all(check_geom=True)
 
 cols = ['Error','Year_Record',
         'State_Code',
@@ -1156,5 +1155,5 @@ cols = ['Error','Year_Record',
 
 
 #problem area for code currently 
-total_errors[cols].to_excel('errors.xlsx', index=False)
+# total_errors[cols].to_excel('errors.xlsx', index=False)
 
