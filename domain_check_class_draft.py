@@ -122,8 +122,7 @@ class DomainCheck():
                     pair_list.append(pair)
         print(pair_list)
         return pair_list
-
-    
+   
     def rid_overlap(self,df):
         for rid in df['Route_ID'].unique():
             tmp = df[df['RouteID']==rid]
