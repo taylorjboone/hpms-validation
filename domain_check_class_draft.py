@@ -1,6 +1,5 @@
 from distutils.log import error
 import os
-from matplotlib import scale
 import pandas as pd
 from wvdot_utils import add_routeid_df, add_geom_validation_df
 from os import listdir
@@ -39,6 +38,78 @@ class DomainCheck():
         self.correct_format={'County_Code':'CountyID','Pct_MC':'PctMotorcycles','Pct_Lgt_Trucks':'PctLightTrucks','Pct_SU_Trucks':'PctSingleUnit','Pct_CU_Trucks':'PctCombination','YEAR_RECORD':'BeginDate','END_POINT':'EndPoint','STATE_CODE':'StateID','ROUTE_ID':'RouteID','VALUE_DATE':'ValueDate','Data_Item':'DataItem','Value_Numeric':'ValueNumeric','Year_Record':'BeginDate','End_Point':'EndPoint','State_Code':'StateID','Value_Date':'ValueDate','Data_Item':'DataItem','Route_ID':'RouteID','Urban_Code':'UrbanID','Value_Text':'ValueText','VALUE_TEXT':'ValueText','BEGIN_POINT':'BeginPoint','Begin_Point':'BeginPoint'}
         self.correct_format_inverse = {}
         self.mypath = 'hpms_data_items'
+        self.cols = ['Error','Year_Record',
+        'State_Code',
+        'Route_ID',
+        'Begin_Point',
+        'End_Point',
+        'Data_Item',
+        'Section_Length',
+        'Value_Numeric',
+        'Value_Text',
+        'Value_Date',
+        'Comments']
+        self.validation_dict = {
+    'DataItem1_F_System.csv': [self.check_fsystem_valid,'F_System'],
+    'DataItem2_Urban_Code.csv': [self.check_urban_code,'Urban_Code'],
+    'DataItem3_Facility_Type.csv': [self.check_facility_type,'Facility_Type'],
+    'DataItem5-Access_Control.csv' :[self.access_control,'Access_Control'],
+    'DataItem6_Ownership.csv': [self.check_ownership,'Ownership'],
+    'DataItem7_Through_Lanes.csv': [self.check_through_lanes,'Through_Lanes'],
+    'DataItem10_Peak_Lanes.csv' : [self.peak_lanes,'PEAK_LANES'],
+    'DataItem11_Counter_Peak_Lanes.csv' : [self.counter_peak_lanes,'Counter_Peak_Lanes'],
+    'DataItem12-Turn_Lanes_R.csv' : [self.turn_lanes_r,'Turn_Lanes_R'],
+    'DataItem13-Turn_Lanes_L.csv' : [self.turn_lanes_l,'Turn_Lanes_L'],
+    'DataItem14_SpeedLimit.csv' : [self.speed_limit,'Speed_Limit'],
+    'DataItem15_Toll_ID.csv' : [self.toll_id,'Toll_ID'],
+    'DataItem17-RouteNumber.csv' : [self.route_number,'Route_Number'],
+    'DataItem18-Route_Signing.csv' : [self.route_signing,'Route Signing'],
+    'DataItem19-Route_Qualifier.csv' : [self.route_qualifier,'Route Qualifier'],
+    'DataItem20-Alternative_Route_Name.csv' : [self.alternative_route_name,'Alternative Route Name'],
+    'DataItem21-AADT.csv':[self.check_aadt,'AADT'],
+    'DataItem22-AADT_Single_Unit.csv':[self.check_aadt_single_unit,'AADT_Single_Unit'],
+    'DataItem23-Pct_Peak_Single.csv':[self.check_Pct_Peak_Single,'Pct_Peak_Single'],
+    'DataItem24-AADT_Combination.csv':[self.check_AADT_Combination,'AADT_Combination'],
+    'DataItem25-Pct_Peak_Combination.csv':[self.check_pct_peak_combination,'Pct_Peak_Combination'],
+    'DataItem26-K_Factor.csv' : [self.check_k_factor,'K_Factor'],
+    'DataItem27-Dir_Factor.csv' : [self.dir_factor,'Dir Factor'],
+    'DataItem28-Future_AADT.csv' : [self.future_aadt,'Future AADT'],
+    'DataItem29-Signal_Type.csv' : [self.signal_type,'Signal_Type'],
+    'DataItem30-Pct_Green_Time.csv' : [self.pct_green_time,'Percent_Green_Time'],
+    'DataItem31-Number_Signals.csv' : [self.number_signals,'Number_signals'],
+    'DataItem32-Stop_Signs.csv' : [self.stop_signs,'Stop_Signs'],
+    'DataItem33-At_Grade_Other_test.csv' : [self.at_grade_others,'At_Grade_Others'],
+    'DataItem34_Lane_Width.csv' : [self.lane_width,'Lane Width'],
+    'DataItem35_Median_Type.csv' : [self.median_type,'Median Type'],
+    'DataItem36_Median_Width.csv' : [self.median_width,'Median Width'],
+    'DataItem37_Shoulder_Type.csv' : [self.shoulder_type,'Shoulder Type'],
+    'DataItem38_Right_Shoulder_Width.csv' : [self.shoulder_width_r,'Shoulder Width Right'],
+    'DataItem39_Left_Shoulder_Width.csv' : [self.shoulder_width_l,'Shoulder Width Left'],
+    'DataItem40-Peak_Parking.csv' : [self.peak_parking,'Peak Parking'],
+    'DataItem42-Widening_Potential.csv' : [self.widening_potential,'Widening Potential'],
+    'DataItem43_Curve_Classification.csv' : [self.curves,'Curve Classification'],
+    'DataItem44-Terrain_Type.csv' : [self.terrain_types,'Terrain Types'],
+    'DataItem45_Grade_Classifcation.csv' : [self.grades,'Grade Classification'],
+    'DataItem46-Pct_Pass_Sight.csv' : [self.pct_pass_sight,'Peak Passing Sight'],
+    'DataItem47_IRI_non_interstate_NHS.csv' : [self.iri,'IRI'],
+    'DataItem49_Surface_Type.csv' : [self.surface_type,'Surface Type'],
+    'DataItem50_Rutting_non_interstate_NHS.csv' : [self.rutting,'Rutting'],
+    'DataItem51_Faulting_non_interstate_NHS.csv' : [self.faulting,'Faulting'],
+    'DataItem52_Cracking_Percent_non_interstate_NHS.csv' : [self.cracking_percent,'Cracking Percent'],
+    'DataItem54_Year_of_Last_Improvement.csv' : [self.year_last_improvement,'Year Last Improvement'],
+    'DataItem55_Year_of_Last_Construction.csv' : [self.year_last_construction,'Year Last Construction'],
+    'DataItem56_Last_Overlay_Thickness.csv' : [self.last_overlay_thickness,'Last Overlay Thickness'],
+    'DataItem57_Thickness_Rigid.csv' : [self.thickness_rigid,'Thickness Rigid'],
+    'DataItem58_Thickness_Flexible.csv' : [self.thickness_flexible,'Thickness Flexible'],
+    'DataItem59_Base_Type.csv' : [self.base_type,'Base Type'],
+    'DataItem60_Base_Thickness.csv':[self.base_thickness,'BASE_THICKNESS'],
+    'DataItem63-County_Code.csv':[self.county_id,'County_ID'],
+    'DataItem64_NHS.csv':[self.nhs_new_check,'NHS'],
+    'DataItem65-STRAHNET_Type.csv':[self.strahnet_type,'Strahnet_Type'],
+    'DataItem66-NN.csv':[self.nn,'NN'],
+    'DataItem70_Dir_Through_Lanes.csv':[self.check_dir_through_lanes,'Dir_Through_Lanes'],
+    'HPMS_2021_SAMPLES_LANE_WIDTH.csv':[self.lane_width,'Lane_Width']
+}
         for k,v in self.correct_format.items():
             self.correct_format_inverse[v] = k
 
@@ -136,7 +207,7 @@ class DomainCheck():
                 data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'Urban Code geometry check invalid!')
-        tmpdf = data2[~data2['Value_Numeric'].isin(self.functional_class_list)]
+        tmpdf = data2[~data2['Value_Numeric'].isin(self.urban_code_list)]
         self.add_error_df(tmpdf, "Check value numeric for Urban Code valid")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
@@ -151,7 +222,7 @@ class DomainCheck():
                 data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'Facility Type geometry check invalid!')
-        tmpdf = data2[~data2['Value_Numeric'].isin(self.functional_class_list)]
+        tmpdf = data2[~data2['Value_Numeric'].isin(self.facility_type_list)]
         self.add_error_df(tmpdf, "Check value numeric for Facility Type valid")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
@@ -165,10 +236,827 @@ class DomainCheck():
             geom_check = add_geom_validation_df(
                 data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
             self.add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Facility Type geometry check invalid!')
-        tmpdf = data2[~data2['Value_Numeric'].isin(self.functional_class_list)]
-        self.add_error_df(tmpdf, "Check value numeric for Facility Type valid")
+                     False], 'Ownership geometry check invalid!')
+        tmpdf = data2[~data2['Value_Numeric'].isin(self.ownership_list)]
+        self.add_error_df(tmpdf, "Check value numeric for Ownership valid")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
         self.add_error_df(
-            tmpdf2, "Check value numeric for fsystem section length is zero")
+            tmpdf2, "Check value numeric for Ownership section length is zero")
+    
+    def check_through_lanes(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid == False], "Though Lanes geometry check invalid")
+        
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf,'Through Lanes value numeric is nan')
+        tmpdf2 = data2[data2['Section_length']==0]
+        self.add_error_df(tmpdf2,"Through Lanes section length is zero")
+
+    def nhs_new_check(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'NHS geometry check invalid!')
+        tmpdf = data2[~data2['Value_Numeric'].isna()]
+        self.add_error_df(tmpdf, "NHS Value Numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for NHS section length is zero")
+    
+    def check_dir_through_lanes(self,x,check_geom):
+        data = self.read_hpms_csv(data)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Direct Through Lanes geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Direct Through Lanes value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Direct Through Lanes section length is zero")
+    
+    def check_addt(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'AADT geometry check invalid!')
+        tmpdf = data2[data2['Value_Numeric'].isna()]
+        self.add_error_df(tmpdf, "Check value numeric for AADT valid")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for AADT section length is zero")
+    
+    def check_aadt_single_unit(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'AADT Single Unit geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, " AADT Single Unit is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for AADT single Unit section length is zero")
+    
+    def check_pct_peak_single(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Percent Peak Single geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Percent Peak Single is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for Percent Peak Single section length is zero")
+    
+    def check_aadt_combination(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'AADT combination geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "AADT combination ")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for AADT  combination section length is zero")
+    
+    def check_pct_peak_combination(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'percent peak combination geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "percent peak combination valid")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for percent peak combination section length is zero")
+    
+    def check_k_factor(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'K Factor geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Check value numeric for K Factor valid")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for K Factor section length is zero")
+    
+    def dir_factor(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Direct Factor geometry check invalid!')
+        tmpdf = data2[~data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Direct Factor is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for Direct Factor section length is zero")
+    
+    def signal_type(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'AADT geometry check invalid!')
+        tmpdf = data2[~data2['Value_Numeric'].isin(self.signal_list)]
+        self.add_error_df(tmpdf, "Check value numeric for AADT valid")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Check value numeric for AADT section length is zero")
+    
+    def pct_green_time(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2,routeid_field='Route_ID',bmp_field='Begin_Point',emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Percent Green Time geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Percent Green Time is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        print(self.rid_overlap(data2))
+        self.add_error_df(
+            tmpdf2, "Percent Green Time section length is zero")
+    
+    def lane_width(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2 = self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid == False], 'Median type geometry check invalid')
+        tmpdf = data2[(data2.Value_Numeric.isna())]
+        self.add_error_df(tmpdf, "Lane Width is not in accepted range")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Lane Width section length is zero")
+    
+    def median_type(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Median type geometry check invalid!')
+            tmpdf = data2[(data2['Value_Numeric'].isna()) | (~data2['Value_Numeric'].isin(self.median_type_list))]
+        self.add_error_df(tmpdf, "Median type is not in accepted range")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Median type section length is zero")
+    
+    def median_width(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Median width geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Median width numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Median width section length is zero")
+
+    def shoulder_type(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+        self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Shoulder type geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+    ~data2['Value_Numeric'].isin(self.shoulder_type_list))]
+        self.add_error_df(tmpdf, "Shoulder type is not in accepted range")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Shoulder type section length is zero")
+    
+    def shoulder_width_r(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+        self.add_error_df(geom_check[geom_check.IsValid ==
+                     False], 'Shoulder width R geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Shoulder width R value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Shoulder width R section length is zero")
+
+    def shoulder_width_l(self,x,check_geom):
+     data = self.read_hpms_csv(x)
+     data2=self.add_column_section_length(data)
+     if check_geom:
+         geom_check = add_geom_validation_df(
+             data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+         self.add_error_df(geom_check[geom_check.IsValid ==
+                      False], 'Shoulder width L geometry check invalid!')
+     tmpdf = data2[data2.Value_Numeric.isna()]
+     self.add_error_df(tmpdf, "Shoulder width L value numeric is nan")
+     tmpdf2 = data2[data2['Section_Length'] == 0]
+     self.add_error_df(tmpdf2, "Shoulder width L section length is zero")
+
+    def peak_parking(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Peak parking geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+            ~data2['Value_Numeric'].isin(self.peak_parking_list))]
+        self.add_error_df(tmpdf, "Peak parking is not in accepted range")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Peak parking section length is zero")
+    
+    def widening_potential(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Widening potential geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+            ~data2['Value_Numeric'].isin(self.widening_potential_list))]
+        self.add_error_df(tmpdf, "Widening potential is not in accepted range")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "widening potential section length is zero")
+    
+    def curves(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'curves geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+            ~data2['Value_Numeric'].isin(self.curve_list))]
+        self.add_error_df(tmpdf, "Curves is not in accepted range")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Curves section length is zero")
+
+    def terrain_types(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Terrain Type geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+            ~data2['Value_Numeric'].isin(self.terrain_types_list))]
+        self.add_error_df(tmpdf, "Terrain Type is not in accepted range")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Terrain section length is zero")
+
+    def grades(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'grades geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+        ~data['Value_Numeric'].isin(self.grades_list))]
+        self.add_error_df(tmpdf, "Grade is not in accepted range")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "grades section length is zero")
+    
+    def pct_pass_sight(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'PCT Pass Sight geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "PCT Pass Sight value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "PCT Pass Sight section length is zero")
+    
+    def iri(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'IRI geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "IRI value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "IRI section length is zero")
+    
+    def surface_type(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'K Factor geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+            ~data2['Value_Numeric'].isin(self.surface_type_list))]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "K Factor section length is zero")
+    
+    def rutting(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Rutting geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Rutting section length is zero")
+
+    def faulting(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Faulting geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Faulting value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Faulting section length is zero")
+    
+    def cracking_percent(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Cracking Percent geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Cracking Percent value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Cracking Percent section length is zero")
+    
+    def year_last_improvement(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Year Last Improvement geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Year Last Improvement value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Year Last Improvement section length is zero")
+    
+    def year_last_construction(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Year Last Construction geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Year Last Construction value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Year Last Construction section length is zero")
+    
+    def last_overlay_thickness(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Last Overlay Thickness geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Last Overlay Thickness value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Last Overlay thickness section length is zero")
+    
+    def thickness_rigid(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'thickness rigid geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Thickness Rigid value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Thickness Rigid section length is zero")
+    
+    def thickness_flexible(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'thickness flexible geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Thickness Flexible value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Thickness Flexible section length is zero")
+    
+    def base_type(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'thickness flexible geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Thickness Flexible value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Thickness Flexible section length is zero")
+    
+    def base_thickness(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Base thickness geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Base thickness value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Base thickness section length is zero")
+    
+    def county_id(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'County ID geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+        ~data['Value_Numeric'].isin(self.county_id_list))]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "County ID value numeric is nan")
+        self.add_error_df(tmpdf2, "County ID section length is zero")
+    
+    def strahnet_type(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'STRAHNET geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+        ~data2['Value_Numeric'].isin(self.strahnet_type_list))]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Strahnet Type value numeric is nan")
+        self.add_error_df(tmpdf2, "STRAHNET section length is zero")
+    
+    def nn(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'NN geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+        ~data2['Value_Numeric'].isin(self.nn_list))]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "NN value numeric error")
+        self.add_error_df(tmpdf2, "NN section length is zero")
+    
+    def maintenance_operations(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Maintence operations geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+        ~data['Value_Numeric'].isin(self.main_ops_list))]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Maintenance Operations value numeric error")
+        self.add_error_df(tmpdf2, "Main operations section length is zero")
+    
+    def dir_through_lanes(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Direct Through Lanes geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "DIrect Through Lanes value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Direct Through Lanes section length is zero")
+    
+    def travel_time_code(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Travel Time Code geometry check invalid!')
+        tmpdf = data2[data2.Value_Numeric.isna()]
+        self.add_error_df(tmpdf, "Travel Time Code value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Travel Time Code section length is zero")
+    
+    def nhfn(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'NHFN geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+        ~data2['Value_Numeric'].isin(self.nhfn_list))]
+        self.add_error_df(tmpdf, "NHFN value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "NHFN section length is zero")
+    
+    def is_restricted(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'K Factor geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+        ~data2['Value_Numeric'].isin(self.is_restricted_list))]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Is Restricted value numeric is nan")
+        self.add_error_df(tmpdf2, "K Factor section length is zero")
+    
+    def access_control(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Access Control geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
+        ~data2['Value_Numeric'].isin(self.access_control_list))]
+        self.add_error_df(tmpdf, "Access Control value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Access Control section length is zero")
+    
+    def peak_lanes(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Peak Lanes geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        self.add_error_df(tmpdf, "Peak Lanes value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Peak Lanes section length is zero")
+    
+    def counter_peak_lanes(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Counter Peak Lanes geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        self.add_error_df(tmpdf, "Counter Peak Lanes value numeric is nan")
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf2, "Counter Peak Lanes section length is zero")
+    
+    def turn_lanes_r(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Turn Lanes R geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Turn Lanes R value numeric is nan")
+        self.add_error_df(tmpdf2, "Turn Lanes R section length is zero")
+    
+    def turn_lanes_l(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Turn Lanes L geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Turn Lanes L value numeric is nan")
+        self.add_error_df(tmpdf2, "Turn Lanes L section length is zero")
+    
+    def speed_limit(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Speed Limit geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Speed Limit value numeric is nan")
+        self.add_error_df(tmpdf2, "Speed Limit section length is zero")
+    
+    def toll_id(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Toll ID geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | data2['Value_Numeric'] != 288]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Toll ID value numeric is nan")
+        self.add_error_df(tmpdf2, "Toll ID section length is zero")
+    
+    def route_number(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Toll ID geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Route Number value numeric is nan")
+        self.add_error_df(tmpdf2, "Route Number section length is zero")
+    
+    def route_signing(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Route Signing geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())| ~data2['Value_Numeric'].isin(self.route_qualifier_list)]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Route Signing value numeric is nan or not in list")
+        self.add_error_df(tmpdf2, "Route Signing section length is zero")
+
+    def route_qualifier(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Route Qualifier geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna()) | ~data2['Value_Numeric'].isin(self.route_signing_list) ]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Route Qualifier value numeric is nan or not in list")
+        self.add_error_df(tmpdf2, "Route Qualifier section length is zero")
+    
+    def alternative_route_name(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Alternative Route Name geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Alternative Route Name value numeric is nan or not in list")
+        self.add_error_df(tmpdf2, "Alternative Route Name section length is zero")
+    
+    def future_aadt(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Future AADT geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Future AADT value numeric is nan or not in list")
+        self.add_error_df(tmpdf2, "Future AADT section length is zero")
+    
+    def number_signals(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Number signals geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Number Signals value numeric is nan or not in list")
+        self.add_error_df(tmpdf2, "Number Signals section length is zero")
+    
+    def stop_signs(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'Stop Signs geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "Stop Signs value numeric is nan or not in list")
+        self.add_error_df(tmpdf2, "Stop Signs section length is zero")
+    
+    def at_grade_others(self,x,check_geom):
+        data = self.read_hpms_csv(x)
+        data2=self.add_column_section_length(data)
+        # print(data)
+        if check_geom:
+            geom_check = add_geom_validation_df(
+                data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
+            self.add_error_df(geom_check[geom_check.IsValid ==
+                         False], 'At Grade Others geometry check invalid!')
+        tmpdf = data2[(data2['Value_Numeric'].isna())]
+        tmpdf2 = data2[data2['Section_Length'] == 0]
+        self.add_error_df(tmpdf, "At Grade Others value numeric is nan or not in list")
+        self.add_error_df(tmpdf2, "At Grade Others section length is zero")
+    
+    def check_columns(self,fn,col):
+        df = self.read_hpms_csv(fn)
+        self.add_error_df(df[df.Data_Item!=col],'%s field not in Data_Item Column' % col)
+    
+    def check_all(self,check_geom=True):
+        for fn in self.onlyfiles:
+            # print(fn, "processing file")
+            vals = self.validation_dict.get(fn, False)
+            if vals != False:
+                myfunc,col = vals 
+                self.check_columns(fn,col)
+                myfunc(fn, check_geom=check_geom)
+
+doval = DomainCheck()

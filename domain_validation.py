@@ -825,7 +825,6 @@ def is_restricted(x,check_geom):
 def access_control(x,check_geom):
     data = read_hpms_csv(x)
     data2=add_column_section_length(data)
-    # print(data)
     if check_geom:
         geom_check = add_geom_validation_df(
             data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
@@ -1034,20 +1033,7 @@ def at_grade_others(x,check_geom):
     tmpdf2 = data2[data2['Section_Length'] == 0]
     add_error_df(tmpdf, "At Grade Others value numeric is nan or not in list")
     add_error_df(tmpdf2, "At Grade Others section length is zero")  
-
-
-    data = read_hpms_csv(x)
-    data2 = add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Surface Type geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | ~data2['Value_Numeric'].isin(surface_type_list)]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Surface Type value numeric is nan or not in list")
-    add_error_df(tmpdf2, "Surface Type section length is zero")  
+  
 
 
 
