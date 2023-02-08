@@ -1141,5 +1141,5 @@ cols = ['Error','Year_Record',
 
 
 #problem area for code currently 
-# total_errors[cols].to_excel('errors.xlsx', index=False)
+total_errors[cols].to_excel('errors.xlsx', index=False)
 
