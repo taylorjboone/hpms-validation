@@ -376,7 +376,7 @@ class DomainCheck():
             geom_check = add_geom_validation_df(data2,routeid_field='RouteID',bmp_field='BeginPoint',emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'Direct Factor geometry check invalid!')
-        tmpdf = data2[~data2.ValueNumeric.isna()]
+        tmpdf = data2[data2.ValueNumeric.isna()]
         self.add_error_df(tmpdf, "Direct Factor is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
