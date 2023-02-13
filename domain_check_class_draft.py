@@ -306,7 +306,7 @@ class DomainCheck():
             geom_check = add_geom_validation_df(data2,routeid_field='RouteID',bmp_field='BeginPoint',emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'AADT Single Unit geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, " AADT Single Unit is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
@@ -320,7 +320,7 @@ class DomainCheck():
             geom_check = add_geom_validation_df(data2,routeid_field='RouteID',bmp_field='BeginPoint',emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'Percent Peak Single geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Percent Peak Single is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
@@ -334,7 +334,7 @@ class DomainCheck():
             geom_check = add_geom_validation_df(data2,routeid_field='RouteID',bmp_field='BeginPoint',emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'AADT combination geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "AADT combination ")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
@@ -348,7 +348,7 @@ class DomainCheck():
             geom_check = add_geom_validation_df(data2,routeid_field='RouteID',bmp_field='BeginPoint',emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'percent peak combination geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "percent peak combination valid")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
@@ -404,7 +404,7 @@ class DomainCheck():
             geom_check = add_geom_validation_df(data2,routeid_field='RouteID',bmp_field='BeginPoint',emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'Percent Green Time geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Percent Green Time is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         print(self.rid_overlap(data2))
@@ -443,7 +443,7 @@ class DomainCheck():
             data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'Median width geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Median width numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Median width section length is zero")
@@ -470,7 +470,7 @@ class DomainCheck():
             data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
         self.add_error_df(geom_check[geom_check.IsValid ==
                      False], 'Shoulder width R geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Shoulder width R value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Shoulder width R section length is zero")
@@ -483,7 +483,7 @@ class DomainCheck():
              data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
          self.add_error_df(geom_check[geom_check.IsValid ==
                       False], 'Shoulder width L geometry check invalid!')
-     tmpdf = data2[data2.ValueNumeric.isna()]
+     tmpdf = data2[data2['ValueNumeric'].isna()]
      self.add_error_df(tmpdf, "Shoulder width L value numeric is nan")
      tmpdf2 = data2[data2['Section_Length'] == 0]
      self.add_error_df(tmpdf2, "Shoulder width L section length is zero")
@@ -566,7 +566,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'PCT Pass Sight geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "PCT Pass Sight value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "PCT Pass Sight section length is zero")
@@ -579,7 +579,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'IRI geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "IRI value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "IRI section length is zero")
@@ -631,7 +631,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'Cracking Percent geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Cracking Percent value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Cracking Percent section length is zero")
@@ -670,7 +670,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'Last Overlay Thickness geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Last Overlay Thickness value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Last Overlay thickness section length is zero")
@@ -683,7 +683,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'thickness rigid geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Thickness Rigid value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Thickness Rigid section length is zero")
@@ -696,7 +696,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'thickness flexible geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Thickness Flexible value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Thickness Flexible section length is zero")
@@ -709,7 +709,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'thickness flexible geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Thickness Flexible value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Thickness Flexible section length is zero")
@@ -722,7 +722,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'Base thickness geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Base thickness value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Base thickness section length is zero")
@@ -791,7 +791,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'Direct Through Lanes geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "DIrect Through Lanes value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Direct Through Lanes section length is zero")
@@ -804,7 +804,7 @@ class DomainCheck():
                 data2, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'Travel Time Code geometry check invalid!')
-        tmpdf = data2[data2.ValueNumeric.isna()]
+        tmpdf = data2[data2['ValueNumeric'].isna()]
         self.add_error_df(tmpdf, "Travel Time Code value numeric is nan")
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Travel Time Code section length is zero")
@@ -1052,7 +1052,7 @@ class DomainCheck():
     def check_columns(self,fn,col):
         df = self.read_hpms_csv(fn)
         print(df.columns)
-        self.add_error_df(df[df.DataItem!=col],'%s field not in DataItem Column' % col)
+        self.add_error_df(df[df['DataItem']!=col],'%s field not in DataItem Column' % col)
     
     def check_all(self,check_geom=True):
         for fn in self.onlyfiles:
