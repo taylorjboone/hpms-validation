@@ -594,6 +594,7 @@ class DomainCheck():
                          False], 'Surface Type geometry check invalid!')
         tmpdf = data2[(data2['ValueNumeric'].isna()) | (
             ~data2['ValueNumeric'].isin(self.surface_type_list))]
+        self.add_error_df(tmpdf, "Surface_Type value numeric is nan")    
         tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf2, "Surface Type section length is zero")
     
