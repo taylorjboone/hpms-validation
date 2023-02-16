@@ -5,6 +5,7 @@ from datetime import date,timedelta
 from dateutil.relativedelta import relativedelta
 import random
 pandarallel.initialize()
+import os
 from os import listdir
 from os.path import isfile,join
 
@@ -90,34 +91,9 @@ urban_id_list = ['06139','15481','21745','36190','40753','59275','67672','93592'
 '''
 
 convert_dict = {
-    'ROUTEID': 'RouteId',
-    'BEG_MP': 'BeginPoint',
-    'END_MP': 'EndPoint',
-    'LENGTH': '',
-    'SURF_TYPE': 'SURFACE_TYPE',
-    'IRI_MEAN': 'IRI',
-    'RUT_MEAN': 'RUTTING',
-    'Fault_Avg': 'FAULTING',
-    'SHLD_TYPE': 'SHOULDER_TYPE',
-    'IRI_FLAG': 'EXCEPTION_IRI',
-    'RUT_FLAG': 'EXCEPTION_RUTTING',
-    'WET': 'EXCEPTION_WET',
-    'BRIDGE': 'EXCEPTION_BRIDGE',
-    'CONSTR': 'EXCEPTION_CONSTRUCTION',
-    'DUAL_PV': 'EXCEPTION_DUAL_PAVEMENT',
-    'LANE': '',
-    'FEDAIDDESC': '',
-    'WVAFUNDESC': '',
-    'URBAN_AREA': '',
-    'TYPFACDESC': '',
-    'Date': '',
-    'COND_YEAR': '',
-    'Lanewidth': '',
-    'Percent_Cracking': '',
-    'Cracking_Length': '',
-    'FHWA_Percent_Cracking': 'CRACKING_PERCENT',
-    'THRU_LANES': 'THROUGH_LANES',
-    'Comments': '',
+   'Route_ID':'RouteID',
+   'Begin_Point':'BMP',
+   'End_Point':'EMP'
 }
 
 
@@ -125,29 +101,32 @@ class full_spatial_join_class():
 
     def __init__(self,filename):
         self.df = pd.read_csv(filename)
-        
 
-    def dummy_data(self):
-        self.df['RouteID']=self.df['RouteID'].astype(str)
-        self.df['sup_code'] = self.df['RouteID'].str.slice(9,11)
-        self.df['BeginDate'] = date.fromisoformat('2022-12-31')
-        self.df['sign_system'] = self.df['RouteID'].str.slice(2,3)
-        self.df['section_length'] = self.df['EMP'] - self.df['BMP']
-        self.df['ValueDate'] = date.fromisoformat('2022-10-31')
-        self.df['ValueText'] ='A'
-        self.df['TRAVEL_TIME_CODE'] = 'asdfasdfasf'
-        self.df['YEAR_LAST_CONSTRUCTION'] = date.fromisoformat('2010-12-31') 
-        self.df['THICKNESS_RIGID'] = np.random.randint(1, 20, self.df.shape[0])
-        self.df['THICKNESS_FLEXIBLE'] = np.random.randint(1, 20, self.df.shape[0])
-        self.df['MAINTENANCE_OPERATIONS'] = np.random.randint(1, 12, self.df.shape[0])
+    # def dummy_data(self):
+    #     self.df['RouteID']=self.df['RouteID'].astype(str)
+    #     self.df['sup_code'] = self.df['RouteID'].str.slice(9,11)
+    #     self.df['BeginDate'] = date.fromisoformat('2022-12-31')
+    #     self.df['sign_system'] = self.df['RouteID'].str.slice(2,3)
+    #     self.df['section_length'] = self.df['EMP'] - self.df['BMP']
+    #     self.df['ValueDate'] = date.fromisoformat('2022-10-31')
+    #     self.df['ValueText'] ='A'
+    #     self.df['TRAVEL_TIME_CODE'] = 'asdfasdfasf'
+    #     self.df['YEAR_LAST_CONSTRUCTION'] = date.fromisoformat('2010-12-31') 
+    #     self.df['THICKNESS_RIGID'] = np.random.randint(1, 20, self.df.shape[0])
+    #     self.df['THICKNESS_FLEXIBLE'] = np.random.randint(1, 20, self.df.shape[0])
+    #     self.df['MAINTENANCE_OPERATIONS'] = np.random.randint(1, 12, self.df.shape[0])
     
-    def create_data_files(self):
-        mypath = 'C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items'
-        onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-        for a in onlyfiles:
-            b = pd.read_csv(mypath + a,sep='|')
-        return b
-    
+    def create_data_files(self,mypath):
+        onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
+        for split_file in onlyfiles:
+            # print(split_file)
+            prefix = split_file.replace("C:\PythonTest\Voltron\hpms_data_items_2021\\test\\DataItem","").split(".")[0]
+            prefix2 = prefix.replace("C:\PythonTest\Voltron\hpms_data_items_2021\\test\\","")
+            print(prefix2)
+            command = f'lrsops split -b C:\PythonTest\Voltron\\base_file.csv -s {split_file} -c "Data_Item,Value_Numeric" --prefix "{prefix2}" -o C:\PythonTest\Voltron\\base_file.csv' 
+            print(command)            
+            os.system(command)
+        
     def check_rule_sjf43(self, df):
         sum_curve = df.loc[( df['CURVE_CLASSIFICATION'].notna()),'section_length'].sum()
         sum_sample = df.loc[ (((df['is_sample'].notna())&( df['F_SYSTEM'].isin([1,2,3]) )) | ( (df['F_SYSTEM']==4) & (df['URBAN_ID']==99999) ) ),'section_length'].sum()
