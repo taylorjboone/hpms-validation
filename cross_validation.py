@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import geopandas as gpd
 
 cols_dict = {
     'BMP':'BeginPoint',
@@ -70,13 +71,10 @@ def get_f_system(value):
     elif value in [9, 19]:
         return int(7)
 
+arnold = gpd.read_file(r'C:\Users\E025205\Documents\GitHub\hpms-validation\lrs_data\Route_Status_12_31_2022_WGS_84.zip')
+arnold_rids = arnold['ROUTE_ID'].unique().tolist()
 
-class Cross_Validation():
-    def __init__(self, df):
-        self.df = df
-
-    def load_defaults(self):
-        df=self.df
+def load_defaults(df):
         # Standardizes columns names 
         df.rename(columns=cols_dict, inplace=True)
         cols = df.columns.tolist()
@@ -114,15 +112,18 @@ class Cross_Validation():
 
         return df
 
+class Cross_Validation():
+    def __init__(self, df):
+        self.df = load_defaults(df)
 
     def inventory_spatial_join(self):
         df = self.df
         # Creates a column for each rule, outputs a False for each row that doesn't pass the rule for a column
         spatial_join_checks = {
-            'sji01': ((df['F_SYSTEM'].notna()) & (df['RouteID'].isin(arnold['RouteID']))),
-            'sji02': ((df['FACILITY_TYPE'].notna()) & (df['RouteID'].isin(arnold['RouteID']))),
-            'sji03': ((df['OWNERSHIP'].notna()) & (df['RouteID'].isin(arnold['RouteID']))),
-            'sji04': ((df['URBAN_ID'].notna()) & (df['RouteID'].isin(arnold['RouteID']))),
+            'sji01': ((df['F_SYSTEM'].notna()) & (df['RouteID'].isin(arnold_rids))),
+            'sji02': ((df['FACILITY_TYPE'].notna()) & (df['RouteID'].isin(arnold_rids))),
+            'sji03': ((df['OWNERSHIP'].notna()) & (df['RouteID'].isin(arnold_rids))),
+            'sji04': ((df['URBAN_ID'].notna()) & (df['RouteID'].isin(arnold_rids))),
             'sji05': (((df['FACILITY_TYPE'].notna()) & (df['F_SYSTEM'].notna())) | df['FACILITY_TYPE'].isna()),
             'sji06': (((df['F_SYSTEM'].notna()) & (df['FACILITY_TYPE'].notna())) | df['F_SYSTEM'].isna()),
             'sji07': (((df['F_SYSTEM'] == 1) & (df['FACILITY_TYPE'].isin([1,2])) & (df['RouteNumber'].notna())) | (df['F_SYSTEM'] != 1)),
@@ -164,8 +165,8 @@ class Cross_Validation():
         return tmp2.drop_duplicates()
 
 
-# input_file = 'lrs_data/lrs_dump_12-05-22.csv'
-# data = pd.read_csv(input_file)
+input_file = 'lrs_data/lrs_dump_03-01-23.csv'
+data = pd.read_csv(input_file)
 
 # data = load_defaults(data)
 
@@ -178,3 +179,10 @@ class Cross_Validation():
 
 # print(inventory)
 # print(traffic)
+
+cross_validation = Cross_Validation(data)
+isj_errors = cross_validation.inventory_spatial_join()
+tsj_errors = cross_validation.traffic_spatial_join()
+
+print('ISJ Errors', isj_errors)
+print('TSJ Errors', tsj_errors)
