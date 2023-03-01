@@ -9,7 +9,7 @@ from os import listdir
 from os.path import isfile, join 
 from domain_check_class_draft import DomainCheck
 from pm2_validations import pm2_spatial_join
-from full_spatial_join_completed import full_spatial_join
+from full_spatial_join_class import full_spatial_join_class
 
 
 
@@ -133,7 +133,7 @@ class Validations:
     
     def check_full_spatial(self):
         print('**************',self.df)
-        full_spatial_join(self.df)
+        full_spatial_join_class(self.df)
 
     def domain_check(self):
         domain = DomainCheck(self.df)
