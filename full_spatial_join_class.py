@@ -31,41 +31,41 @@ facility_list = [1,2,4,5,6]
 facility_list2 = [1,2,4]
 f_system_list = [1,2,3,4,5,6,7]
 urban_id_list = ['06139','15481','21745','36190','40753','59275','67672','93592','94726']
-'''
-# convert_dict = {
-    # 'BMP':'BeginPoint',
-    # 'EMP':'EndPoint',
-    # '12_COUNTY':'COUNTY_ID',
-    '2_AADT':'AADT',
-    '2_FUTURE_AADT':'FUTURE_AADT',
-    '3_ACCESS_CONTROL':'ACCESS_CONTROL',
-    '4_ALT_ROUTE_NAME':'ALT_ROUTE_NAME',
-    '5_AT_GRADE_OTHER':'AT_GRADE_OTHER',
-    '6_AVG_LANE_WIDTH_FT':'LANE_WIDTH',
-    '8_BASE_TYPE':'BASE_TYPE',
-    '14_CRACKING_PERCENT':'CRACKING_PERCENT',
-    '16_CURVE_CLASS':'CURVE_CLASSIFICATION',
-    '17_DES_TRUCK_ROUTE':'NN',
-    '20_FACILITY':'FACILITY_TYPE',
-    '21_FAULTING':'FAULTING',
-    '25_GRADE_CLASS':'GRADE_CLASSIFICATION',
+
+convert_dict = {
+    'BMP':'BeginPoint',
+    'EMP':'EndPoint',
+    '63_County_Code_Value_Numeric':'COUNTY_ID',
+    '21_AADT_Value_Numeric':'AADT',
+    '28_FUTURE_AADT_Value_Numeric':'FUTURE_AADT',
+    '5_Acces_Control_Value_Numeric':'ACCESS_CONTROL',
+    '20_ALternative_Route_Name_Value_Numeric':'ALT_ROUTE_NAME',
+    '33_At_Grade_Other_Value_Numeric':'AT_GRADE_OTHER',
+    '34_Lane_Width_Value_Numeric':'LANE_WIDTH',
+    '59_Base_Type_Value_Numeric':'BASE_TYPE',
+    '52_Cracking_Percent_Value_Numeric':'CRACKING_PERCENT',
+    '43_Curve_Classification_Value_Numeric':'CURVE_CLASSIFICATION',
+    '66_NN_Value_Numeric':'NN',
+    '3_Facility_Type_Value_Numeric':'FACILITY_TYPE',
+    '51_Faulting_Value_Numeric':'FAULTING',
+    '45_Grade_Classification_Value_Numeric':'GRADE_CLASSIFICATION',
     '29_HPMS_SAMPLE_NO':'is_sample',
-    '30_IRI_VALUE':'IRI',
-    '34_MEDIAN_WIDTH_FT':'MEDIAN_WIDTH',
-    '34_HPMS_MEDIAN_BARRIER_TYPE':'MEDIAN_TYPE',
-    '36_NHS':'NHS',
-    '37_NUMBER_SIGNALS':'NUMBER_SIGNALS',
-    '39_OWNERSHIP':'OWNERSHIP',
-    '41_PCT_GREEN_TIME':'PCT_GREEN_TIME',
-    '42_PCT_PASS_SIGHT':'PCT_PASS_SIGHT',
-    '43_PEAK_LANES':'PEAK_LANES',
-    '43_COUNTER_PEAK_LANES':'COUNTER_PEAK_LANES',
-    '45_PSR':'PSR',
-    '52_RUTTING':'RUTTING',
-    '56_SHOULDER_TYPE_RT':'SHOULDER_TYPE',
-    '57_SHOULDER_WIDTH_LFT_FT':'SHOULDER_WIDTH_L',
-    '58_SHOULDER_WIDTH_RT_FT':"SHOULDER_WIDTH_R",
-    '59_SIGNAL_TYPE':'SIGNAL_TYPE',
+    '47_IRI_Value_Numeric':'IRI',
+    '36_Median_Width_Value_Numeric':'MEDIAN_WIDTH',
+    '35_Median_Type_Value_Numeric':'MEDIAN_TYPE',
+    '64_NHS_Value_Numeric':'NHS',
+    '31_Number_Signals_Value_Numeric':'NUMBER_SIGNALS',
+    '6_Ownership_Value_Numeric':'OWNERSHIP',
+    '30_Pct_Green_Time_Value_Numeric':'PCT_GREEN_TIME',
+    '46_Pct_Pass_Sight_Value_Numeric':'PCT_PASS_SIGHT',
+    '10_Peak_Lanes_Value_Numeric':'PEAK_LANES',
+    '11_Counter_Peak_Lanes_Value_Numeric':'COUNTER_PEAK_LANES',
+    # '45_PSR':'PSR',
+    '50_Rutting_Value_Numeric':'RUTTING',
+    '37_Shoulder_Type_Value_Numeric':'SHOULDER_TYPE',
+    '39_Left_Shoulder_Width_Value_Numeric':'SHOULDER_WIDTH_L',
+    '38_Right_Shoulder_Width_Value_Numeric':"SHOULDER_WIDTH_R",
+    '29_Signal_Type_Value_Numeric':'SIGNAL_TYPE',
     '63_SPEED_LIMIT_MPH':'SPEED_LIMIT',
     '65_STATE_FUNCTIONAL_CLASS':'F_SYSTEM',
     '66_STOP_SIGNS':'STOP_SIGNS',
@@ -87,13 +87,13 @@ urban_id_list = ['06139','15481','21745','36190','40753','59275','67672','93592'
     '85_WIDENING_POTENTIAL':'WIDENING_POTENTIAL',
     '88_YEAR_LAST_IMPROV':'YEAR_LAST_IMPROVEMENT',
     '115_STRAHNET':'STRAHNET'
-# }
-'''
+}
+
 
 convert_dict = {
    'Route_ID':'RouteID',
    'Begin_Point':'BMP',
-   'End_Point':'EMP'
+   'End_Point':'EMP',
 }
 
 
@@ -117,13 +117,18 @@ class full_spatial_join_class():
     #     self.df['MAINTENANCE_OPERATIONS'] = np.random.randint(1, 12, self.df.shape[0])
     
     def create_data_files(self,mypath):
+        df = pd.DataFrame(columns=['Year_Record','State_Code','RouteID','BMP','EMP','Data_Item','Section_Length','Value_Numeric','Value_Text','Value_Date','Comments'])
+        df.to_csv('C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv')
         onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
-        for split_file in onlyfiles:
-            # print(split_file)
-            prefix = split_file.replace("C:\PythonTest\Voltron\hpms_data_items_2021\\test\\DataItem","").split(".")[0]
-            prefix2 = prefix.replace("C:\PythonTest\Voltron\hpms_data_items_2021\\test\\","")
-            print(prefix2)
-            command = f'lrsops split -b C:\PythonTest\Voltron\\base_file.csv -s {split_file} -c "Data_Item,Value_Numeric" --prefix "{prefix2}" -o C:\PythonTest\Voltron\\base_file.csv' 
+        for split_file in onlyfiles[-6:]:
+            print(split_file)
+            df = pd.read_csv(split_file,sep='|')
+            print(len(df.axes[1]))
+            prefix = split_file.replace("C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items\data_items\DataItem","").split(".")[0]
+            print(prefix)
+            prefix2 = prefix.replace("C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items\data_items","")
+            # print(prefix2)
+            command = f'lrsops split -b C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv -s {split_file} -c "Data_Item,Value_Numeric" --prefix "{prefix2}" -o C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv' 
             print(command)            
             os.system(command)
         
@@ -147,18 +152,18 @@ class full_spatial_join_class():
             print('Sums are equal')
             return True
         
-    def produce_dir_through_lanes(self, x):
-        boolval = (len(x['RouteID']) == 13) and (x.section_length > 0) and (int(x.sup_code) < 24) and \
-        (x['70_SURFACE_TYPE'] !=1) and  not (x['97_ORIG_SURVEY_DIRECTION']==np.isnan) and \
-            (x.sign_system=='1')
-        if boolval and (x['97_ORIG_SURVEY_DIRECTION'] == '0'):
-            x['Dir_Through_Lanes']=x['43_PEAK_LANES']
-        elif boolval and (x['97_ORIG_SURVEY_DIRECTION'] in ['1','A']):
-            x['Dir_Through_Lanes']=x['43_COUNTER_PEAK_LANES']
-        else:
-            # print('NAN')
-            pass
-        return x
+    # def produce_dir_through_lanes(self, x):
+    #     boolval = (len(x['RouteID']) == 13) and (x.section_length > 0) and (int(x.sup_code) < 24) and \
+    #     (x['70_SURFACE_TYPE'] !=1) and  not (x['97_ORIG_SURVEY_DIRECTION']==np.isnan) and \
+    #         (x.sign_system=='1')
+    #     if boolval and (x['97_ORIG_SURVEY_DIRECTION'] == '0'):
+    #         x['Dir_Through_Lanes']=x['43_PEAK_LANES']
+    #     elif boolval and (x['97_ORIG_SURVEY_DIRECTION'] in ['1','A']):
+    #         x['Dir_Through_Lanes']=x['43_COUNTER_PEAK_LANES']
+    #     else:
+    #         # print('NAN')
+    #         pass
+    #     return x
     
     def load_defaults(self):
         df = self.df
@@ -166,24 +171,24 @@ class full_spatial_join_class():
         cols = df.columns.tolist()
 
 
-        # If RouteNumber column is missing, adds and populates RouteNumber pulled from RouteID
-        if not 'RouteNumber' in cols:
-            df['RouteNumber'] = df['RouteID'].str[3:7]
-            df['RouteNumber'] = df['RouteNumber'].map(lambda x: x.lstrip('0'))
-            print('Added RouteNumber column')
+        # # If RouteNumber column is missing, adds and populates RouteNumber pulled from RouteID
+        # if not 'RouteNumber' in cols:
+        #     df['RouteNumber'] = df['RouteID'].str[3:7]
+        #     df['RouteNumber'] = df['RouteNumber'].map(lambda x: x.lstrip('0'))
+        #     print('Added RouteNumber column')
 
-        # If Sign System column is missing, adds and populates sign system pulled from RouteID
-        if not 'RouteSigning' in cols:
-            df['RouteSigning'] = df['RouteID'].str[2]
-            print('Added RouteSigning column')
+        # # If Sign System column is missing, adds and populates sign system pulled from RouteID
+        # if not 'RouteSigning' in cols:
+        #     df['RouteSigning'] = df['RouteID'].str[2]
+        #     print('Added RouteSigning column')
 
-        if not '65_STATE_FUNCTIONAL_CLASS' in cols:
-            df['65_STATE_FUNCTIONAL_CLASS'] = df['35_NAT_FUNCTIONAL_CLASS'].map(f_system_dict)
-            print('Added State Functional Class column')
+        # if not '65_STATE_FUNCTIONAL_CLASS' in cols:
+        #     df['65_STATE_FUNCTIONAL_CLASS'] = df['35_NAT_FUNCTIONAL_CLASS'].map(f_system_dict)
+        #     print('Added State Functional Class column')
 
-        if not 'Dir_Through_lanes' in cols:
-            df = df.apply(self.produce_dir_through_lanes,axis=1)
-            # print(df['Dir_Through_Lanes'])
+        # if not 'Dir_Through_lanes' in cols:
+        #     df = df.apply(self.produce_dir_through_lanes,axis=1)
+        #     # print(df['Dir_Through_Lanes'])
 
         return df 
     
