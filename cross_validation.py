@@ -153,7 +153,15 @@ class Cross_Validation():
             'sjt04': ((df['AADT_SINGLE_UNIT'].isna()) | (((df['AADT_SINGLE_UNIT'] * 0.01) < (df['AADT'] * (df['PCT_DH_SINGLE_UNIT'] * .01))) & ((df['AADT'] * (df['PCT_DH_SINGLE_UNIT'] * .01)) < (df['AADT_SINGLE_UNIT'] * 0.5)))),
             'sjt05': ((df['PCT_DH_SINGLE_UNIT'].isna()) | ((df['PCT_DH_SINGLE_UNIT'] > 0) & (df['PCT_DH_SINGLE_UNIT'] < 25))),
             'sjt06': ((df['PCT_DH_SINGLE_UNIT'].isna()) | (((df['AADT_SINGLE_UNIT'] < 50) & (df['PCT_DH_SINGLE_UNIT'] == 0)) | (df['PCT_DH_SINGLE_UNIT'] != 0))),
-            'sjt07': ((df['AADT_COMBINATION'].isna()) | (df['AADT_COMBINATION'] < (0.4 * df['AADT'])))
+            'sjt07': ((df['AADT_COMBINATION'].isna()) | (df['AADT_COMBINATION'] < (0.4 * df['AADT']))),
+            'sjt08': ((df['AADT_COMBINATION'].isna()) | ((df['AADT'] <= 500) | ((df['AADT'] > 500) & (df['AADT_COMBINATION'] > 0)))),
+            'sjt09': ((df['PCT_DH_COMBINATION'].isna()) | (((df['AADT_COMBINATION'] * .01) < (df['AADT'] * (df['PCT_DH_COMBINATION'] / 100))) & ((df['AADT'] * (df['PCT_DH_COMBINATION'] / 100)) < (df['AADT_COMBINATION'] * 0.5)))),
+            'sjt10': ((df['PCT_DH_COMBINATION'].isna()) | ((df['PCT_DH_COMBINATION'] > 0) & (df['PCT_DH_COMBINATION'] < 25))),
+            'sjt11': ((df['AADT_COMBINATION'].isna()) | ((df['PCT_DH_COMBINATION'] != 0) | ((df['PCT_DH_COMBINATION'] == 0) & (df['AADT_COMBINATION'] < 50)))),
+            'sjt12': ((df['K_FACTOR'].isna()) | ((df['K_FACTOR'] > 4) & (df['K_FACTOR'] < 30))),
+            'sjt13': ((df['DIR_FACTOR'].isna()) | ((df['FACILITY_TYPE'] != 1) | ((df['FACILITY_TYPE'] == 1) & (df['DIR_FACTOR'] == 100)))),
+            'sjt14': ((df['DIR_FACTOR'].isna()) | ((df['FACILITY_TYPE'] != 2) | ((df['FACILITY_TYPE'] == 2) & ((df['DIR_FACTOR'] >= 50) & (df['DIR_FACTOR'] <= 75))))),
+            # 'sjt15': ((df['FUTURE_AADT'].isna()) | ((df['ValueDate'].isna()) & (((df['FUTURE_AADT'] > df['AADT']) & (df['FUTURE_AADT'] < (df['AADT'] * 4))) | (df['FUTURE_AADT'] < (df['AADT'] * 0.2)))))
         }
 
         tmp = df.copy()
