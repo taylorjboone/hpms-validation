@@ -10,152 +10,109 @@ from os.path import isfile, join
 from domain_check_class_draft import DomainCheck
 from pm2_validations import pm2_spatial_join
 from full_spatial_join_class import full_spatial_join_class
+from cross_validation import Cross_Validation
+import os
 
 
-
-class Validations:
-    def __init__(self,filename):
-        self.df = pd.read_csv(filename,sep='|')
+mypath = "hpms_data_items/data_items/"
+class Validations():
+    def __init__(self):
+        self.convert_dict = {
+    'BMP':'BeginPoint',
+    'EMP':'EndPoint',
+    '63_County_Code_Value_Numeric':'COUNTY_ID',
+    '21_AADT_Value_Numeric':'AADT',
+    '28_FUTURE_AADT_Value_Numeric':'FUTURE_AADT',
+    '5_Acces_Control_Value_Numeric':'ACCESS_CONTROL',
+    '20_ALternative_Route_Name_Value_Numeric':'ALT_ROUTE_NAME',
+    '33_At_Grade_Other_Value_Numeric':'AT_GRADE_OTHER',
+    '34_Lane_Width_Value_Numeric':'LANE_WIDTH',
+    '59_Base_Type_Value_Numeric':'BASE_TYPE',
+    '52_Cracking_Percent_Value_Numeric':'CRACKING_PERCENT',
+    '43_Curve_Classification_Value_Numeric':'CURVE_CLASSIFICATION',
+    '66_NN_Value_Numeric':'NN',
+    '3_Facility_Type_Value_Numeric':'FACILITY_TYPE',
+    '51_Faulting_Value_Numeric':'FAULTING',
+    '45_Grade_Classification_Value_Numeric':'GRADE_CLASSIFICATION',
+    '29_HPMS_SAMPLE_NO':'is_sample',
+    '47_IRI_Value_Numeric':'IRI',
+    '36_Median_Width_Value_Numeric':'MEDIAN_WIDTH',
+    '35_Median_Type_Value_Numeric':'MEDIAN_TYPE',
+    '64_NHS_Value_Numeric':'NHS',
+    '31_Number_Signals_Value_Numeric':'NUMBER_SIGNALS',
+    '6_Ownership_Value_Numeric':'OWNERSHIP',
+    '30_Pct_Green_Time_Value_Numeric':'PCT_GREEN_TIME',
+    '46_Pct_Pass_Sight_Value_Numeric':'PCT_PASS_SIGHT',
+    '10_Peak_Lanes_Value_Numeric':'PEAK_LANES',
+    '11_Counter_Peak_Lanes_Value_Numeric':'COUNTER_PEAK_LANES',
+    # '45_PSR':'PSR',
+    '50_Rutting_Value_Numeric':'RUTTING',
+    '37_Shoulder_Type_Value_Numeric':'SHOULDER_TYPE',
+    '39_Left_Shoulder_Width_Value_Numeric':'SHOULDER_WIDTH_L',
+    '38_Right_Shoulder_Width_Value_Numeric':"SHOULDER_WIDTH_R",
+    '29_Signal_Type_Value_Numeric':'SIGNAL_TYPE',
+    '14_SpeedLimit_Value_Numeric':'SPEED_LIMIT',
+    '1_F_System_Value_Numeric':'F_SYSTEM',
+    '32_Stop_Signs_Value_Numeric':'STOP_SIGNS',
+    '49_Surface_Type_Value_Numeric':'SURFACE_TYPE',
+    '44_Terrain_Type_Value_Numeric':'TERRAIN_TYPE',
+    '7_Through_Lanes_Value_Numeric':'THROUGH_LANES',
+    '15_Toll_ID_Value_Numeric':'TOLL_ID',
+    # '76_TOLL_CHARGED':'TOLL_ID',
+    '22_AADT_Single_Unit_Value_Numeric':'AADT_SINGLE_UNIT',
+    '24_AADT_Combination_Value_Numeric':'AADT_COMBINATION',
+    '23_PCT_DH_Single_Unit_Value_Numeric':'PCT_DH_SINGLE_UNIT',
+    '25_Pct_Peak_Combination_Value_Numeric':'PCT_DH_COMBINATION',
+    '26_K_Factor_Value_Numeric':"K_FACTOR",
+    '27_Dir_Factor_Value_Numeric':'DIR_FACTOR',
+    '13_Turn_Lanes_L_Value_Numeric':'TURN_LANES_L',
+    '12_Turn_lanes_R_Value_Numeric':'TURN_LANES_R',
+    '2_Urban_Code_Value_Numeric':'URBAN_ID',
+    '42_Widening_Potential_Value_Numeric':'WIDENING_POTENTIAL',
+    # '85_WIDENING_POTENTIAL':'WIDENING_POTENTIAL',
+    '54_Year_Of_Last_Improvement_Value_Numeric':'YEAR_LAST_OF_IMPROVEMENT',
+    '65_STRAHNET_Type_Value_Numeric':'STRAHNET',
+    '55_Year_of_Last_Construction_Value_Numeric':"YEAR_LAST_OF_CONSTRUCTION",
+    '71_Travel_Time_Code_Value_Numeric':"TRAVEL_TIME_CODE",
+    '57_Thickness_Rigid_Value_Numeric':"THICKNESS_RIGID",
+    '58_Thickness_Flexible_Value_Numeric':"THICKNESS_FLEXIBLE",
+    '68_Maintenance_Operations_Value_Numeric':"MAINTENANCE_OPERATIONS",
+    '70_Dir_Through_Lanes':"DIR_THROUGH_LANES",
+}
         
-        self.f_system_dict = {
-            1:1,
-            11:1,
-            4:2,
-            12:2,
-            2:3,
-            14:3,
-            6:4,
-            16:4,
-            7:5,
-            17:5,
-            8:6,
-            18:6,
-            9:7,
-            19:7
-        }
-        self.facility_list = [1,2,4,5,6]
-        self.facility_list2 = [1,2,4]
-        self.f_system_list = [1,2,3,4,5,6,7]
-        self.urban_id_list=['06139',15481,21745,36190,40753,59275,67672,93592,94726]
-        # self.columm_list_master = [
-        # 'RouteID','BeginPoint','EndPoint','F_SYSTEM','NHS','STRAHNET','NN','NHFN',
-        # 'ROUTE_NUMBER','URBAN_ID','FACILITY_TYPE','STRUCTURE_TYPE',
-        # 'OWNERSHIP','COUNTY_ID','MAINTENANCE_OPERATIONS','IS_RESTRICTED','THROUGH_LANES',
-        # 'MANAGED_LANES_TYPE','MANAGED_LANES','PEAK_LANES',
-        # 'COUNTER_PEAK_LANES','TOLL_ID','LANE_WIDTH','MEDIAN_TYPE',
-        # 'MEDIAN_WIDTH','SHOULDER_TYPE',
-        # 'SHOULDER_WIDTH_R','SHOULDER_WIDTH_L','DIR_THROUGH_LANES',
-        # 'TURN_LANES_R','TURN_LANES_L',
-        # 'SIGNAL_TYPE','PCT_GREEN_TIME','NUMBER_SIGNALS','STOP_SIGNS',
-        # 'AT_GRADE_OTHER','AADT',
-        # 'AADT_SINGLE_UNIT','PCT_DH_SINGLE_UNIT',
-        # 'AADT_COMBINATION','PCT_DH_COMBINATION',
-        # 'K_FACTOR','DIR_FACTOR','FUTURE_AADT',
-        # 'ACCESS_CONTROL','SPEED_LIMIT','IRI','PSR',
-        # 'SURFACE_TYPE','RUTTING','FAULTING','CRACKING_PERCENT',
-        # 'YEAR_LAST_IMPROVEMENT',
-        # 'YEAR_LAST_CONSTRUCTION','LAST_OVERLAY_THICKNESS',
-        # 'THICKNESS_RIGID','THICKNESS_FLEXIBLE',
-        # 'BASE_TYPE','BASE_THICKNESS','SOIL_TYPE',
-        # 'WIDENING_POTENTIAL','CURVE_CLASSIFICATION',
-        # 'TERRAIN_TYPE','GRADE_CLASSIFICATION','PCT_PASS_SIGHT','TRAVEL_TIME_CODE']
-        self.convert_dict={
-            'BMP':'BeginPoint',
-            'EMP':'EndPoint',
-            '12_COUNTY':'COUNTY_ID',
-            '2_AADT':'AADT',
-            '2_FUTURE_AADT':'FUTURE_AADT',
-            '3_ACCESS_CONTROL':'ACCESS_CONTROL',
-            '4_ALT_ROUTE_NAME':'ALT_ROUTE_NAME',
-            '5_AT_GRADE_OTHER':'AT_GRADE_OTHER',
-            '6_AVG_LANE_WIDTH_FT':'LANE_WIDTH',
-            '8_BASE_TYPE':'BASE_TYPE',
-            '14_CRACKING_PERCENT':'CRACKING_PERCENT',
-            '16_CURVE_CLASS':'CURVE_CLASSIFICATION',
-            '17_DES_TRUCK_ROUTE':'NN',
-            '20_FACILITY':'FACILITY_TYPE',
-            '21_FAULTING':'FAULTING',
-            '25_GRADE_CLASS':'GRADE_CLASSIFICATION',
-            '29_HPMS_SAMPLE_NO':'is_sample',
-            '30_IRI_VALUE':'IRI',
-            '34_MEDIAN_WIDTH_FT':'MEDIAN_WIDTH',
-            '34_HPMS_MEDIAN_BARRIER_TYPE':'MEDIAN_TYPE',
-            '36_NHS':'NHS',
-            '37_NUMBER_SIGNALS':'NUMBER_SIGNALS',
-            '39_OWNERSHIP':'OWNERSHIP',
-            '41_PCT_GREEN_TIME':'PCT_GREEN_TIME',
-            '42_PCT_PASS_SIGHT':'PCT_PASS_SIGHT',
-            '43_PEAK_LANES':'PEAK_LANES',
-            '43_COUNTER_PEAK_LANES':'COUNTER_PEAK_LANES',
-            '45_PSR':'PSR',
-            '52_RUTTING':'RUTTING',
-            '56_SHOULDER_TYPE_RT':'SHOULDER_TYPE',
-            '57_SHOULDER_WIDTH_LFT_FT':'SHOULDER_WIDTH_L',
-            '58_SHOULDER_WIDTH_RT_FT':"SHOULDER_WIDTH_R",
-            '59_SIGNAL_TYPE':'SIGNAL_TYPE',
-            '63_SPEED_LIMIT_MPH':'SPEED_LIMIT',
-            '65_STATE_FUNCTIONAL_CLASS':'F_SYSTEM',
-            '66_STOP_SIGNS':'STOP_SIGNS',
-            '70_SURFACE_TYPE':'SURFACE_TYPE',
-            '71_TERRAIN_TYPE':'TERRAIN_TYPE',
-            '74_NUM_THROUGH_LANES':'THROUGH_LANES',
-            '75_TOLL_CHARGED':'TOLL_ID',
-            '76_TOLL_CHARGED':'TOLL_ID',
-            '77_AADT_SINGLE':'AADT_SINGLE_UNIT',
-            '77_AADT_COMBINATION':'AADT_COMBINATION',
-            '77_PCT_PEAK_SINGLE':'PCT_DH_SINGLE_UNIT',
-            '77_PCT_PEAK_COMBINATION':'PCT_DH_COMBINATION',
-            '77_K_FACTOR':"K_FACTOR",
-            '77_DIR_FACTOR':'DIR_FACTOR',
-            '80_TURN_LANES_LFT':'TURN_LANES_L',
-            '81_TURN_LANES_R':'TURN_LANES_R',
-            '83_URBAN_CODE':'URBAN_ID',
-            '84_WIDENING_OBSTACLE':'WIDENING_POTENTIAL',
-            '85_WIDENING_POTENTIAL':'WIDENING_POTENTIAL',
-            '88_YEAR_LAST_IMPROV':'YEAR_LAST_IMPROVEMENT',
-            '115_STRAHNET':'STRAHNET'
-        }
-    
-    def dummy_d(self):
-        self.df['RouteID']=self.df['RouteID'].astype(str)
-        self.df['sup_code'] = self.df['RouteID'].str.slice(9,11)
-        self.df['BeginDate'] = date.fromisoformat('2022-12-31')
-        self.df['sign_system'] = self.df['RouteID'].str.slice(2,3)
-        self.df['section_length'] = self.df['EMP'] - self.df['BMP']
-        self.df['ValueDate'] =date.fromisoformat('2022-10-31')
-        self.df['ValueText'] ='A'
-        self.df['TRAVEL_TIME_CODE'] = 'asdfasdfasf'
-        self.df['YEAR_LAST_CONSTRUCTION'] =date.fromisoformat('2010-12-31') 
-        self.df['THICKNESS_RIGID']=np.random.randint(1, 20, self.df.shape[0])
-        self.df['THICKNESS_FLEXIBLE']=np.random.randint(1, 20, self.df.shape[0])
-        self.df['MAINTENANCE_OPERATIONS']=np.random.randint(1, 12, self.df.shape[0])
+    def split_combine(self,mypath):
+        df = pd.DataFrame(columns=['Year_Record','State_Code','RouteID','BMP','EMP','Data_Item','Section_Length','Value_Numeric','Value_Text','Value_Date','Comments'])
+        df.to_csv('base_file.csv')
+        onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
+        for split_file in onlyfiles:
+            # print(split_file)
+            # df = pd.read_csv(split_file,sep='|')
+            # print(len(df.axes[1]))
+            prefix = split_file.replace("hpms_data_items/data_items/DataItem","").split(".")[0]
+            # print(prefix)
+            prefix2 = prefix.replace("hpms_data_items/data_items","")
+            # print(prefix2)
+            command = f'lrsops split -b base_file.csv -s {split_file} -c "Data_Item,Value_Numeric" --prefix "{prefix2}" -o base_file.csv' 
+            # print(command)            
+            os.system(command)
+        return 'base_file.csv'         
         
+    def read_combined_file(self):
+        self.df = pd.read_csv(self.split_combine)
+        self.df = self.df.rename(columns=self.convert_dict)
+        return self.df
     
     def check_full_spatial(self):
-        print('**************',self.df)
-        full_spatial_join_class(self.df)
+        print('**************',self.read_combined_file)
+        full_spatial_join_class(self.read_combined_file)
 
     def domain_check(self):
-        domain = DomainCheck(self.df)
-        
-    def file_sep(self):
-        mypath = "\\hpms-validation\\hpms_data_items\\"
-        onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-        file_list = []
-        for a in onlyfiles:
-            k,v = a.split(".")
-            file_list.append(k) 
-        for b in file_list:
-            val_dict = {b: onlyfiles}
-            print(val_dict)
-        
-        
-        
-        val_dict = dict(zip(file_list, onlyfiles))
+        DomainCheck(self.read_combined_file)
 
+    def cross_check(self):
+        Cross_Validation(self.read_combined_file)
+        
 
-# validations = Validations('test_data.csv')
-# validations.dummy_d()
-# validations.check_full_spatial()
-
-# domain=DomainCheck()
+val = Validations()
+print(val.domain_check())
+  
