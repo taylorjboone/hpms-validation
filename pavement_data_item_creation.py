@@ -20,16 +20,23 @@ data_number = {
     'IRI': '47'
 }
 
+
 data_items = ['RUTTING', 'FAULTING', 'CRACKING_PERCENT', 'IRI']
 master = pd.read_excel('hpms_data_items/pavement/2023_submission_pavement_data.xlsx', usecols=data_cols + route_cols)
 master.rename(columns=rename_dict, inplace=True)
 master = master[master['RouteID'].str[2] == '1']
+
+def convert_date(x):
+    day,month,year = x.split('/')
+    out = '/'.join([month,day,year])
+    return out
 
 
 def load_defaults(df):
     df['BeginDate'] = '01/01/2022'
     df['StateID'] = '54'
     df['Comments'] = ''
+    df['ValueDate'] = df['ValueDate'].map(convert_date)
     return df
 
 
