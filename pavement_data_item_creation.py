@@ -23,6 +23,7 @@ data_number = {
 data_items = ['RUTTING', 'FAULTING', 'CRACKING_PERCENT', 'IRI']
 master = pd.read_excel('hpms_data_items/pavement/2023_submission_pavement_data.xlsx', usecols=data_cols + route_cols)
 master.rename(columns=rename_dict, inplace=True)
+master = master[master['RouteID'].str[2] == '1']
 
 
 def load_defaults(df):
@@ -53,7 +54,7 @@ for i in data_items:
 
 for k,v in data_item_dict.items():
     print(k, '\n', v, '\n\n\n')
-    v.to_csv(f'pavement_data_items/DataItem{data_number[k]}_{k}.csv', index=False, sep='|')
+    v.to_csv(f'hpms_data_items/pavement/interstate/DataItem{data_number[k]}_{k}.csv', index=False, sep='|')
 
 
 
