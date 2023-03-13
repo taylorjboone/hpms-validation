@@ -12,13 +12,21 @@ rename_dict = {
     'IRI_MEAN': 'IRI',
     'Date': 'ValueDate'
 }
+
+data_number = {
+    'RUTTING': '50',
+    'FAULTING': '51',
+    'CRACKING_PERCENT': '52',
+    'IRI': '47'
+}
+
 data_items = ['RUTTING', 'FAULTING', 'CRACKING_PERCENT', 'IRI']
 master = pd.read_excel('hpms_data_items/pavement/2023_submission_pavement_data.xlsx', usecols=data_cols + route_cols)
 master.rename(columns=rename_dict, inplace=True)
 
 
 def load_defaults(df):
-    df['BeginDate'] = '12/31/2021'
+    df['BeginDate'] = '01/01/2022'
     df['StateID'] = '54'
     df['Comments'] = ''
     return df
@@ -33,6 +41,7 @@ def create_data_item(df, data_item):
     df = df[['RouteID', 'BeginPoint', 'EndPoint', f'{data_item}', 'ValueDate']]
     df = load_defaults(df)
     df.rename(columns={f'{data_item}':'ValueNumeric'}, inplace=True)
+    df = df[df['ValueNumeric'] != -1]
     df['DataItem'] = f'{data_item}'
     df['ValueText'] = ''
     df = sort_cols(df)
@@ -44,6 +53,7 @@ for i in data_items:
 
 for k,v in data_item_dict.items():
     print(k, '\n', v, '\n\n\n')
+    v.to_csv(f'pavement_data_items/DataItem{data_number[k]}_{k}.csv', index=False, sep='|')
 
 
 
