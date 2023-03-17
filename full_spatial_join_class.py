@@ -32,75 +32,81 @@ facility_list2 = [1,2,4]
 f_system_list = [1,2,3,4,5,6,7]
 urban_id_list = ['06139','15481','21745','36190','40753','59275','67672','93592','94726']
 
-convert_dict = {
-    'BMP':'BeginPoint',
-    'EMP':'EndPoint',
-    '63_County_Code_Value_Numeric':'COUNTY_ID',
-    '21_AADT_Value_Numeric':'AADT',
-    '28_FUTURE_AADT_Value_Numeric':'FUTURE_AADT',
-    '5_Acces_Control_Value_Numeric':'ACCESS_CONTROL',
-    '20_ALternative_Route_Name_Value_Numeric':'ALT_ROUTE_NAME',
-    '33_At_Grade_Other_Value_Numeric':'AT_GRADE_OTHER',
-    '34_Lane_Width_Value_Numeric':'LANE_WIDTH',
-    '59_Base_Type_Value_Numeric':'BASE_TYPE',
-    '52_Cracking_Percent_Value_Numeric':'CRACKING_PERCENT',
-    '43_Curve_Classification_Value_Numeric':'CURVE_CLASSIFICATION',
-    '66_NN_Value_Numeric':'NN',
-    '3_Facility_Type_Value_Numeric':'FACILITY_TYPE',
-    '51_Faulting_Value_Numeric':'FAULTING',
-    '45_Grade_Classification_Value_Numeric':'GRADE_CLASSIFICATION',
-    '29_HPMS_SAMPLE_NO':'is_sample',
-    '47_IRI_Value_Numeric':'IRI',
-    '36_Median_Width_Value_Numeric':'MEDIAN_WIDTH',
-    '35_Median_Type_Value_Numeric':'MEDIAN_TYPE',
-    '64_NHS_Value_Numeric':'NHS',
-    '31_Number_Signals_Value_Numeric':'NUMBER_SIGNALS',
-    '6_Ownership_Value_Numeric':'OWNERSHIP',
-    '30_Pct_Green_Time_Value_Numeric':'PCT_GREEN_TIME',
-    '46_Pct_Pass_Sight_Value_Numeric':'PCT_PASS_SIGHT',
-    '10_Peak_Lanes_Value_Numeric':'PEAK_LANES',
-    '11_Counter_Peak_Lanes_Value_Numeric':'COUNTER_PEAK_LANES',
-    # '45_PSR':'PSR',
-    '50_Rutting_Value_Numeric':'RUTTING',
-    '37_Shoulder_Type_Value_Numeric':'SHOULDER_TYPE',
-    '39_Left_Shoulder_Width_Value_Numeric':'SHOULDER_WIDTH_L',
-    '38_Right_Shoulder_Width_Value_Numeric':"SHOULDER_WIDTH_R",
-    '29_Signal_Type_Value_Numeric':'SIGNAL_TYPE',
-    '63_SPEED_LIMIT_MPH':'SPEED_LIMIT',
-    '65_STATE_FUNCTIONAL_CLASS':'F_SYSTEM',
-    '66_STOP_SIGNS':'STOP_SIGNS',
-    '70_SURFACE_TYPE':'SURFACE_TYPE',
-    '71_TERRAIN_TYPE':'TERRAIN_TYPE',
-    '74_NUM_THROUGH_LANES':'THROUGH_LANES',
-    '75_TOLL_CHARGED':'TOLL_ID',
-    '76_TOLL_CHARGED':'TOLL_ID',
-    '77_AADT_SINGLE':'AADT_SINGLE_UNIT',
-    '77_AADT_COMBINATION':'AADT_COMBINATION',
-    '77_PCT_PEAK_SINGLE':'PCT_DH_SINGLE_UNIT',
-    '77_PCT_PEAK_COMBINATION':'PCT_DH_COMBINATION',
-    '77_K_FACTOR':"K_FACTOR",
-    '77_DIR_FACTOR':'DIR_FACTOR',
-    '80_TURN_LANES_LFT':'TURN_LANES_L',
-    '81_TURN_LANES_R':'TURN_LANES_R',
-    '83_URBAN_CODE':'URBAN_ID',
-    '84_WIDENING_OBSTACLE':'WIDENING_POTENTIAL',
-    '85_WIDENING_POTENTIAL':'WIDENING_POTENTIAL',
-    '88_YEAR_LAST_IMPROV':'YEAR_LAST_IMPROVEMENT',
-    '115_STRAHNET':'STRAHNET'
-}
+# convert_dict = {
+#     'BMP':'BeginPoint',
+#     'EMP':'EndPoint',
+#     '63_County_Code_Value_Numeric':'COUNTY_ID',
+#     '21_AADT_Value_Numeric':'AADT',
+#     '28_FUTURE_AADT_Value_Numeric':'FUTURE_AADT',
+#     '5_Acces_Control_Value_Numeric':'ACCESS_CONTROL',
+#     '20_ALternative_Route_Name_Value_Numeric':'ALT_ROUTE_NAME',
+#     '33_At_Grade_Other_Value_Numeric':'AT_GRADE_OTHER',
+#     '34_Lane_Width_Value_Numeric':'LANE_WIDTH',
+#     '59_Base_Type_Value_Numeric':'BASE_TYPE',
+#     '52_Cracking_Percent_Value_Numeric':'CRACKING_PERCENT',
+#     '43_Curve_Classification_Value_Numeric':'CURVE_CLASSIFICATION',
+#     '66_NN_Value_Numeric':'NN',
+#     '3_Facility_Type_Value_Numeric':'FACILITY_TYPE',
+#     '51_Faulting_Value_Numeric':'FAULTING',
+#     '45_Grade_Classification_Value_Numeric':'GRADE_CLASSIFICATION',
+#     '29_HPMS_SAMPLE_NO':'is_sample',
+#     '47_IRI_Value_Numeric':'IRI',
+#     '36_Median_Width_Value_Numeric':'MEDIAN_WIDTH',
+#     '35_Median_Type_Value_Numeric':'MEDIAN_TYPE',
+#     '64_NHS_Value_Numeric':'NHS',
+#     '31_Number_Signals_Value_Numeric':'NUMBER_SIGNALS',
+#     '6_Ownership_Value_Numeric':'OWNERSHIP',
+#     '30_Pct_Green_Time_Value_Numeric':'PCT_GREEN_TIME',
+#     '46_Pct_Pass_Sight_Value_Numeric':'PCT_PASS_SIGHT',
+#     '10_Peak_Lanes_Value_Numeric':'PEAK_LANES',
+#     '11_Counter_Peak_Lanes_Value_Numeric':'COUNTER_PEAK_LANES',
+#     # '45_PSR':'PSR',
+#     '50_Rutting_Value_Numeric':'RUTTING',
+#     '37_Shoulder_Type_Value_Numeric':'SHOULDER_TYPE',
+#     '39_Left_Shoulder_Width_Value_Numeric':'SHOULDER_WIDTH_L',
+#     '38_Right_Shoulder_Width_Value_Numeric':"SHOULDER_WIDTH_R",
+#     '29_Signal_Type_Value_Numeric':'SIGNAL_TYPE',
+#     '14_SpeedLimit_Value_Numeric':'SPEED_LIMIT',
+#     '1_F_System_Value_Numeric':'F_SYSTEM',
+#     '32_Stop_Signs_Value_Numeric':'STOP_SIGNS',
+#     '49_Surface_Type_Value_Numeric':'SURFACE_TYPE',
+#     '44_Terrain_Type_Value_Numeric':'TERRAIN_TYPE',
+#     '7_Through_Lanes_Value_Numeric':'THROUGH_LANES',
+#     '15_Toll_ID_Value_Numeric':'TOLL_ID',
+#     # '76_TOLL_CHARGED':'TOLL_ID',
+#     '22_AADT_Single_Unit_Value_Numeric':'AADT_SINGLE_UNIT',
+#     '24_AADT_Combination_Value_Numeric':'AADT_COMBINATION',
+#     '23_PCT_DH_Single_Unit_Value_Numeric':'PCT_DH_SINGLE_UNIT',
+#     '25_Pct_Peak_Combination_Value_Numeric':'PCT_DH_COMBINATION',
+#     '26_K_Factor_Value_Numeric':"K_FACTOR",
+#     '27_Dir_Factor_Value_Numeric':'DIR_FACTOR',
+#     '13_Turn_Lanes_L_Value_Numeric':'TURN_LANES_L',
+#     '12_Turn_lanes_R_Value_Numeric':'TURN_LANES_R',
+#     '2_Urban_Code_Value_Numeric':'URBAN_ID',
+#     '42_Widening_Potential_Value_Numeric':'WIDENING_POTENTIAL',
+#     # '85_WIDENING_POTENTIAL':'WIDENING_POTENTIAL',
+#     '54_Year_Of_Last_Improvement_Value_Numeric':'YEAR_LAST_OF_IMPROVEMENT',
+#     '65_STRAHNET_Type_Value_Numeric':'STRAHNET',
+#     '55_Year_of_Last_Construction_Value_Numeric':"YEAR_LAST_OF_CONSTRUCTION",
+#     '71_Travel_Time_Code_Value_Numeric':"TRAVEL_TIME_CODE",
+#     '57_Thickness_Rigid_Value_Numeric':"THICKNESS_RIGID",
+#     '58_Thickness_Flexible_Value_Numeric':"THICKNESS_FLEXIBLE",
+#     '68_Maintenance_Operations_Value_Numeric':"MAINTENANCE_OPERATIONS"
+# }
 
 
-convert_dict = {
-   'Route_ID':'RouteID',
-   'Begin_Point':'BMP',
-   'End_Point':'EMP',
-}
+# convert_dict = {
+#    'Route_ID':'RouteID',
+#    'Begin_Point':'BMP',
+#    'End_Point':'EMP',
+# }
 
 
 class full_spatial_join_class():
 
-    def __init__(self,filename):
-        self.df = pd.read_csv(filename)
+    def __init__(self,df):
+        self.df = df
+        # print(self.df)       
 
     # def dummy_data(self):
     #     self.df['RouteID']=self.df['RouteID'].astype(str)
@@ -116,25 +122,25 @@ class full_spatial_join_class():
     #     self.df['THICKNESS_FLEXIBLE'] = np.random.randint(1, 20, self.df.shape[0])
     #     self.df['MAINTENANCE_OPERATIONS'] = np.random.randint(1, 12, self.df.shape[0])
     
-    def create_data_files(self,mypath):
-        df = pd.DataFrame(columns=['Year_Record','State_Code','RouteID','BMP','EMP','Data_Item','Section_Length','Value_Numeric','Value_Text','Value_Date','Comments'])
-        df.to_csv('C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv')
-        onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
-        for split_file in onlyfiles[-6:]:
-            print(split_file)
-            df = pd.read_csv(split_file,sep='|')
-            print(len(df.axes[1]))
-            prefix = split_file.replace("C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items\data_items\DataItem","").split(".")[0]
-            print(prefix)
-            prefix2 = prefix.replace("C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items\data_items","")
-            # print(prefix2)
-            command = f'lrsops split -b C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv -s {split_file} -c "Data_Item,Value_Numeric" --prefix "{prefix2}" -o C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv' 
-            print(command)            
-            os.system(command)
+    # def create_data_files(self,mypath):
+    #     df = pd.DataFrame(columns=['Year_Record','State_Code','RouteID','BMP','EMP','Data_Item','Section_Length','Value_Numeric','Value_Text','Value_Date','Comments'])
+    #     df.to_csv('C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv')
+    #     onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
+    #     for split_file in onlyfiles[-6:]:
+    #         print(split_file)
+    #         df = pd.read_csv(split_file,sep='|')
+    #         print(len(df.axes[1]))
+    #         prefix = split_file.replace("C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items\data_items\DataItem","").split(".")[0]
+    #         print(prefix)
+    #         prefix2 = prefix.replace("C:\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\hpms_data_items\data_items","")
+    #         # print(prefix2)
+    #         command = f'lrsops split -b C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv -s {split_file} -c "Data_Item,Value_Numeric" --prefix "{prefix2}" -o C:\\PythonTest\\Voltron\\district_chrystal_report_website\\hpms-validation\\base_file.csv' 
+    #         print(command)            
+    #         os.system(command)
         
-    def check_rule_sjf43(self, df):
-        sum_curve = df.loc[( df['CURVE_CLASSIFICATION'].notna()),'section_length'].sum()
-        sum_sample = df.loc[ (((df['is_sample'].notna())&( df['F_SYSTEM'].isin([1,2,3]) )) | ( (df['F_SYSTEM']==4) & (df['URBAN_ID']==99999) ) ),'section_length'].sum()
+    def check_rule_sjf43(self):
+        sum_curve = self.df.loc[( self.df['CURVE_CLASSIFICATION'].notna()),'section_length'].sum()
+        sum_sample = self.df.loc[ (((self.df['is_sample'].notna())&( self.df['F_SYSTEM'].isin([1,2,3]) )) | ( (self.df['F_SYSTEM']==4) & (self.df['URBAN_ID']==99999) ) ),'section_length'].sum()
         if sum_curve != sum_sample:
             print('Sums are not equal, please review')
             return False
@@ -142,9 +148,9 @@ class full_spatial_join_class():
             print('Sums are equal')
             return True
         
-    def check_rule_sjf47(self, df):
-        sum_grade = df.loc[( df['GRADE_CLASSIFICATION'].notna()),'section_length'].sum()
-        sum_sample = df.loc[ (((df['is_sample'].notna())&( df['F_SYSTEM'].isin([1,2,3]) )) | ( (df['F_SYSTEM']==4) & (df['URBAN_ID']==99999) ) ),'section_length'].sum()
+    def check_rule_sjf47(self):
+        sum_grade = self.df.loc[( self.df['GRADE_CLASSIFICATION'].notna()),'section_length'].sum()
+        sum_sample = self.df.loc[ (((self.df['is_sample'].notna())&( self.df['F_SYSTEM'].isin([1,2,3]) )) | ( (self.df['F_SYSTEM']==4) & (self.df['URBAN_ID']==99999) ) ),'section_length'].sum()
         if sum_grade != sum_sample:
             print('Sums are not equal, please review')
             return False
@@ -166,9 +172,8 @@ class full_spatial_join_class():
     #     return x
     
     def load_defaults(self):
-        df = self.df
-        print(df.head(60))
-        cols = df.columns.tolist()
+        print(self.df.head(60))
+        cols = self.df.columns.tolist()
 
 
         # # If RouteNumber column is missing, adds and populates RouteNumber pulled from RouteID
@@ -190,17 +195,18 @@ class full_spatial_join_class():
         #     df = df.apply(self.produce_dir_through_lanes,axis=1)
         #     # print(df['Dir_Through_Lanes'])
 
-        return df 
+        return self.df 
     
     def full_spatial_join(self):
-        df = self.load_defaults()
-        df = df.rename(columns=convert_dict)
+        df = self.df
+        # df = self.load_defaults()
+        # df = df.rename(columns=convert_dict)
         error_dict = {
             'sjf01':((df['F_SYSTEM'].notna()) & (df['FACILITY_TYPE'].isin(facility_list))),
             'sjf02':(((df['URBAN_ID'].notna()) & (df['FACILITY_TYPE'].isin(facility_list2)) & \
             (df['F_SYSTEM'].isin(f_system_list))) | \
             ((df['FACILITY_TYPE'] == 6) & \
-            (df['Dir_Through_Lanes'] > 0) & \
+            (df['DIR_THROUGH_LANES'] > 0) & \
             (df['F_SYSTEM'] == 1) & \
             (df['IRI'].notna()))),
             'sjf03':((df['FACILITY_TYPE'].notna()) & (df['F_SYSTEM'].isin(f_system_list))),
@@ -243,25 +249,25 @@ class full_spatial_join_class():
             'sjf40':(df['is_sample'].notna()),
             'sjf41':(   ( df['CURVE_CLASSIFICATION'].notna() ) &   ( df['is_sample'].notna() ) & ((df['F_SYSTEM'].isin([1,2,3,4]) )  | (df['F_SYSTEM']==4) ) & (df['URBAN_ID'] == 99999) & (df['SURFACE_TYPE'] > 1)) , #Double check this, logic seems weird
             'sjf42':(   ( df['CURVE_CLASSIFICATION'].notna() ) &   ( df['is_sample'].notna() ) & ((df['F_SYSTEM'].isin([1,2,3,4]) )  | (df['F_SYSTEM']==4) ) & (df['URBAN_ID'] == 99999) & (df['SURFACE_TYPE'] > 1)) ,
-            'sjf43': self.check_rule_sjf43(df),
+            'sjf43': self.check_rule_sjf43(),
             'sjf44':((df['is_sample'].notna()) & (df['URBAN_ID']==99999) & (df['F_SYSTEM'].isin([1,2,3,4,5]))),
             'sjf45':(   ( df['GRADE_CLASSIFICATION'].notna() ) &   ( df['is_sample'].notna() ) & ((df['F_SYSTEM'].isin([1,2,3,4]) )  | (df['F_SYSTEM']==4) ) & (df['URBAN_ID'] == 99999) & (df['SURFACE_TYPE'] > 1)) ,#Double check, similiar to previous rules
             'sjf46':(   ( df['GRADE_CLASSIFICATION'].notna() ) &   ( df['is_sample'].notna() ) & ((df['F_SYSTEM'].isin([1,2,3,4]) )  | (df['F_SYSTEM']==4) ) & (df['URBAN_ID'] == 99999) & (df['SURFACE_TYPE'] > 1)) ,
-            'sjf47': self.check_rule_sjf47(df),
+            'sjf47': self.check_rule_sjf47(),
             'sjf48':( ( df['is_sample'].notna() ) & (df['URBAN_ID']==99999) & (df['THROUGH_LANES']==2) & (df['MEDIAN_TYPE'].isin([1,2])) & (df['SURFACE_TYPE'] > 1)),
-            'sjf49':(df['IRI'].isna()) | ((df['IRI'].notna()) & (df['SURFACE_TYPE']>1)&((df['FACILITY_TYPE'].isin([1,2]))&((df['PSR']!='A')&((df['F_SYSTEM'].isin([1,2,3])) | (df['NHS'].notna()))|((df['is_sample'].notna())&(df['F_SYSTEM']==4)&(df['URBAN_ID']==99999)))|(df['Dir_Through_Lanes']>0))),
+            'sjf49':(df['IRI'].isna()) | ((df['IRI'].notna()) & (df['SURFACE_TYPE']>1)&((df['FACILITY_TYPE'].isin([1,2]))&((df['PSR']!='A')&((df['F_SYSTEM'].isin([1,2,3])) | (df['NHS'].notna()))|((df['is_sample'].notna())&(df['F_SYSTEM']==4)&(df['URBAN_ID']==99999)))|(df['DIR_THROUGH_LANES']>0))),
             'sjf50':((df['PSR'].notna())&(df['IRI'].isna())&(df['FACILITY_TYPE'].isin([1,2]))&(df['SURFACE_TYPE'])),
-            'sjf51':(df['SURFACE_TYPE'].isna())|((df['SURFACE_TYPE'].notna()) & (df['FACILITY_TYPE'].isin([1,2])) & ((df['F_SYSTEM']==1) | (df['NHS'].notna()) | (df['is_sample'].notna())) | ((df['Dir_Through_Lanes'] > 0) & ((df['IRI'].notna())|(df['PSR'].notna())))),
-            'sjf52':(df['RUTTING'].isna())|((df['SURFACE_TYPE'].isin([2,6,7,8]))&((df['FACILITY_TYPE'].isin([1,2]))&((df['F_SYSTEM']==1)|(df['NHS'].notna())|(df['is_sample'].notna()))|(df['Dir_Through_Lanes']>0)&((df['IRI'].notna())|(df['PSR'].notna())))),
-            'sjf53':(df['FAULTING'].isna())|((df['SURFACE_TYPE'].isin([3,4,9,10]))&((df['FACILITY_TYPE'].isin([1,2]))&((df['F_SYSTEM']==1)|(df['NHS'].notna())|(df['is_sample'].notna()))|(df['Dir_Through_Lanes']>0)&((df['IRI'].notna())|(df['PSR'].notna())))),
-            'sjf54':(df['CRACKING_PERCENT'].isna())|((df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9]))&((df['FACILITY_TYPE'].isin([1,2]))&((df['F_SYSTEM']==1)|(df['NHS'].notna())|(df['is_sample'].notna()))|(df['Dir_Through_Lanes']>0)&((df['IRI'].notna())|(df['PSR'].notna())))),
-            'sjf55':(((df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])) & (df['is_sample'].notna()) )| ((df['YEAR_LAST_CONSTRUCTION'].notna()) & (df['YEAR_LAST_CONSTRUCTION'] < (df['BeginDate']-relativedelta(years=20)) ) ) ),
+            'sjf51':(df['SURFACE_TYPE'].isna())|((df['SURFACE_TYPE'].notna()) & (df['FACILITY_TYPE'].isin([1,2])) & ((df['F_SYSTEM']==1) | (df['NHS'].notna()) | (df['is_sample'].notna())) | ((df['DIR_THROUGH_LANES'] > 0) & ((df['IRI'].notna())|(df['PSR'].notna())))),
+            'sjf52':(df['RUTTING'].isna())|((df['SURFACE_TYPE'].isin([2,6,7,8]))&((df['FACILITY_TYPE'].isin([1,2]))&((df['F_SYSTEM']==1)|(df['NHS'].notna())|(df['is_sample'].notna()))|(df['DIR_THROUGH_LANES']>0)&((df['IRI'].notna())|(df['PSR'].notna())))),
+            'sjf53':(df['FAULTING'].isna())|((df['SURFACE_TYPE'].isin([3,4,9,10]))&((df['FACILITY_TYPE'].isin([1,2]))&((df['F_SYSTEM']==1)|(df['NHS'].notna())|(df['is_sample'].notna()))|(df['DIR_THROUGH_LANES']>0)&((df['IRI'].notna())|(df['PSR'].notna())))),
+            'sjf54':(df['CRACKING_PERCENT'].isna())|((df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9]))&((df['FACILITY_TYPE'].isin([1,2]))&((df['F_SYSTEM']==1)|(df['NHS'].notna())|(df['is_sample'].notna()))|(df['DIR_THROUGH_LANES']>0)&((df['IRI'].notna())|(df['PSR'].notna())))),
+            'sjf55':(((df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])) & (df['is_sample'].notna()) )| ((df['YEAR_LAST_CONSTRUCTION'].notna()) & (df['YEAR_LAST_CONSTRUCTION'] < (df['BeginDate']-timedelta(days = 7305)) ) ) ),
             'sjf56':((df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])) & (df['is_sample'].notna())),
             'sjf57':((df['is_sample'].notna()) & (df['YEAR_LAST_IMPROVEMENT'].notna())),
             'sjf58':((df['SURFACE_TYPE'].isin([3,4,5,6,7,8,9,10])) & (df['is_sample'].notna())),
             'sjf59':((df['SURFACE_TYPE'].isin([2,6,7,8])) & (df['is_sample'].notna())),
             'sjf60':((df['is_sample'].notna()) & (df['SURFACE_TYPE'] > 1)),
-            'sjf61':((df['BASE_TYPE'] > 1) & (df['SURFACE_TYPE'] > 1) & (df['is_sample'].notna())),
+            'sjf61':(((df['BASE_TYPE'].notna()) & (df['BASE_TYPE'].astype('Int64') > 1)) & (df['SURFACE_TYPE'] > 1) & (df['is_sample'].notna())),
             'sjf62':True,
             'sjf63':((df['FACILITY_TYPE'].isin([1,2]) ) & ( df['F_SYSTEM'].isin([1,2,3,4,5])  |((df['F_SYSTEM']==6) & (df['URBAN_ID'] < 99999))) | (df['NHS'].notna())),
             'sjf64':((df['F_SYSTEM']==1) & (df['FACILITY_TYPE'].isin([1,2,6]) ) ),
@@ -296,7 +302,7 @@ class full_spatial_join_class():
             'sjf93':((df['THICKNESS_FLEXIBLE'].isna()) & (df['SURFACE_TYPE'].isin([3,4,5,9,10]) ) ),
             'sjf94':((df['THICKNESS_FLEXIBLE'].notna()) & (df['SURFACE_TYPE'].isin([7,8]) ) ),
             'sjf95':((df['THICKNESS_RIGID'].notna()) & (df['SURFACE_TYPE'].isin([7,8]) ) ),
-            'sjf96':(df['Dir_Through_Lanes']<=df['THROUGH_LANES']),
+            'sjf96':(df['DIR_THROUGH_LANES']<=df['THROUGH_LANES']),
             'sjf97':(df['TRAVEL_TIME_CODE'].notna() & df['NHS'].notna()),
             'sjf98':( (df['MAINTENANCE_OPERATIONS']) != (df['OWNERSHIP']) ),
             'sjf99':(True),#TODO Figure out how to write this, seems to need to remember older results

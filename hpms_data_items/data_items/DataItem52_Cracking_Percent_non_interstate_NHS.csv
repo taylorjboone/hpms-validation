@@ -1,4 +1,4 @@
-|BeginDate|StateID|RouteID|BeginPoint|EndPoint|DataItem|ValueNumeric|ValueText|ValueDate|Comments
+Unnamed: 0|BeginDate|StateID|RouteID|BeginPoint|EndPoint|DataItem|Value_Numeric|Value_Text|Value_Date|Comments
 0|12/31/2021|54|02200110000NB|13.3|13.4|CRACKING_PERCENT|0||6/2021|
 1|12/31/2021|54|02200110000NB|13.4|13.5|CRACKING_PERCENT|0||6/2021|
 2|12/31/2021|54|02200110000NB|13.5|13.6|CRACKING_PERCENT|0||6/2021|

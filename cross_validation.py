@@ -71,8 +71,8 @@ def get_f_system(value):
     elif value in [9, 19]:
         return int(7)
 
-arnold = gpd.read_file(r'C:\Users\E025205\Documents\GitHub\hpms-validation\lrs_data\Route_Status_12_31_2022_WGS_84.zip')
-arnold_rids = arnold['ROUTE_ID'].unique().tolist()
+# arnold = gpd.read_file(r'lrs_data/Route_Status_12_31_2022_WGS_84.zip')
+# arnold_rids = arnold['ROUTE_ID'].unique().tolist()
 
 def load_defaults(df):
         # Standardizes columns names 
@@ -173,8 +173,8 @@ class Cross_Validation():
         return tmp2.drop_duplicates()
 
 
-input_file = 'lrs_data/lrs_dump_03-01-23.csv'
-data = pd.read_csv(input_file)
+# input_file = 'lrs_data/lrs_dump_03-01-23.csv'
+# data = pd.read_csv(input_file)
 
 # data = load_defaults(data)
 
@@ -188,9 +188,9 @@ data = pd.read_csv(input_file)
 # print(inventory)
 # print(traffic)
 
-cross_validation = Cross_Validation(data)
-isj_errors = cross_validation.inventory_spatial_join()
-tsj_errors = cross_validation.traffic_spatial_join()
+# cross_validation = Cross_Validation(data)
+# isj_errors = cross_validation.inventory_spatial_join()
+# tsj_errors = cross_validation.traffic_spatial_join()
 
-print('ISJ Errors', isj_errors)
-print('TSJ Errors', tsj_errors)
+# print('ISJ Errors', isj_errors)
+# print('TSJ Errors', tsj_errors)

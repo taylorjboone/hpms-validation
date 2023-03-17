@@ -1,7 +1,7 @@
 import pandas as pd
 input_file = 'ril_7_6_2022.xlsx'
-df = pd.read_excel(input_file, usecols=['RouteID', 'BMP', 'EMP', '65_STATE_FUNCTIONAL_CLASS','30_IRI_VALUE','21_FAULTING','14_CRACKING_PERCENT','52_RUTTING'])
-print('Dataframe loaded')
+# df = pd.read_excel(input_file, usecols=['RouteID', 'BMP', 'EMP', '65_STATE_FUNCTIONAL_CLASS','30_IRI_VALUE','21_FAULTING','14_CRACKING_PERCENT','52_RUTTING'])
+# print('Dataframe loaded')
 
 def pm2_spatial_join(df):
     # checks for section length and creates section length if not found
