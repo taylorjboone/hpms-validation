@@ -10,6 +10,7 @@ class DomainCheck():
 
     def __init__(self,df):
         self.df = df
+        print(self.df)
         self.cols = ['Error','BeginDate',
         'StateID',
         'RouteID',
@@ -158,17 +159,34 @@ class DomainCheck():
         emp_overlap2)
     
     def add_column_section_length(self,df):
-        if 'Section_Length' not in df.columns:
+        if 'Section_Length' not in df.columns.unique():
             df['Section_Length']=df['EndPoint']-df['BeginPoint']
             return df
         else:
             return df
     
     def add_error_df(self,df,error_message):
-        self.total_errors
         if len(df) > 0:
             df['Error'] = error_message
+            print('*******', len([i for i in df.columns.tolist()]))
+            tmp = []
+            count = 0
+            # print('df columns',df.columns)
+            # df = df.reset_index()
+            # self.total_errors = self.total_errors.reset_index(drop=True)
+            print("Sum of Columns",len(self.total_errors.columns))
+            print('error', self.total_errors)
+            for i in self.total_errors.columns:
+                if i not in df.columns:
+                    tmp.append(i)
+
+            print(tmp)
+            print('Total error df columns',self.total_errors.columns)
+            print('DF columns',df.columns)
             self.total_errors = pd.concat([self.total_errors,df],ignore_index=True)
+            print('Total Error DATAFRAME',self.total_errors)
+            # print("hi, how are you",self.total_errors)
+            # self.total_errors= self.total_errors.loc[:,~df.columns.duplicated()].copy()
             print('Wrote Errors df with message:%s and size:%s'% (error_message,len(df)))
         else:
             print('No errors found for error message | %s'% error_message)
@@ -780,7 +798,7 @@ class DomainCheck():
             self.add_error_df(geom_check[geom_check.IsValid ==
                          False], 'Maintence operations geometry check invalid!')
         tmpdf = self.df[(self.df['MAINTENANCE_OPERATIONS'].isna()) | (
-        ~self.df['MAINTENANCE_OPERATIONS'].isin(self.main_ops_list))]
+        ~self.df['MAINTENANCE_OPERATIONS'].isin(self.   main_ops_list))]
         # tmpdf2 = data2[data2['Section_Length'] == 0]
         self.add_error_df(tmpdf, "Maintenance Operations value numeric error")
         # self.add_error_df(tmpdf2, "Main operations section length is zero")
@@ -853,16 +871,15 @@ class DomainCheck():
         # tmpdf2 = data2[data2['Section_Length'] == 0]
         # self.add_error_df(tmpdf2, "Access Control section length is zero")
     
-    def peak_lanes(self,x,check_geom):
+    def peak_lanes(self,df,check_geom):
         # data = self.read_hpms_csv(x)
         # data2=self.add_column_section_length(data)
         # print(data)
         if check_geom:
-            geom_check = add_geom_validation_df(
-                self.df, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
-            self.add_error_df(geom_check[geom_check.IsValid ==
-                         False], 'Peak Lanes geometry check invalid!')
+            geom_check = add_geom_validation_df(self.df, routeid_field='RouteID', bmp_field='BeginPoint', emp_field='EndPoint')
+            self.add_error_df(geom_check[geom_check.IsValid ==False], 'Peak Lanes geometry check invalid!')
         tmpdf = self.df[(self.df['PEAK_LANES'].isna())]
+        print('TMPDF of PEAK LANES',tmpdf)
         self.add_error_df(tmpdf, "Peak Lanes value numeric is nan")
         # tmpdf2 = self.df[self.df['Section_Length'] == 0]
         # self.add_error_df(tmpdf2, "Peak Lanes section length is zero")

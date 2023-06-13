@@ -7,7 +7,7 @@ import random
 import numpy as np
 from os import listdir
 from os.path import isfile, join 
-from domain_check_class_draft import DomainCheck
+from domain_rewrite import DomainCheck
 from pm2_validations import pm2_spatial_join
 from full_spatial_join_class import full_spatial_join_class
 from cross_validation import Cross_Validation
@@ -70,17 +70,16 @@ class Validations():
             '22_AADT_Single_UnitValue_Numeric':'AADT_SINGLE_UNIT',
             '24_AADT_CombinationValue_Numeric':'AADT_COMBINATION',
             '23_PCT_DH_Single_UnitValue_Numeric':'PCT_DH_SINGLE_UNIT',
-            '23_Pct_Peak_SingleValue_Numeric':'PCT_DH_SINGLE_UNIT',
-            '25_Pct_Peak_CombinationValue_Numeric':'PCT_DH_COMBINATION',
+            # '25_Pct_Peak_CombinationValue_Numeric':'PCT_DH_COMBINATION',
             '25_PCT_DH_CombinationValue_Numeric':'PCT_DH_COMBINATION',
             '26_K_FactorValue_Numeric':"K_FACTOR",
             '27_Dir_FactorValue_Numeric':'DIR_FACTOR',
             '13_Turn_Lanes_LValue_Numeric':'TURN_LANES_L',
-            '12_Turn_lanes_RValue_Numeric':'TURN_LANES_R',
+            '12_Turn_Lanes_RValue_Numeric':'TURN_LANES_R',
             '2_Urban_CodeValue_Numeric':'URBAN_ID',
             '42_Widening_PotentialValue_Numeric':'WIDENING_POTENTIAL',
             # '85_WIDENING_POTENTIAL':'WIDENING_POTENTIAL',
-            '54_Year_Of_Last_ImprovementValue_Numeric':'YEAR_LAST_IMPROVEMENT',
+            # '54_Year_Of_Last_ImprovementValue_Numeric':'YEAR_LAST_IMPROVEMENT',
             '54_Year_of_Last_ImprovementValue_Numeric':'YEAR_LAST_IMPROVEMENT',
             '65_STRAHNET_TypeValue_Numeric':'STRAHNET',
             '55_Year_of_Last_ConstructionValue_Numeric':"YEAR_LAST_CONSTRUCTION",
@@ -106,127 +105,70 @@ class Validations():
        '57_Thickness_Rigid', '58_Thickness_Flexible',
        '59_Base_Type','59_Base_Type']
         
-        df = pd.DataFrame(columns=['BeginDate','State_Code','RouteID','BMP','EMP','Data_Item','section_length','Value_Numeric','Value_Text','Value_Date','Comments'])
-        print('Created base file dataframe',df.columns)
-        df.to_csv('base_file.csv')
-        onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
-
-        newlist = []
-        for pos,split_file in enumerate(onlyfiles):
-            prefix = split_file.replace("hpms_data_items/data_items/DataItem","").split(".")[0]
-
-            if pos == 0:
-                op = {
-            "operation":"split",
-            "base_file":'base_file.csv',
-            "split_file":split_file,
-            "prefix":prefix,
-            "split_fields":["Value_Numeric","Value_Date"],
-            "out_file":"temp"
-                }
-             
-            elif pos == len(onlyfiles)-1:
-                op = {
-            "operation":"split",
-            "base_file":"previous",
-            "split_file":split_file,
-            "prefix":prefix,
-            "split_fields":["Value_Numeric","Value_Date"],
-            "out_file":"base_file.csv"
-                }
-            else:
-                op = {
-            "operation":"split",
-            "prefix":prefix,
-            "base_file":"previous",
-            "split_file":split_file,
-            "split_fields":["Value_Numeric","Value_Date"],
-            "out_file":"temp"
-                }
-
-
-
-            # print(split_file)
-            # # split_file.replace('-','_')
-            # base=pd.read_csv(split_file)
-            # print('Reading in CSV of split_file',base.columns)
-            # base.rename(columns={'ValueNumeric':'Value_Numeric'},inplace=True)
-            # print('Renamed split_file with dict',base.columns)
-            # base.to_csv(split_file,sep='|',index=False)
-            newlist.append(op)
-            
-            # tmp = pd.read_csv(split_file, sep='|')
-            # tmp.rename(columns={'ValueNumeric': 'Value_Numeric','ValueText':'Value_Text','ValueDate':'Value_Date'}, inplace=True)
-            # tmp.to_csv(split_file, sep='|', index=False)
-
-            # # print(tmp[['Value_Date','Value_Numeric','Value_Text']])
-            # prefix = split_file.replace("hpms_data_items/data_items/DataItem","").split(".")[0]
-            # # print('First prefix',prefix)
-            # prefix2 = prefix.replace("hpms_data_items/data_items","")
-            # # print('Second prefix',prefix2)
-            # # print("Split file before being filtered",split_file)
-            # print(split_file)
-            # if prefix2 in pavement_prefix_list or True:
-            #     # print('Second Prefix',prefix2)
-            #     command = f'lrsops split -b base_file.csv -s {split_file} -c "Value_Numeric,Value_Date" --prefix "{prefix2}" -o base_file.csv'
-            #     print('pavement here',command)
-            # else:
-            #     command = f'lrsops split -b base_file.csv -s {split_file} -c "Value_Numeric" --prefix "{prefix2}" -o base_file.csv'
- 
-            # # print(command)            
-            # os.system(command)
-    
-        myjson = {'operations':newlist}
-        with open('myfile.json','w') as f:
-            f.write(json.dumps(myjson))
-        os.system('lrsops split --operations myfile.json')
-
-        self.df = pd.read_csv('base_file.csv')
-        # df = df.rename(columns=self.convert_dict)
-        # self.df = self.df.rename(columns=self.correct_format)
-        self.df['section_length'] = self.df['EMP'] - self.df['BMP']
-        self.df['Year_Record'] = datetime.datetime(2022,1,1)
-        print('hey, where is sectionLength',self.df.columns)
-        self.df = self.df.rename(columns=self.convert_dict)
-        self.df['YEAR_LAST_CONSTRUCTION'] = pd.to_datetime(self.df['YEAR_LAST_CONSTRUCTION'])
-        print('SectionLength is where?',self.df.columns)
-    
-    # def split_combine(self):
         # df = pd.DataFrame(columns=['BeginDate','State_Code','RouteID','BMP','EMP','Data_Item','section_length','Value_Numeric','Value_Text','Value_Date','Comments'])
         # print('Created base file dataframe',df.columns)
         # df.to_csv('base_file.csv')
         # onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
-        # for split_file in onlyfiles:
-        #     # print(split_file)
-        #     # # split_file.replace('-','_')
-        #     # base=pd.read_csv(split_file)
-        #     # print('Reading in CSV of split_file',base.columns)
-        #     # base.rename(columns={'ValueNumeric':'Value_Numeric'},inplace=True)
-        #     # print('Renamed split_file with dict',base.columns)
-        #     # base.to_csv(split_file,sep='|',index=False)
-        #     tmp = pd.read_csv(split_file, sep='|')
-        #     tmp.rename(columns={'ValueNumeric': 'Value_Numeric'}, inplace=True)
-        #     tmp.to_csv(split_file, sep='|', index=False)
+
+        # newlist = []
+        # for pos,split_file in enumerate(onlyfiles):
         #     prefix = split_file.replace("hpms_data_items/data_items/DataItem","").split(".")[0]
-        #     # print(prefix)
-        #     prefix2 = prefix.replace("hpms_data_items/data_items","")
-        #     # print(prefix2)
-        #     command = f'lrsops split -b base_file.csv -s {split_file} -c "Value_Numeric" --prefix "{prefix2}" -o base_file.csv' 
-        #     # print(command)            
-        #     os.system(command)
-        # self.df = pd.read_csv('base_file.csv')
-        # # df = df.rename(columns=self.convert_dict)
-        # # self.df = self.df.rename(columns=self.correct_format)
-        # self.df['section_length'] = self.df['EMP'] - self.df['BMP']
-        # self.df['Year_Record'] = datetime.datetime(2022,1,1)
-        # print('hey, where is sectionLength',self.df.columns)
-        # return self.df
+
+        #     if pos == 0:
+        #         op = {
+        #     "operation":"overlay",
+        #     "base_file":'base_file.csv',
+        #     "split_file":split_file,
+        #     "prefix":prefix,
+        #     "split_fields":["Value_Numeric","Value_Date","Value_Text"],
+        #     "out_file":"temp"
+        #         }
+             
+        #     elif pos == len(onlyfiles)-1:
+        #         op = {
+        #     "operation":"overlay",
+        #     "base_file":"previous",
+        #     "split_file":split_file,
+        #     "prefix":prefix,
+        #     "split_fields":["Value_Numeric","Value_Date","Value_Text"],
+        #     "out_file":"base_file.csv"
+        #         }
+        #     else:
+        #         op = {
+        #     "operation":"overlay",
+        #     "prefix":prefix,
+        #     "base_file":"previous",
+        #     "split_file":split_file,
+        #     "split_fields":["Value_Numeric","Value_Date","Value_Text"],
+        #     "out_file":"temp"
+        #         }
+
+
+
+
             
-        
-    # def read_combined_file(self):
-    #     self.df = pd.read_csv('base_file.csv')
-    #     self.df = self.df.rename(columns=self.convert_dict)
-    #     print('SectionLength is where?',self.df.columns)
+            
+            
+        #     newlist.append(op)
+            
+
+    
+        # myjson = {'operations':newlist}
+        # with open('myfile.json','w') as f:
+        #     f.write(json.dumps(myjson))
+        # os.system('lrsops overlay --operations myfile.json')
+
+        self.df = pd.read_csv('test_base_file.csv')
+        # df = df.rename(columns=self.convert_dict)
+        # self.df = self.df.rename(columns=self.correct_format)
+        self.df['section_length'] = self.df['EMP'] - self.df['BMP']
+        self.df['Year_Record'] = datetime.datetime(2022,1,1)
+        # print('hey, where is sectionLength',self.df.columns)
+        self.df = self.df.rename(columns=self.convert_dict)
+        self.df['YEAR_LAST_CONSTRUCTION'] = pd.to_datetime(self.df['YEAR_LAST_CONSTRUCTION'])
+        # print('SectionLength is where?',self.df.columns)
+    
+    
 
 
     
@@ -238,7 +180,7 @@ class Validations():
     def domain_check(self):
         df = self.df
         dom = DomainCheck(df)
-        dom.check_all()
+        dom.main()
 
     def cross_check(self):
         df = self.df
@@ -249,5 +191,6 @@ class Validations():
         
 
 val = Validations()
-print(val.check_full_spatial())
-  
+# print(val.check_full_spatial())
+print(val.domain_check())
+# print(val.cross_check())  

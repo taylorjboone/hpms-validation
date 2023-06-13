@@ -20,6 +20,16 @@ def pm2_spatial_join(df):
     #     print(row)
     #     if ((row['IRI_VALUE'] != row['FAULTING']) and (row['IRI_VALUE'] != row['CRACKING_PERCENT']) and (row['IRI_VALUE'] != row['RUTTING'])):
     #         print(row['RouteID'],row['BMP'],row['EMP'])
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     errors = df.loc[((df['30_IRI_VALUE'] != df['21_FAULTING']) & (df['30_IRI_VALUE'] != df['14_CRACKING_PERCENT']) & (df['30_IRI_VALUE'] != df['52_RUTTING']))]
     return errors.to_excel('pm2_errors.xlsx',index=False)
 
