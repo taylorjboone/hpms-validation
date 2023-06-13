@@ -195,6 +195,6 @@ class Validations():
         
 
 val = Validations()
-# print(val.check_full_spatial())
-print(val.domain_check())
+print(val.check_full_spatial())
+# print(val.domain_check())
 # print(val.cross_check())  

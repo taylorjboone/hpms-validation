@@ -1,0 +1,11 @@
+﻿pass_or_fail,F_System,FACILITY_TYPE,DIR_THROUGH_LANES,IRI,URBAN_ID
+pass,1,2,1,25,15481
+fail,1,101000,0,145,
+fail,,2,,124,6139
+pass,1,1,4,111,67672
+fail,6,0,0,234,
+fail,6,12312313,1,,94726
+pass,1,4,3,54,15481
+fail,4,8,,700,
+fail,5,23,0,999,59275
+pass,2,2,1,200,93592

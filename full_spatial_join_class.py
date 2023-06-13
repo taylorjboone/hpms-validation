@@ -199,6 +199,7 @@ class full_spatial_join_class():
     
     def full_spatial_join(self):
         df = self.df
+        df = pd.to_datetime(df[['47_IRI_non_interstate_NHSValue_Date','50_Rutting_non_interstate_NHSValue_Date','51_Faulting_non_interstate_NHSValue_Date','52_Cracking_Percent_non_interstate_NHSValue_Date','45_PSRValue_Date']])
         # df = self.load_defaults()
         # df = df.rename(columns=convert_dict)
         error_dict = {
@@ -287,7 +288,7 @@ class full_spatial_join_class():
             'sjf78':(df['IRI'].isna())|(((df['47_IRI_non_interstate_NHSValue_Date'].notna()) & (df['BeginDate'].notna())) & ((df['is_sample'].isna())|(df['47_IRI_non_interstate_NHSValue_Text'].isna())) & (df['F_SYSTEM'] > 1) & (df['NHS'].isin([1,2,3,4,5,6,7,8,9]))),
             'sjf79':(df['RUTTING'].isna())|(((df['50_Rutting_non_interstate_NHSValue_Date'].notna()) & (df['BeginDate'].notna())) & ((df['is_sample'].isna())|(df['50_Rutting_non_interstate_NHSValue_Text'].isna())) & (df['F_SYSTEM'] > 1) & (df['NHS'].isin([1,2,3,4,5,6,7,8,9]))),
             'sjf80':(df['FAULTING'].isna())|(((df['51_Faulting_non_interstate_NHSValue_Date'].notna()) & (df['BeginDate'].notna())) & ((df['is_sample'].isna())|(df['51_Faulting_non_interstate_NHSValue_Text'].isna())) & (df['F_SYSTEM'] > 1) & (df['NHS'].isin([1,2,3,4,5,6,7,8,9]))), 
-            'sjf81':(df['CRACKING_PERCENT'].isna())|(((df['52_Cracking_Percent_non_interstate_NHSValue_Date']) >= (df['BeginDate']-timedelta(days=365))) & ((df['is_sample'].isna())|(df['52_Cracking_Percent_non_interstate_NHSValue_Text'].isna())) & (df['F_SYSTEM'] > 1) & (df['NHS'].isin([1,2,3,4,5,6,7,8,9]))),
+            'sjf81':(df['CRACKING_PERCENT'].isna())|(((pd.to_datetime(df['52_Cracking_Percent_non_interstate_NHSValue_Date'])) >= (pd.to_datetime(df['BeginDate'])-timedelta(days=365))) & ((df['is_sample'].isna())|(df['52_Cracking_Percent_non_interstate_NHSValue_Text'].isna())) & (df['F_SYSTEM'] > 1) & (df['NHS'].isin([1,2,3,4,5,6,7,8,9]))),
             'sjf82':(df['IRI'].isna())|(df['RUTTING'].isna())|(df['FAULTING'].isna())|(df['CRACKING_PERCENT'].isna())|((df['47_IRI_non_interstate_NHSValue_Date'] == df['BeginDate']) & (df['47_IRI_non_interstate_NHSValue_Text'].isna()) & (df['F_SYSTEM']==1))|((df['52_Cracking_Percent_non_interstate_NHSValue_Date'] == df['BeginDate']) & (df['52_Cracking_Percent_non_interstate_NHSValue_Text'].isna()) & (df['F_SYSTEM']==1))|((df['50_Rutting_non_interstate_NHSValue_Date'] == df['BeginDate']) & (df['50_Rutting_non_interstate_NHSValue_Text'].isna()) & (df['F_SYSTEM']==1))|((df['51_Faulting_non_interstate_NHSValue_Date'] == df['BeginDate']) & (df['51_Faulting_non_interstate_NHSValue_Text'].isna()) & (df['F_SYSTEM']==1)),
             'sjf83':(df['IRI'].isna())|(df['RUTTING'].isna())|(df['FAULTING'].isna())|((df['47_IRI_non_interstate_NHSValue_Text'].isin(['A','B','C','D','E'])) & ((df['47_IRI_non_interstate_NHSValue_Date']!=df['BeginDate']) & (df['F_SYSTEM']==1)| (((df['47_IRI_non_interstate_NHSValue_Date'])<(df['BeginDate']-timedelta(days=365))) & (df['NHS'].notna())))),
             'sjf83-2':(df['IRI'].isna())|(df['RUTTING'].isna())|(df['FAULTING'].isna())|((df['50_Rutting_non_interstate_NHSValue_Text'].isin(['A','B','C','D','E'])) & ((df['50_Rutting_non_interstate_NHSValue_Date']!=df['BeginDate']) & (df['F_SYSTEM']==1)| (((df['50_Rutting_non_interstate_NHSValue_Date'])<(df['BeginDate']-timedelta(days=365))) & (df['NHS'].notna())))),
@@ -320,7 +321,7 @@ class full_spatial_join_class():
             tmp[k] = v
             print('Here we go')
         # print(df)
-        rules = ['sjf98']
+        # rules = ['sjf98']
         rules = ['sjf01', 'sjf02', 'sjf03', 'sjf04', 'sjf05', 'sjf06', 'sjf07', 'sjf08', 'sjf09', 'sjf10', 'sjf11', 'sjf12', 'sjf13', 'sjf14', 'sjf15', 'sjf16', 'sjf17', 'sjf18', 'sjf19', 'sjf20', 'sjf21', 'sjf22', 'sjf23', 'sjf24', 'sjf25', 'sjf26', 'sjf27', 'sjf28', 'sjf29', 'sjf30', 'sjf31', 'sjf32', 'sjf33', 'sjf34', 'sjf35', 'sjf36', 'sjf37', 'sjf38', 'sjf39', 'sjf40', 'sjf41', 'sjf42', 'sjf43', 'sjf44', 'sjf45', 'sjf46', 'sjf47', 'sjf48', 'sjf49', 'sjf50', 'sjf51', 'sjf52', 'sjf53', 'sjf54', 'sjf55', 'sjf56', 'sjf57', 'sjf58', 'sjf59', 'sjf60', 'sjf61', 'sjf62', 'sjf63', 'sjf64', 'sjf65', 'sjf66', 'sjf67', 'sjf68', 'sjf69', 'sjf70', 'sjf71', 'sjf72', 'sjf73', 'sjf74', 'sjf75', 'sjf76', 'sjf77', 'sjf78', 'sjf79', 'sjf80', 'sjf81', 'sjf82', 'sjf83', 'sjf84', 'sjf85', 'sjf86', 'sjf87', 'sjf88', 'sjf89', 'sjf90', 'sjf91', 'sjf92', 'sjf93', 'sjf94', 'sjf95', 'sjf96',  'sjf98', 'sjf99', 'sjf100']
         # print('raw True or False Data:',tmp)
         tmp = tmp.mask(tmp[rules].all(axis='columns')).dropna(how='all')
