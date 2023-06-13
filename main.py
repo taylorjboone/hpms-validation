@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from pandarallel import pandarallel
+# from pandarallel import pandarallel
 from datetime import date,timedelta
 from dateutil.relativedelta import relativedelta
 import random
@@ -97,14 +97,17 @@ class Validations():
             '60_Base_ThicknessValue_Numeric':'BASE_THICKNESS',
             '56_Last_Overlay_ThicknessValue_Numeric':'LAST_OVERLAY_THICKNESS',
         }
-        pavement_prefix_list = ['50_Rutting_non_interstate_NHS',
-       '51_Faulting_non_interstate_NHS',
-       '52_Cracking_Percent_non_interstate_NHS',
-       '54_Year_of_Last_Improvement',
-       '55_Year_of_Last_Construction',
-       '56_Last_Overlay_Thickness',
-       '57_Thickness_Rigid', '58_Thickness_Flexible',
-       '59_Base_Type','59_Base_Type']
+        pavement_prefix_list = [
+            '50_Rutting_non_interstate_NHS',
+            '51_Faulting_non_interstate_NHS',
+            '52_Cracking_Percent_non_interstate_NHS',
+            '54_Year_of_Last_Improvement',
+            '55_Year_of_Last_Construction',
+            '56_Last_Overlay_Thickness',
+            '57_Thickness_Rigid',
+            '58_Thickness_Flexible',
+            '59_Base_Type','59_Base_Type'
+       ]
         
         df = pd.DataFrame(columns=['BeginDate','State_Code','RouteID','BMP','EMP','Data_Item','section_length','Value_Numeric','Value_Text','Value_Date','Comments'])
         print('Created base file dataframe',df.columns)

@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-from pandarallel import pandarallel
+# from pandarallel import pandarallel
 from datetime import date,timedelta
 from dateutil.relativedelta import relativedelta
 import random
-pandarallel.initialize()
+# pandarallel.initialize()
 import os
 from os import listdir
 from os.path import isfile,join

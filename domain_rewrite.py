@@ -131,4 +131,5 @@ class DomainCheck():
         self.route_signing(self.master)
         self.peak_parking(self.master)
         self.route_qualifier(self.master)
-        return self.errors.to_csv('domain_errors_df.csv',sep = '|',index = False)
+        # return self.errors.to_csv('domain_errors_df.csv',sep = '|',index = False)
+        return self.errors
