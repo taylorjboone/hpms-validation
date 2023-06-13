@@ -1,6 +1,6 @@
 import pandas as pd
 
-data_cols = ['RUT_MEAN', 'Fault_Avg', 'Percent_Cracking', 'IRI_MEAN']
+data_cols = ['RUT_MEAN', 'Fault_Avg', 'Percent_Cracking', 'IRI_MEAN', 'SURF_TYPE', 'SHLD_TYPE']
 route_cols = ['ROUTEID', 'BEG_MP', 'END_MP', 'Date']
 rename_dict = {
     'ROUTEID': 'RouteID',
@@ -10,6 +10,8 @@ rename_dict = {
     'Fault_Avg':'FAULTING',
     'Percent_Cracking':'CRACKING_PERCENT',
     'IRI_MEAN': 'IRI',
+    'SURF_TYPE': 'SURFACE_TYPE',
+    'SHLD_TYPE': 'SHOULDER_TYPE',
     'Date': 'ValueDate'
 }
 
@@ -17,11 +19,13 @@ data_number = {
     'RUTTING': '50',
     'FAULTING': '51',
     'CRACKING_PERCENT': '52',
-    'IRI': '47'
+    'IRI': '47',
+    'SURFACE_TYPE': '49',
+    'SHOULDER_TYPE': '37'
 }
 
 
-data_items = ['RUTTING', 'FAULTING', 'CRACKING_PERCENT', 'IRI']
+data_items = ['RUTTING', 'FAULTING', 'CRACKING_PERCENT', 'IRI', 'SURFACE_TYPE', 'SHOULDER_TYPE']
 master = pd.read_excel('hpms_data_items/pavement/2023_submission_pavement_data.xlsx', usecols=data_cols + route_cols)
 master.rename(columns=rename_dict, inplace=True)
 master = master[master['RouteID'].str[2] == '1']
@@ -55,9 +59,25 @@ def create_data_item(df, data_item):
     df = sort_cols(df)
     return df
 
+
 data_item_dict = {}
 for i in data_items:
     data_item_dict[i] = create_data_item(master, i)
+
+
+surf_dict = {'CON': 3, 'ASP': 6}
+data_item_dict['SURFACE_TYPE']['ValueNumeric'] = data_item_dict['SURFACE_TYPE']['ValueNumeric'].map(lambda x: surf_dict[x])
+
+
+def shoulder_mapper(x):
+    if int(x) == 7:
+        return 1
+    else:
+        return x
+
+data_item_dict['SHOULDER_TYPE']['ValueNumeric'] = data_item_dict['SHOULDER_TYPE']['ValueNumeric'].map(shoulder_mapper)
+# data_item_dict['SHOULDER_TYPE'] = data_item_dict['SHOULDER_TYPE'].loc[data_item_dict['SHOULDER_TYPE']['ValueNumeric'].astype('string') != '-1']
+
 
 for k,v in data_item_dict.items():
     print(k, '\n', v, '\n\n\n')
