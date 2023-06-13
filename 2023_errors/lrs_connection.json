@@ -1,0 +1,5 @@
+{
+    "connection_string":"DRIVER={ODBC Driver 17 for SQL Server};SERVER=dotb6gisdb01;DATABASE=RIL_LRS;",
+    "type":"mssqldb",
+    "database_name":"RIL_LRS"
+}

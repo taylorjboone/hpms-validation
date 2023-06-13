@@ -1,0 +1,65 @@
+Count,ValidationRule,ValidationDescription
+166950,SJ-F-70,The sum of COUNTER_PEAK_LANES + PEAK_LANES must be >= THROUGH_LANES
+50538,SJ-F-18,ROUTE_QUALIFIER must exist where (F_SYSTEM in (1;2;3;4) or NHS) and FACILITY_TYPE (1;2)
+50538,SJ-F-19,ROUTE_NAME must exist where (F_SYSTEM in (1;2;3;4) or NHS) and FACILITY_TYPE (1;2)
+50538,SJ-F-17,ROUTE_SIGNING must exist where (F_SYSTEM in (1;2;3;4) or NHS) and FACILITY_TYPE (1;2)
+43118,SJ-F-84,ValueDate Must Must >= BeginDate ? 1 Where Sample OR F_SYSTEM >1 and NHS in (1;2;3;4;5;6;7;8;9)
+39952,SJ-F-80,ValueDate Must Must = BeginDate Where Sample OR ValueText is Null AND F_SYSTEM >1 and NHS in (1;2;3;4;5;6;7;8;9)
+21486,SJ-F-69,THROUGH_LANES must be >1 WHERE FACILITY_TYPE = 2
+21118,SJ-F-33,LANE_WIDTH must exist on Samples
+14989,SJ-F-63,FACILITY_TYPE in (1;2) AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_ID <99999) or NHS
+14169,SJ-F-14,SPEED_LIMIT must exist on Samples and  the NHS
+12654,SJ-F-79,ValueDate Must Must = BeginDate Where Sample OR ValueText is Null AND F_SYSTEM >1 and NHS in (1;2;3;4;5;6;7;8;9)
+12072,SJ-F-76,MEDIAN_WIDTH should be NULL if (FACILITY_TYPE ValueNumeric is = 1 or=  4; OR WHERE MEDIAN_TYPE ValueNumeric = 1
+11821,SJ-F-77,SHOULDER_WIDTH_L should be < Median_Width
+11496,SJ-F-55,YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
+10907,SJ-F-59,SURFACE_TYPE (2;6;7;8) and Sample
+9868,SJ-F-56,YEAR_LAST_CONSTRUCTION must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10)
+9516,SJ-F-81,ValueDate Must Must >= (BeginDate ? 1) Where Sample OR ValueText is Null AND F_SYSTEM >1 and NHS in (1;2;3;4;5;6;7;8;9)
+8485,SJ-F-78,ValueDate Must Must = BeginDate Where Sample OR ValueText is Null AND F_SYSTEM >1 and NHS in (1;2;3;4;5;6;7;8;9)
+7365,SJ-F-60,Sample and SURFACE_TYPE >1
+7232,SJ-F-16,ROUTE_NUMBER ValueNumeric Must Exist where (F_SYSTEM in (1;2;3;4) or NHS ValueNumeric <> NULL ) and FACILITY_TYPE (1;2) and ROUTE_SIGNING in (2;3;4;5;6;7;8;9)  OR F_SYSTEM=1 AND FACILITY_TYPE=6 AND DIR_THROUGH_LANES > 0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)
+4972,SJ-F-51,SURFACE_TYPE ValueNumeric Must Exist Where FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS ValueNumeric <> NULL OR Sample exists) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL) 
+4928,SJ-F-36,SHOULDER_TYPE must exist on Samples
+4680,SJ-F-73,Where F_SYSTEM = 1 and URBAN_ID <> 99999; SIGNAL_TYPE must = 5
+2698,SJ-F-61,Where BASE_TYPE >1; SURFACE_TYPE >1  and Sample
+2005,SJ-F-28,SIGNAL_TYPE must exist on Samples WHERE (URBAN_ID <> 99999 AND NUMBER_SIGNALS >=1)
+1843,SJ-F-90,Where SURFACE_TYPE is in (3;4;5;9;10) CRACKING_PERCENT < 75
+1271,SJ-F-86,Where F_SYSTEM =1; and IRI is Null; PSR ValueNumeric Must be >0 and PSR ValueText must = A
+1255,SJ-F-64,(F_SYSTEM = 1 AND (FACILITY_TYPE  in 1;2;6))
+1206,SJ-F-58,SURFACE_TYPE (3;4;5;7;8;9;10) and Sample
+1102,SJ-F-54,SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
+1079,SJ-F-53,Faulting ValueNumeric Must Exist Where SURFACE_TYPE in (3;4;9;10) AND (FACILITY_TYPE in (1;2)  AND  (F_SYSTEM = 1 OR NHS OR Sample) OR  DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+693,SJ-F-47,Sum Length (GRADES_A + GRADES_B + GRADES_C + GRADES_D + GRADES_E + GRADES_E) Must Equal to the Sample Length on (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_ID = 99999)))
+693,SJ-F-43,Sum Length (CURVES_A + CURVES_B + CURVES_C + CURVES_D + CURVES_E + CURVES_E) Must Equal to the Sample Length on (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_ID = 99999)))
+679,SJ-F-42,At least one CURVES_A-F must be coded for each Sample WHERE (F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_ID = 99999) and SURFACE_TYPE > 1.
+675,SJ-F-46,At least one GRADES_A-F must be coded for each Sample WHERE F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_ID = 99999 and SURFACE_TYPE > 1.
+394,SJ-F-92,THICKNESS_RIGID must be Null WHERE SURFACE_TYPE in (2;6) 
+278,SJ-F-57,Sample and YEAR_LAST_IMPROVEMENT exists
+151,SJ-F-49,IRI ValueNumeric Must Exist Where SURFACE_TYPE >1 AND (FACILITY_TYPE IN (1;2) AND (PSR ValueText <> 'A' AND (F_SYSTEM in (1;2;3) OR NHS ValueNumeric <>1) OR Sample sections WHERE (F_SYSTEM = 4 and URBAN_ID = 99999)OR DIR_THROUGH_LANES >0
+141,SJ-F-93,THICKNESS_FLEXIBLE must be Null WHERE SURFACE_TYPE in (3;4;5;9;10)
+60,SJ-F-31,STOP_SIGNS (the number of stop sign controlled intersections) must exist on Samples
+51,SJ-F-10,PEAK_LANES must exist on Samples
+51,SJ-F-32,AT_GRADE_OTHER (the number of intersections; type 'other') must exist on Samples
+51,SJ-F-34,MEDIAN_TYPE must exist on Samples
+51,SJ-F-40,WIDENING_POTENTIAL must exist on Samples
+50,SJ-F-37,SHOULDER_WIDTH_R must exist on Samples where SHOULDER_TYPE in (2;3;4;5;6)
+49,SJ-F-11,COUNTER_PEAK_LANES must exist on Samples where FACILITY_TYPE = 2 AND (URBAN_ID < 99999 OR THROUGH_LANES >=4)
+33,SJ-F-39,PEAK_PARKING must exist on Samples where URBAN_ID < 99999
+30,SJ-F-52,RUTTING ValueNumeric Must Exist Where SURFACE_TYPE in (2;6;7;8) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS OR Sample) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+26,SJ-F-13,TURN_LANES_L must exist on Samples where URBAN_ID  < 99999 and ACCESS_CONTROL >1
+26,SJ-F-12,TURN_LANES_R must exist on Samples where URBAN_ID  < 99999 and ACCESS_CONTROL >1
+23,SJ-F-20,AADT must exist WHERE: (FACILITY_TYPE in (1;2;4) AND (F_SYSTEM in (1;2;3;4;5)) OR (F_SYSTEM = 6 and URBAN_ID  <99999) OR NHS ValueNumeric <> NULL
+23,SJ-F-41,CURVES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_ID = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
+23,SJ-F-45,GRADES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_ID = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
+18,SJ-F-44,TERRAIN_TYPE must exist on Samples WHERE (URBAN_ID = 99999 AND F_SYSTEM in (1;2;3;4;5))
+15,SJ-F-71,COUNTER_PEAK_LANES must be NULL if FACILITY_TYPE is 1
+14,SJ-F-30,NUMBER_SIGNALS must exist on Samples WHERE SIGNAL_TYPE IN (1;2;3;4)
+10,SJ-F-48,PCT_PASS_SIGHT must exist on Samples WHERE: (URBAN_ID = 99999 and THROUGH_LANES =2 and MEDIAN_TYPE in (1;2) and SURFACE_TYPE > 1)
+3,SJ-F-98,MAINTENANCE_OPERATIONS ValueNumeric <> OWNERSHIP ValueNumeric
+2,SJ-F-99,Sample crosses TOPS.  The extent of a given Sample Panel Section extends beyond the extent of the associated TOPS section.  Samples should match the length of TOPS sections or be shorter; but can not be longer.
+2,SJ-F-21,AADT_SINGLE_UNIT must exist WHERE ((F_SYSTEM in (1) or NHS ValueNumeric <> NULL) and FACILITY_TYPE (1;2)) and on Samples
+2,SJ-F-23,AADT_COMBINATION must exist WHERE ((F_SYSTEM in (1) or NHS ValueNumeric <> NULL) and FACILITY_TYPE (1;2)) and on Samples
+1,SJ-F-27,FUTURE_AADT must exist on Samples
+1,SJ-F-26,DIR_FACTOR must exist on Samples
+1,SJ-F-25,K_FACTOR must exist on Samples
