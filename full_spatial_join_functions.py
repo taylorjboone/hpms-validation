@@ -35,6 +35,9 @@ class full_spatial_functions():
         self.f_system = self.df['F_System']
         self.dir_through_lanes = self.df['DIR_THROUGH_LANES']
         self.iri = self.df['IRI']
+        self.samples = self.df['is_sample']
+        self.through_lanes = self.df['THROUGH_LANES']
+        self.access_control = self.df['ACCESS_CONTROL']
     
     def sjf01(self):
         tmp_errors = (~((self.f_system.notna())&(self.facility_type.isin([1,2,3,4,5,6]))))
@@ -56,10 +59,53 @@ class full_spatial_functions():
         return tmp_errors
     
     def sjf03(self):
-        tmp_errors = (~(self.facility_type.notna())&\
-        (self.f_system.isin(f_system_list)))
+        tmp_errors = (~((self.facility_type.notna())&\
+        (self.f_system.isin(f_system_list))))
         print('SJF03 Completed',tmp_errors)
         return tmp_errors
+    
+    def sjf04(self):
+        return True
+    
+    def sjf05(self):
+        tmp_errors = (~( (self.f_system.isin([1,2,3]))& (self.facility_type.isin([1,2])) ) )
+        print('sjf05',tmp_errors)
+        return tmp_errors
+    
+    def sjf06(self):
+        tmp_errors = (~((self.f_system.isin([1,2,3,4,5,6,7]))&(self.facility_type.isin([1,2,5,6]))))
+        print('sjf06',tmp_errors)
+        return tmp_errors
+    
+    def sjf07(self):
+        tmp_errors = (~((self.facility_type.isin([1,2,4]))&(self.f_system.isin([1,2,5,6]))))
+        print('sjf07',tmp_errors)
+        return tmp_errors
+    
+    def sjf08(self):
+        return True
+    
+    def sjf09(self):
+        return True
+    
+    def sjf10(self):
+        tmp_errors = (~(self.samples.notna()))
+        print('sjf10',tmp_errors)
+        return tmp_errors
+    
+    def sjf11(self):
+        tmp_errors = (~((self.samples.notna())&(self.facility_type==2)&((self.urban_id<99999)|(self.through_lanes>=4))))
+        print('sjf11',tmp_errors)
+        return tmp_errors
+    
+    def sjf12(self):
+        tmp_errors = (~((self.samples.notna())&(self.urban_id<99999)&(self.access_control>1)))
+        print('sjf12',tmp_errors)
+        return tmp_errors
+    
+    def sjf13(self):
+        tmp_errors = (~(self.samples.notna())&())
+
     
 
     
@@ -73,9 +119,19 @@ class full_spatial_functions():
     
     
     def run(self):
+        #when it returns false, it means the data has no errors itself
         self.df['SJF-01'] = self.sjf01()
         self.df['SJF-02'] = self.sjf02()
         self.df['SJF-03'] = self.sjf03()
+        # self.df['SJF-04'] = self.sjf04()
+        self.df['SJF-05'] = self.sjf05()
+        self.df['SJF-06'] = self.sjf06()
+        self.df['SJF-07'] = self.sjf07()
+        # self.df['SJF-08'] = self.sjf08()
+        # self.df['SJF-09'] = self.sjf09()
+        self.df['SJF-10'] = self.sjf10()
+        self.df['SJF-11'] = self.sjf11()
+        self.df['SJF-12'] = self.sjf12()
         print(self.df)
 
 
