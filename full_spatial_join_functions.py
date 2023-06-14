@@ -38,6 +38,9 @@ class full_spatial_functions():
         self.samples = self.df['is_sample']
         self.through_lanes = self.df['THROUGH_LANES']
         self.access_control = self.df['ACCESS_CONTROL']
+        self.turn_lanes_l = self.df['TURN_LANES_L']
+        self.peak_lanes = self.df['PEAK_LANES']
+        self.counter_peak_lanes = self.df['COUNTER_PEAK_LANES']
     
     def sjf01(self):
         tmp_errors = (~((self.f_system.notna())&(self.facility_type.isin([1,2,3,4,5,6]))))
@@ -89,12 +92,12 @@ class full_spatial_functions():
         return True
     
     def sjf10(self):
-        tmp_errors = (~(self.samples.notna()))
+        tmp_errors = (~((self.peak_lanes.notna())&(self.samples.notna())))
         print('sjf10',tmp_errors)
         return tmp_errors
     
     def sjf11(self):
-        tmp_errors = (~((self.samples.notna())&(self.facility_type==2)&((self.urban_id<99999)|(self.through_lanes>=4))))
+        tmp_errors = (~((self.counter_peak_lanes.notna())&(self.samples.notna())&(self.facility_type==2)&((self.urban_id<99999)|(self.through_lanes>=4))))
         print('sjf11',tmp_errors)
         return tmp_errors
     
