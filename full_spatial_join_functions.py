@@ -54,6 +54,27 @@ class full_spatial_functions():
         self.route_signing = self.df['ROUTE_SIGNING']
         self.route_qualifier = self.df['ROUTE_QUALIFIER']
         self.route_name = self.df['ROUTE_NAME']
+        self.aadt = self.df['AADT']
+        self.aadt_single_unit = self.df['AADT_SINGLE_UNIT']
+        self.pct_dh_single_unit = self.df['PCt_DH_SINGLE_UNIT']
+        self.aad_combination = self.df['AADT_COMBINATION']
+        self.pct_dh_combination = self.df['PCT_DH_COMBINATION']
+        self.k_factor = self.df['K_FACTOR']
+        self.dir_factor = self.df['DIR_FACTOR']
+        self.future_aadt = self.df['FUTURE_AADT']
+        self.signal_type = self.df['SIGNAL_TYPE']
+        self.number_signals = self.df['NUMBER_SIGNALS']
+        self.pct_green_time = self.df['PCT_GREEN_TIME']
+        self.stop_signs = self.df['STOP_SIGNS']
+        self.at_grade_other = self.df['AT_GRADE_OTHER']
+        self.lane_width = self.df['LANE_WIDTH']
+        self.median_type = self.df['MEDIAN_TYPE']
+        self.median_width = self.df['MEDIAN_WIDTH']
+        self.shoulder_type = self.df['SHOULDER_TYPE']
+        self.shoulder_width_r = self.df['SHOULDER_WIDTH_R']
+        self.shoulder_width_l = self.df['SHOULDER_WIDTH_L']
+        self.widening_potential = self.df['WIDENING_POTENTIAL']
+
 
 
     
@@ -187,9 +208,85 @@ class full_spatial_functions():
         print('sjf19 Completed',tmp_errors)
         return tmp_errors
     
+    def sjf20(self):
+        tmp_errors = (~((self.aadt.notna())&((self.facility_type.isin([1,2,4]))&(self.f_system.isin([1,2,3,4,5]))|((self.f_system==6)&(self.urban_id<99999))|(self.nhs.notna()))))
+        print('sjf20',tmp_errors)
+        return tmp_errors
     
+    def sjf21(self):
+        tmp_errors = (~((self.aadt_single_unit.notna())&(((self.f_system==1)|(self.nhs.notna()))&(self.facility_type.isin([1,2])))& self.samples.notna()))
+        print('sjf21',tmp_errors)
+        return tmp_errors
 
+    def sjf22(self):
+        tmp_errors = (~((self.pct_dh_single_unit.notna())&(self.samples.notna())))
+        print('sjf22',tmp_errors)
+        return tmp_errors
     
+    def sjf23(self):
+        tmp_errors = (~((self.aad_combination.notna())&(((self.f_system==1)|(self.nhs.notna()))&(self.facility_type.isin([1,2])))& self.samples.notna()))
+        print('sjf23',tmp_errors)
+        return tmp_errors
+    
+    def sjf24(self):
+        tmp_errors = (~((self.pct_dh_combination.notna())&(self.samples.notna())))
+        print('sjf24',tmp_errors)
+        return tmp_errors
+    
+    def sjf25(self):
+        tmp_errors = (~((self.k_factor.notna())&(self.samples.notna())))
+        print('sjf25',tmp_errors)
+        return tmp_errors
+    
+    def sjf26(self):
+        tmp_errors = (~((self.dir_factor.notna())&(self.samples.notna())))
+        print('sjf26',tmp_errors)
+        return tmp_errors
+    
+    def sjf27(self):
+        tmp_errors = (~((self.future_aadt.notna())&(self.samples.notna())))
+        print('sjf27',tmp_errors)
+        return tmp_errors 
+    
+    def sjf28(self):
+        tmp_errors = (~((self.signal_type.notna())&(self.urban_id!=99999)&(self.number_signals>=1)&(self.samples.notna())))
+        print('sjf28',tmp_errors)
+        return tmp_errors
+    
+    def sjf29(self):
+        tmp_errors = (~((self.pct_green_time.notna())&(self.number_signals>=1)&(self.urban_id<99999)&(self.samples.notna())))
+        print('sjf29',tmp_errors)
+        return tmp_errors
+    
+    def sjf30(self):
+        tmp_errors = (~((self.number_signals.notna())&(self.signal_type.isin([1,2,3,4]))&(self.samples.notna())))
+        print('sjf30',tmp_errors)
+        return tmp_errors
+    
+    def sjf31(self):
+        tmp_errors = (~((self.stop_signs.notna())&(self.samples.notna())))
+        print('sjf31',tmp_errors)
+        return tmp_errors
+    
+    def sjf32(self):
+        tmp_errors = (~((self.at_grade_other.notna())&(self.samples.notna())))
+        print('sjf32',tmp_errors)
+        return tmp_errors
+    
+    def sjf33(self):
+        tmp_errors = (~((self.lane_width.notna())&(self.samples.notna())))
+        print('sjf33',tmp_errors)
+        return tmp_errors
+    
+    def sjf34(self):
+        tmp_errors = (~((self.median_type.notna())&(self.samples.notna())))
+        print('sjf34',tmp_errors)
+        return tmp_errors
+    
+    def sjf35(self):
+        tmp_errors = (~((self.median_width.notna())&(self.median_type.isin([2,3,4,5,6,7]))&(self.samples.notna())))
+        print('sjf35',tmp_errors)
+        return tmp_errors
     
     
     
@@ -220,6 +317,24 @@ class full_spatial_functions():
         self.df['SJF-17'] = self.sjf17()
         self.df['SJF-18'] = self.sjf18()
         self.df['SJF-19'] = self.sjf19()
+        self.df['SJF-20'] = self.sjf20()
+        self.df['SJF-21'] = self.sjf21()
+        self.df['SJF-22'] = self.sjf22()
+        self.df['SJF-23'] = self.sjf23()
+        self.df['SJF-24'] = self.sjf24()
+        self.df['SJF-25'] = self.sjf25()
+        self.df['SJF-26'] = self.sjf26()
+        self.df['SJF-27'] = self.sjf27()
+        self.df['SJF-28'] = self.sjf28()
+        self.df['SJF-29'] = self.sjf29()
+        self.df['SJF-30'] = self.sjf30()
+        self.df['SJF-31'] = self.sjf31()
+        self.df['SJF-32'] = self.sjf32()
+        self.df['SJF-33'] = self.sjf33()
+        self.df['SJF-34'] = self.sjf34()
+        self.df['SJF-35'] = self.sjf35()
+
+
         print(self.df)
 
 
