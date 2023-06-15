@@ -80,7 +80,9 @@ class full_spatial_functions():
         self.terrain_type = self.df['TERRAIN_TYPE']
         self.grade_classification = self.df['GRADE_CLASSIFICATION']
         self.pct_pass_sight = self.df['PCT_PASS_SIGHT']
-
+        self.psr_value_text = self.df['PSR_VALUE_TEXT']
+        self.psr = self.df['PSR']
+        
 
     def check_rule_sjf43(self):
         #sums up the section lengths of samples and the section length of curves in order to execute rule sjf43
@@ -394,7 +396,25 @@ class full_spatial_functions():
         return tmp_errors
     
     def sjf48(self):
-        tmp_errors = (~((self.pct_pass_sight.notna())&(self.urban_id=99999)&()&()&()&()))
+        #PCT_PASS_SIGHT must exist on Samples WHERE: (URBAN_ID = 99999 and THROUGH_LANES =2 and MEDIAN_TYPE in (1;2) and SURFACE_TYPE > 1
+        tmp_errors = (~((self.pct_pass_sight.notna())&\
+        (self.urban_id==99999)&(self.through_lanes==2)&\
+        (self.median_type.isin([1,2]))&(self.surface_type>1)&\
+        (self.samples.notna())))
+        print('sjf48',tmp_errors)
+        return tmp_errors
+    
+    def sjf49(self):
+        #"IRI ValueNumeric Must Exist Where SURFACE_TYPE >1 AND (FACILITY_TYPE IN (1;2) AND (PSR ValueText <> 'A' AND (F_SYSTEM in (1;2;3) OR NHS ValueNumeric <>1) OR Sample sections WHERE (F_SYSTEM = 4 and URBAN_ID = 99999)OR DIR_THROUGH_LANES >0"
+        tmp_errors = (~((self.iri.notna())&((((self.surface_type>1)&\
+        (self.facility_type.isin([1,2]))&(self.psr_value_text!='A')&\
+        ((self.f_system.isin([1,2,3]))|(self.nhs!=1))))|((self.f_system==4)&\
+        (self.urban_id==99999)&(self.samples.notna()))|(self.dir_through_lanes>0))))
+        print('sjf49',tmp_errors)
+        return tmp_errors
+    
+    def sjf50(self):
+        # "PSR ValueNumeric Must Exist Where IRI ValueNumeric IS NULL AND FACILITY_TYPE IN (1;2) AND SURFACE_TYPE >1 AND(Sample exists AND (F_SYSTEM in (4;6) AND URBAN_ID <99999 OR F_SYSTEM = 5) OR (F_SYSTEM = 1 or NHS ValueNumeric <>NULL) AND PSR ValueText = ‘A’)"
 
 
 
@@ -456,6 +476,8 @@ class full_spatial_functions():
         self.df['SJF-45'] = self.sjf45()
         self.df['SJF-46'] = self.sjf46()
         self.df['SJF-47'] = self.sjf47()
+        self.df['SJF-48'] = self.sjf48()
+        self.df['SJF-49'] = self.sjf49()
 
 
 
