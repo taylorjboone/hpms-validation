@@ -74,9 +74,33 @@ class full_spatial_functions():
         self.shoulder_width_r = self.df['SHOULDER_WIDTH_R']
         self.shoulder_width_l = self.df['SHOULDER_WIDTH_L']
         self.widening_potential = self.df['WIDENING_POTENTIAL']
+        self.peak_parking = self.df['PEAK_PARKING']
+        self.curve_classification = self.df['CURVE_CLASSIFICATION']
+        self.surface_type = self.df['SURFACE_TYPE']
+        self.terrain_type = self.df['TERRAIN_TYPE']
+        self.grade_classification = self.df['GRADE_CLASSIFICATION']
+        self.pct_pass_sight = self.df['PCT_PASS_SIGHT']
 
 
-
+    def check_rule_sjf43(self):
+        #sums up the section lengths of samples and the section length of curves in order to execute rule sjf43
+        sum_curve = self.df.loc[( self.curve_classification.notna()),'Section_Length'].sum()
+        sum_sample = self.df.loc[ (((self.samples.notna())&( self.f_system.isin([1,2,3]) )) | ( (self.f_system==4) & (self.urban_id==99999) ) ),'Section_Length'].sum()
+        if sum_curve != sum_sample:
+            return True
+        else:
+            return False
+    
+    def check_rule_sjf47(self):
+        #sums up the section lengths of samples and the section length of grades in order to execute rule sjf47
+        sum_grade = self.df.loc[( self.grade_classification.notna()),'Section_Length'].sum()
+        sum_sample = self.df.loc[ (((self.samples.notna())&( self.f_system.isin([1,2,3]) )) | ( (self.f_system==4) & (self.urban_id==99999) ) ),'Section_Length'].sum()
+        if sum_grade != sum_sample:
+            print('Sums are not equal, please review')
+            return True
+        else:
+            print('Sums are equal')
+            return False
     
     def sjf01(self):
         #F_SYSTEM|F_SYSTEM must exist where FACILITY_TYPE is in (1;2;4;5;6) and Must not be NULL
@@ -288,6 +312,93 @@ class full_spatial_functions():
         print('sjf35',tmp_errors)
         return tmp_errors
     
+    def sjf36(self):
+        tmp_errors = (~((self.shoulder_type.notna())&(self.samples.notna())))
+        print('sjf36',tmp_errors)
+        return tmp_errors
+    
+    def sjf37(self):
+        tmp_errors = (~((self.shoulder_width_r.notna())&\
+        (self.shoulder_type.isin([2,3,4,5,6]))&\
+        (self.samples.notna())))
+        print('sjf37',tmp_errors)
+        return tmp_errors
+    
+    def sjf38(self):
+        tmp_errors = (~((self.shoulder_width_l.notna())&\
+        (self.shoulder_type.isin([2,3,4,5,6]))&\
+        (self.median_type.isin([2,3,4,5,6,7]))&\
+        (self.samples.notna())))
+        print('sjf38',tmp_errors)
+        return tmp_errors
+    
+    def sjf39(self):
+        tmp_errors = (~((self.peak_parking.notna())&\
+        (self.urban_id<99999)&(self.samples.notna())))
+        print('sjf39',tmp_errors)
+        return tmp_errors
+    
+    def sjf40(self):
+        tmp_errors = (~((self.widening_potential.notna())&\
+        (self.samples.notna())))
+        print('sjf40',tmp_errors)
+        return tmp_errors
+    
+    def sjf41(self):
+        tmp_errors = (~((self.curve_classification.notna())&\
+        ((self.f_system.isin([1,2,3]))|\
+        ((self.f_system==4)&(self.urban_id==99999)&\
+        (self.surface_type>1)))))
+        print('sjf41',tmp_errors)
+        return tmp_errors
+    
+    def sjf42(self):#revisit, this may not suppose to be a direct copy of SJF41
+        tmp_errors = (~((self.curve_classification.notna())&\
+        ((self.f_system.isin([1,2,3]))|\
+        ((self.f_system==4)&(self.urban_id==99999)&\
+        (self.surface_type>1)))))
+        print('sjf42',tmp_errors)
+        return tmp_errors
+    
+    def sjf43(self):
+        tmp_errors = self.check_rule_sjf43()
+        print('sjf43',tmp_errors)
+        return tmp_errors
+    
+    def sjf44(self):
+        #TERRAIN_TYPE must exist on Samples WHERE (URBAN_ID = 99999 AND F_SYSTEM in (1;2;3;4;5))
+        tmp_error = (~((self.terrain_type.notna())&\
+        (self.urban_id==99999)&(self.f_system.isin([1,2,3,4,5]))))
+        print('sjf44',tmp_error)
+        return tmp_error
+    
+    def sjf45(self):
+        tmp_errors =(~((self.grade_classification.notna())&\
+        ((self.f_system.isin([1,2,3]))|\
+        ((self.f_system==4)&(self.urban_id==99999)&\
+        (self.surface_type>1)))))
+        print('sjf45',tmp_errors)
+        return tmp_errors
+    
+    def sjf46(self):
+        tmp_errors =(~((self.grade_classification.notna())&\
+        ((self.f_system.isin([1,2,3]))|\
+        ((self.f_system==4)&(self.urban_id==99999)&\
+        (self.surface_type>1)))))
+        print('sjf46',tmp_errors)
+        return tmp_errors
+    
+    def sjf47(self):
+        tmp_errors = self.check_rule_sjf47()
+        print('sjf47',tmp_errors)
+        return tmp_errors
+    
+    def sjf48(self):
+        tmp_errors = (~((self.pct_pass_sight.notna())&(self.urban_id=99999)&()&()&()&()))
+
+
+
+    
     
     
     
@@ -333,6 +444,20 @@ class full_spatial_functions():
         self.df['SJF-33'] = self.sjf33()
         self.df['SJF-34'] = self.sjf34()
         self.df['SJF-35'] = self.sjf35()
+        self.df['SJF-36'] = self.sjf36()
+        self.df['SJF-37'] = self.sjf37()
+        self.df['SJF-38'] = self.sjf38()
+        self.df['SJF-39'] = self.sjf39()
+        self.df['SJF-40'] = self.sjf40()
+        self.df['SJF-41'] = self.sjf41()
+        self.df['SJF-42'] = self.sjf42()
+        self.df['SJF-43'] = self.sjf43()
+        self.df['SJF-44'] = self.sjf44()
+        self.df['SJF-45'] = self.sjf45()
+        self.df['SJF-46'] = self.sjf46()
+        self.df['SJF-47'] = self.sjf47()
+
+
 
 
         print(self.df)
