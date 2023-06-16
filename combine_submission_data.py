@@ -78,15 +78,17 @@ for file in unique_items:
     if 'Data_Item' in df.columns.tolist():
         data_item = df['Data_Item'].iloc[0].upper()
         data_item = data_item
-        df.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'})
+        df.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'}, inplace=True)
     elif 'DataItem' in df.columns.tolist():
         data_item = df['DataItem'].iloc[0]
-        df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'})
+        df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
     else:
         print('COLUMN FORMAT ERROR')
     
     cols = [f'{data_item}', f'{data_item}_VALUE_DATE', f'{data_item}_VALUE_TEXT']
     filename = f'tmp/{data_item}.csv'
+    # if data_item == 'F_SYSTEM':
+    #     print('**************************mattsucks\n', df[['ROUTEID', 'BMP', 'EMP', 'Value']])
     df.to_csv(filename)
 
     if pos == 0:
