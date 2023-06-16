@@ -3,6 +3,7 @@ import os
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import json
+import shutil
 
 gauth = GoogleAuth()
 gauth.LocalWebserverAuth()
@@ -58,8 +59,8 @@ print(f'Number of Data Items: {num_files}')
 
 
 pos = 0
-print('total')
-[print(i) for i in sorted(unique_titles)]
+# print('total')
+# [print(i) for i in sorted(unique_titles)]
 operations = []
 
 if not os.path.exists('tmp'):
@@ -69,7 +70,7 @@ basedf = pd.DataFrame(columns=['ROUTEID', 'BMP', 'EMP'])
 basedf.to_csv('all_submission_data.csv')
 
 for file in unique_items:
-    print(file['title'])
+    print(f"{pos+1} / {num_files}: {file['title']}")
     download = drive.CreateFile({'id':file['id']})
     download.GetContentFile('example.csv')
     df = pd.read_csv('example.csv', sep='|')
@@ -119,6 +120,8 @@ myjson = {'operations':operations}
 with open('myfile.json','w') as f:
     f.write(json.dumps(myjson))
 os.system('lrsops overlay --operations myfile.json')
+
+shutil.rmtree('tmp')
 
 
 # for file in june_submission:
