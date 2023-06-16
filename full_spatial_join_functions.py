@@ -1,4 +1,6 @@
 import pandas as pd
+from datetime import datetime,timedelta
+from dateutil.relativedelta import relativedelta
 
 f_system_dict = {
             1:1,
@@ -82,7 +84,18 @@ class full_spatial_functions():
         self.pct_pass_sight = self.df['PCT_PASS_SIGHT']
         self.psr_value_text = self.df['PSR_VALUE_TEXT']
         self.psr = self.df['PSR']
-        
+        self.rutting = self.df['RUTTING']
+        self.cracking_percent = self.df['CRACKING_PERCENT']
+        self.faulting = self.df['FAULTING']
+        self.year_last_improvement_value_date = self.df['YEAR_LAST_IMPROVEMENT_VALUE_DATE']
+        self.year_last_construction_value_date = self.df['YEAR_LAST_CONSTRUCTION_VALUE_DATE']
+        self.begin_date = self.df['BEGIN_DATE']
+        self.last_overlay_thickness = self.df['LAST_OVERLAY_THICKNESS']
+        self.thickness_rigid = self.df['THICKNESS_RIGID']
+        self.base_type = self.df['BASE_TYPE']
+        self.base_thickness = self.df['BASE_THICKNESS']
+        self.thickness_flexible = self.df['THICKNESS_FLEXIBLE']
+        self.county_id = self.df['COUNTY_ID']
 
     def check_rule_sjf43(self):
         #sums up the section lengths of samples and the section length of curves in order to execute rule sjf43
@@ -405,7 +418,7 @@ class full_spatial_functions():
         return tmp_errors
     
     def sjf49(self):
-        #"IRI ValueNumeric Must Exist Where SURFACE_TYPE >1 AND (FACILITY_TYPE IN (1;2) AND (PSR ValueText <> 'A' AND (F_SYSTEM in (1;2;3) OR NHS ValueNumeric <>1) OR Sample sections WHERE (F_SYSTEM = 4 and URBAN_ID = 99999)OR DIR_THROUGH_LANES >0"
+        #IRI|"IRI ValueNumeric Must Exist Where SURFACE_TYPE >1 AND (FACILITY_TYPE IN (1;2) AND (PSR ValueText <> 'A' AND (F_SYSTEM in (1;2;3) OR NHS ValueNumeric <>1) OR Sample sections WHERE (F_SYSTEM = 4 and URBAN_ID = 99999)OR DIR_THROUGH_LANES >0"
         tmp_errors = (~((self.iri.notna())&((((self.surface_type>1)&\
         (self.facility_type.isin([1,2]))&(self.psr_value_text!='A')&\
         ((self.f_system.isin([1,2,3]))|(self.nhs!=1))))|((self.f_system==4)&\
@@ -414,14 +427,108 @@ class full_spatial_functions():
         return tmp_errors
     
     def sjf50(self):
-        # "PSR ValueNumeric Must Exist Where IRI ValueNumeric IS NULL AND FACILITY_TYPE IN (1;2) AND SURFACE_TYPE >1 AND(Sample exists AND (F_SYSTEM in (4;6) AND URBAN_ID <99999 OR F_SYSTEM = 5) OR (F_SYSTEM = 1 or NHS ValueNumeric <>NULL) AND PSR ValueText = ‘A’)"
+        # PSR|"PSR ValueNumeric Must Exist Where IRI ValueNumeric IS NULL AND FACILITY_TYPE IN (1;2) AND SURFACE_TYPE >1 AND(Sample exists AND (F_SYSTEM in (4;6) AND URBAN_ID <99999 OR F_SYSTEM = 5) OR (F_SYSTEM = 1 or NHS ValueNumeric <>NULL) AND PSR ValueText = ‘A’)"
+        tmp_errors = (~((self.psr.notna())&(self.facility_type.isin([1,2]))&\
+        (self.surface_type>1)&((self.samples.notna())&(((self.f_system.isin([4,6]))&\
+        (self.urban_id<99999)|(self.f_system==5))|((self.f_system==1)|(self.nhs.notna()))&\
+        (self.psr_value_text=='A')))))
+        print('sjf50',tmp_errors)
+        return tmp_errors
+    
+    def sjf51(self):
+        #SURACE_TYPE|"SURFACE_TYPE ValueNumeric Must Exist Where FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS ValueNumeric <> NULL OR Sample exists) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL) "
+        tmp_errors = (~((self.facility_type.isin([1,2]))&((self.f_system==1)|\
+        (self.nhs.notna())|(self.samples.notna()))|(self.dir_through_lanes>0)&\
+        ((self.iri.notna())|(self.psr.notna()))))
+        print('sjf51',tmp_errors)
+        return tmp_errors
+    
+    def sjf52(self):
+        #RUTTING|"RUTTING ValueNumeric Must Exist Where SURFACE_TYPE in (2;6;7;8) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS OR Sample) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+        tmp_errors = (~((self.rutting.notna())&(self.surface_type.isin([2,6,7,8]))&\
+        ((self.facility_type.isin([1,2]))&((self.f_system==1)|(self.nhs.notna())|\
+        (self.samples.notna()))|(self.dir_through_lanes>0)&((self.iri.notna())|(self.psr.notna())))))
+        print('sjf52',tmp_errors)
+        return tmp_errors
+    
+    def sjf53(self):
+        #FAULTING|"Faulting ValueNumeric Must Exist Where SURFACE_TYPE in (3;4;9;10) AND (FACILITY_TYPE in (1;2)  AND  (F_SYSTEM = 1 OR NHS OR Sample) OR  DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+        tmp_errors = (~((self.faulting.notna())&(self.surface_type.isin([3,4,9,10]))&\
+        ((self.facility_type.isin([1,2]))&((self.f_system==1)|(self.nhs.notna())|\
+        (self.samples.notna()))|(self.dir_through_lanes>0)&((self.iri.notna())|(self.psr.notna())))))
+        print('sjf53',tmp_errors)
+        return tmp_errors
+    
+    def sjf54(self):
+        #CRACKING_PERCENT|"SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
+        tmp_errors = (~((self.cracking_percent.notna())&(self.surface_type.isin([2,3,4,5,6,7,8,9,10]))&\
+        ((self.facility_type.isin([1,2]))&((self.f_system==1)|(self.nhs.notna())|\
+        (self.samples.notna()))|(self.dir_through_lanes>0)&((self.iri.notna())|(self.psr.notna())))))
+        print('sjf54',tmp_errors)
+        return tmp_errors
+    
+    def sjf55(self):
+        #YEAR_LAST_IMPROVEMENT|YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
+        tmp_errors = (~((self.year_last_improvement_value_date.notna())&\
+        (self.samples.notna())&((self.surface_type.isin([2,3,4,5,6,7,8,9,10]))|\
+        (pd.to_datetime(self.year_last_construction_value_date)<(pd.to_datetime(self.begin_date)-timedelta(days =7305 ))))))
+        print('sjf55',tmp_errors)
+        return tmp_errors
+    
+    def sjf56(self):
+        #YEAR_LAST_CONSTRUCTION|YEAR_LAST_CONSTRUCTION must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10)
+        tmp_errors = (~((self.year_last_construction_value_date.notna())&\
+        (self.samples.notna())&(self.surface_type.isin([2,3,4,5,6,7,8,9,10]))))
+        print('sjf56',tmp_errors)
+        return tmp_errors
+    
+    def sjf57(self):
+        #LAST_OVERLAY_THICKNESS|Sample and YEAR_LAST_IMPROVEMENT exist
+        tmp_errors = (~((self.samples.notna())&(self.year_last_improvement_value_date.notna())))
+        print('sjf57',tmp_errors)
+        return tmp_errors
+    
+    def sjf58(self):
+        #THICKNESS_RIGID|SURFACE_TYPE (3;4;5;7;8;9;10) and Sample
+        tmp_errors = (~((self.thickness_rigid.notna())&(self.samples.notna())&(self.surface_type.isin([3,4,5,7,8,9,10]))))
+        print('sjf58',tmp_errors)
+        return tmp_errors
+    
+    def sjf59(self):
+        #THICKNESS_FLEXIBLE|SURFACE_TYPE (2;6;7;8) and Sample
+        tmp_errors = (~((self.thickness_flexible.notna())&(self.surface_type.isin([2,6,7,8]))&(self.samples.notna())))
+        print('sjf59',tmp_errors)
+        return tmp_errors
 
-
-
+    def sjf60(self):
+        #BASE_TYPE|Sample and SURFACE_TYPE >1
+        tmp_errors = (~((self.base_type.notna())&(self.samples.notna())&(self.surface_type>1)))
+        print('sjf60',tmp_errors)
+        return tmp_errors
     
+    def sjf61(self):
+        #BASE_THICKNESS|Where BASE_TYPE >1; SURFACE_TYPE >1  and Sample
+        tmp_errors = (~((self.base_type>1)&(self.surface_type>1)&(self.samples.notna())&(self.base_thickness.notna())))
+        print('sjf61',tmp_errors)
+        return tmp_errors
     
+    def sjf62(self):
+        print('Do not collect soil type data item')
+        return False
     
+    def sjf63(self):
+        #COUNTY_ID|FACILITY_TYPE in (1;2) AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_ID <99999) or NHS
+        tmp_errors = (~((self.county_id.notna())&(self.facility_type.isin([1,2]))&\
+        ((self.f_system.isin([1,2,3,4,5]))|((self.f_system==6)&(self.urban_id<99999))|\
+        (self.nhs.notna()))))
+        print('sjf63',tmp_errors)
+        return tmp_errors
     
+    def sjf64(self):
+        #NHS|(F_SYSTEM = 1 AND (FACILITY_TYPE  in 1;2;6))|
+        tmp_errors = (~((self.nhs.notna())&(self.f_system==1)&(self.facility_type.isin([1,2,6]))))
+        print('sjf64',tmp_errors)
+        return tmp_errors
     
     
     
@@ -478,6 +585,22 @@ class full_spatial_functions():
         self.df['SJF-47'] = self.sjf47()
         self.df['SJF-48'] = self.sjf48()
         self.df['SJF-49'] = self.sjf49()
+        self.df['SJF-50'] = self.sjf50()
+        self.df['SJF-51'] = self.sjf51()
+        self.df['SJF-52'] = self.sjf52()
+        self.df['SJF-53'] = self.sjf53()
+        self.df['SJF-54'] = self.sjf54()
+        self.df['SJF-55'] = self.sjf55()
+        self.df['SJF-56'] = self.sjf56()
+        self.df['SJF-57'] = self.sjf57()
+        self.df['SJF-58'] = self.sjf58()
+        self.df['SJF-59'] = self.sjf59()
+        self.df['SJF-60'] = self.sjf60()
+        self.df['SJF-61'] = self.sjf61()
+        self.df['SJF-62'] = self.sjf62()
+        self.df['SJF-63'] = self.sjf63()
+        self.df['SJF-64'] = self.sjf64()
+
 
 
 
