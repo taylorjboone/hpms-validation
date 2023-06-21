@@ -419,10 +419,10 @@ class full_spatial_functions():
     
     def sjf49(self):
         #IRI|"IRI ValueNumeric Must Exist Where SURFACE_TYPE >1 AND (FACILITY_TYPE IN (1;2) AND (PSR ValueText <> 'A' AND (F_SYSTEM in (1;2;3) OR NHS ValueNumeric <>1) OR Sample sections WHERE (F_SYSTEM = 4 and URBAN_ID = 99999)OR DIR_THROUGH_LANES >0"
-        tmp_errors = ((self.surface_type<1)|((self.iri.notna())&((((self.surface_type>1)&\
-        (self.facility_type.isin([1,2]))&(self.psr_value_text!='A')&\
-        ((self.f_system.isin([1,2,3]))|(self.nhs!=1))))|((self.f_system==4)&\
-        (self.urban_id==99999)&(self.samples.notna()))|(self.dir_through_lanes>0))))
+        tmp_errors = ((self.iri.notna())|((self.iri.isna())&(((self.surface_type<=1)|\
+        (~self.facility_type.isin([1,2]))|(self.psr_value_text=='A')|\
+        ((~self.f_system.isin([1,2,3]))|(self.nhs!=1)))|((self.f_system!=4)|\
+        (self.urban_id!=99999)&(self.samples.isna()))|(self.dir_through_lanes<=0))))
         print('sjf49',tmp_errors)
         return tmp_errors
     
@@ -575,10 +575,10 @@ class full_spatial_functions():
     
     def run(self):
         #when it returns True, it means the data has no errors itself
-        self.df['SJF-01'] = self.sjf01()
-        self.df['SJF-02'] = self.sjf02()
-        self.df['SJF-03'] = self.sjf03()
-        # # self.df['SJF-04'] = self.sjf04()
+        # self.df['SJF-01'] = self.sjf01()
+        # self.df['SJF-02'] = self.sjf02()
+        # self.df['SJF-03'] = self.sjf03()
+        # self.df['SJF-04'] = self.sjf04()
         # self.df['SJF-05'] = self.sjf05()
         # self.df['SJF-06'] = self.sjf06()
         # self.df['SJF-07'] = self.sjf07()
@@ -623,7 +623,7 @@ class full_spatial_functions():
         # self.df['SJF-46'] = self.sjf46()
         # self.df['SJF-47'] = self.sjf47()
         # self.df['SJF-48'] = self.sjf48()
-        # self.df['SJF-49'] = self.sjf49()
+        self.df['SJF-49'] = self.sjf49()
         # self.df['SJF-50'] = self.sjf50()
         # self.df['SJF-51'] = self.sjf51()
         # self.df['SJF-52'] = self.sjf52()
@@ -650,7 +650,7 @@ class full_spatial_functions():
 
 
 
-        print(self.df)
+        print(self.df[['SJF-49','SURFACE_TYPE','IS_SAMPLE','IRI','PSR_VALUE_TEXT','FACILITY_TYPE','F_SYSTEM','URBAN_ID','NHS','DIR_THROUGH_LANES']])
 
 
 
