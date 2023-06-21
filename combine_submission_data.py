@@ -34,7 +34,7 @@ pavement_data = [file for file in pavement_data if (file['mimeType'] == 'text/cs
 june_submission = drive.ListFile({'q': "'1hWWgNLRPL609oXt_9iUmQgmPGzapwXUl' in parents and trashed=False"}).GetList()
 june_submission = [file for file in june_submission if (file['mimeType'] == 'text/csv') & (file['title'][0:8] == 'DataItem')]
 
-traffic_data = drive.ListFile({'q': "'1p3-83rG2AndBFqa4JXBB6nLPb7zx8FgW' in parents and trashed=False"}).GetList()
+traffic_data = drive.ListFile({'q': "'14EUUH-xJrkZVC_Yve8s0W-niIxhuDatT' in parents and trashed=False"}).GetList()
 traffic_data = [file for file in traffic_data if (file['mimeType'] == 'text/csv') & (file['title'][0:8] == 'DataItem')]
 
 district_data = drive.ListFile({'q': "'1cSF7v6WhTS7hWIddER37yaZppUbO3j62' in parents and trashed=False"}).GetList()
