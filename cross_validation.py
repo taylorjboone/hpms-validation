@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import geopandas as gpd
 
-cols_dict = {
+cols_dict_old = {
     'BMP':'BeginPoint',
     'EMP':'EndPoint',
     '12_COUNTY':'COUNTY_ID',
@@ -55,6 +55,12 @@ cols_dict = {
     '115_STRAHNET':'STRAHNET'
 }
 
+cols_dict = {
+    'URBAN_CODE':'URBAN_ID',
+    'STRAHNET_TYPE': 'STRAHNET',
+    'TRUCK':'NN',
+}
+
 def get_f_system(value):
     if value in [1, 11]:
         return int(1)
@@ -71,8 +77,8 @@ def get_f_system(value):
     elif value in [9, 19]:
         return int(7)
 
-# arnold = gpd.read_file(r'lrs_data/Route_Status_12_31_2022_WGS_84.zip')
-# arnold_rids = arnold['ROUTE_ID'].unique().tolist()
+arnold = gpd.read_file(r'lrs_data/Route_Status_12_31_2022_WGS_84')
+arnold_rids = arnold['ROUTE_ID'].unique().tolist()
 
 def load_defaults(df):
         # Standardizes columns names 
@@ -82,27 +88,27 @@ def load_defaults(df):
         if not 'Supp_Code' in cols:
             df['Supp_Code'] = df['RouteID'].str[9:11]
 
-        # If RouteNumber column is missing, adds and populates RouteNumber pulled from RouteID
-        if not 'RouteNumber' in cols:
-            df['RouteNumber'] = df['RouteID'].str[3:7]
-            df['RouteNumber'] = df['RouteNumber'].map(lambda x: x.lstrip('0'))
-            print('Added RouteNumber column')
+        # If ROUTE_NUMBER column is missing, adds and populates ROUTE_NUMBER pulled from RouteID
+        if not 'ROUTE_NUMBER' in cols:
+            df['ROUTE_NUMBER'] = df['RouteID'].str[3:7]
+            df['ROUTE_NUMBER'] = df['ROUTE_NUMBER'].map(lambda x: x.lstrip('0'))
+            print('Added ROUTE_NUMBER column')
 
         # If Sign System column is missing, adds and populates sign system pulled from RouteID
-        if not 'RouteSigning' in cols:
-            df['RouteSigning'] = df['RouteID'].str[2]
-            print('Added RouteSigning column')
+        if not 'ROUTE_SIGNING' in cols:
+            df['ROUTE_SIGNING'] = df['RouteID'].str[2]
+            print('Added ROUTE_SIGNING column')
 
         # Converts 1-19 F System to FHWA 1-7 F System
         if not 'F_SYSTEM' in cols:
             df['F_SYSTEM'] = df['FUNCTIONAL_CLASS'].map(lambda x: get_f_system(x))
             print('Added State Functional Class column')
 
-        # If RouteQualifier column is missing, adds and populates RouteQualifier pulled from RouteID
+        # If ROUTE_QUALIFIER column is missing, adds and populates ROUTE_QUALIFIER pulled from RouteID
         qualifier_dict = {'00':1,'01':2, '02':1, '03':5, '04':1, '05':1, '06':1, '07':1, '08':3, '09':3, '10':3, '11':3, '12':3, '13':9, '14':4, '15':6, '16':10, '17':10, '18':10, '19':10, '20':1, '21':10, '22':10, '23':10, '24':7, '25':10, '26':10, '27':10, '28':10, '51':10, '99':10}
-        if not 'RouteQualifier' in cols:
-            df['RouteQualifier'] = df['RouteID'].str[9:11]
-            df['RouteQualifier'] = df['RouteQualifier'].map(lambda x: qualifier_dict[x])
+        if not 'ROUTE_QUALIFIER' in cols:
+            df['ROUTE_QUALIFIER'] = df['RouteID'].str[9:11]
+            df['ROUTE_QUALIFIER'] = df['ROUTE_QUALIFIER'].map(lambda x: qualifier_dict[x])
 
         # Creates Dir through lanes from existing events
         if not 'Dir_Through_Lanes' in cols:
@@ -114,7 +120,8 @@ def load_defaults(df):
 
 class Cross_Validation():
     def __init__(self, df):
-        self.df = load_defaults(df)
+        # self.df = load_defaults(df)
+        self.df = df.rename(columns=cols_dict)
 
     def inventory_spatial_join(self):
         df = self.df
@@ -126,10 +133,10 @@ class Cross_Validation():
             'sji04': ((df['URBAN_ID'].notna()) & (df['RouteID'].isin(arnold_rids))),
             'sji05': (((df['FACILITY_TYPE'].notna()) & (df['F_SYSTEM'].notna())) | df['FACILITY_TYPE'].isna()),
             'sji06': (((df['F_SYSTEM'].notna()) & (df['FACILITY_TYPE'].notna())) | df['F_SYSTEM'].isna()),
-            'sji07': (((df['F_SYSTEM'] == 1) & (df['FACILITY_TYPE'].isin([1,2])) & (df['RouteNumber'].notna())) | (df['F_SYSTEM'] != 1)),
+            'sji07': (((df['F_SYSTEM'] == 1) & (df['FACILITY_TYPE'].isin([1,2])) & (df['ROUTE_NUMBER'].notna())) | (df['F_SYSTEM'] != 1)),
             'sji08': (((df['F_SYSTEM'] == 1) & (df['NHS'] == 1)) | (df['F_SYSTEM'] != 1)),
-            'sji09': (((df['RouteNumber'].notna()) & (df['RouteSigning'].notna())) | (df['RouteNumber'].isna())),
-            'sji10': (((df['RouteNumber'].notna()) & (df['RouteQualifier'].notna())) | (df['RouteNumber'].isna())),
+            'sji09': (((df['ROUTE_NUMBER'].notna()) & (df['ROUTE_SIGNING'].notna())) | (df['ROUTE_NUMBER'].isna())),
+            'sji10': (((df['ROUTE_NUMBER'].notna()) & (df['ROUTE_QUALIFIER'].notna())) | (df['ROUTE_NUMBER'].isna())),
             'sji11': (((df['F_SYSTEM'] == 1) & (df['STRAHNET'] == 1)) | (df['F_SYSTEM'] != 1)),
             'sji12': (((df['STRAHNET'].isin([1,2])) & (df['NHS'] == 1)) | (~df['STRAHNET'].isin([1,2]))),
             'sji13': (((df['F_SYSTEM'] == 1) & (df['NN'] == 1)) | (df['F_SYSTEM'] != 1))
@@ -161,7 +168,7 @@ class Cross_Validation():
             'sjt12': ((df['K_FACTOR'].isna()) | ((df['K_FACTOR'] > 4) & (df['K_FACTOR'] < 30))),
             'sjt13': ((df['DIR_FACTOR'].isna()) | ((df['FACILITY_TYPE'] != 1) | ((df['FACILITY_TYPE'] == 1) & (df['DIR_FACTOR'] == 100)))),
             'sjt14': ((df['DIR_FACTOR'].isna()) | ((df['FACILITY_TYPE'] != 2) | ((df['FACILITY_TYPE'] == 2) & ((df['DIR_FACTOR'] >= 50) & (df['DIR_FACTOR'] <= 75))))),
-            # 'sjt15': ((df['FUTURE_AADT'].isna()) | ((df['ValueDate'].isna()) & (((df['FUTURE_AADT'] > df['AADT']) & (df['FUTURE_AADT'] < (df['AADT'] * 4))) | (df['FUTURE_AADT'] < (df['AADT'] * 0.2)))))
+            'sjt15': ((df['FUTURE_AADT'].isna()) | ((df['FUTURE_AADT_VALUE_DATE'].isna()) & (((df['FUTURE_AADT'] > df['AADT']) & (df['FUTURE_AADT'] < (df['AADT'] * 4))) | (df['FUTURE_AADT'] < (df['AADT'] * 0.2)))))
         }
 
         tmp = df.copy()
@@ -173,8 +180,8 @@ class Cross_Validation():
         return tmp2.drop_duplicates()
 
 
-# input_file = 'lrs_data/lrs_dump_03-01-23.csv'
-# data = pd.read_csv(input_file)
+input_file = 'all_submission_data.csv'
+data = pd.read_csv(input_file)
 
 # data = load_defaults(data)
 
