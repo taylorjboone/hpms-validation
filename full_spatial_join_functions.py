@@ -120,29 +120,41 @@ class full_spatial_functions():
     
     def sjf01(self):
         #F_SYSTEM|F_SYSTEM must exist where FACILITY_TYPE is in (1;2;4;5;6) and Must not be NULL
-        tmp_errors = (((self.f_system.notna())&(self.facility_type.isin([1,2,3,4,5,6]))))
-        print('SJF01 Completed',tmp_errors)
+        #This works the same  as P -> Q (P implies Q)
+        tmp_errors = self.facility_type.isin([1,2,4,5,6]) <= self.f_system.notna()
+        print('SJF01',tmp_errors)
         return tmp_errors
-        # tmp_errors['ErrorMessage'] ='F_SYSTEM must exist where FACILITY_TYPE is in (1;2;4;5;6) and Must not be NULL'
-        # pd.concat([self.error_df,tmp_errors],ignore_index=True)
     
     def sjf02(self):
         #URBAN_ID|"URBAN_ID must exist and must not be NULL where: 1. FACILITY_TYPE in (1;2;4) AND F_SYSTEM in (1;2;3;4;5) [OR] 2. FACILITY_TYPE = 6 AND DIR_THROUGH_LANES > 0 and F_SYSTEM = 1 AND (IRI IS NOT NULL OR PSR IS NOT NULL)"
-        tmp_errors = (((self.urban_id.notna())&\
-        (self.facility_type.isin(facility_list2))&\
-        (self.f_system.isin(f_system_list)))|\
-        ((self.facility_type==6)&\
-        (self.dir_through_lanes>0)&\
-        (self.f_system==1)&\
-        (self.iri.notna())))
-        print('SJF02 Completed',tmp_errors)
-        
+        def sjf02_check(row):
+                if row['FACILITY_TYPE'] in [1,2,4] and row['F_SYSTEM'] in range(1,6):
+                    if row['URBAN_ID'] != np.nan:
+                        row['SJF02'] = True
+                        return row
+                    else:
+                        row['SJF02'] = False
+                        return row
+                
+                elif row['FACILITY_TYPE']==6 and row['DIR_THROUGH_LANES'] > 0 and row['F_SYSTEM'] == 1 and (row['IRI'].notna() or row['PSR'].notna()):
+                    if row['URBAN_ID'] != np.nan:
+                        row['SJF02'] = True
+                        return row
+                    else:
+                        row['SJF02'] = False
+                        return row
+                    
+                else:
+                    row['SJF02'] = True
+                    return row
+        tmp_errors = df.apply(sjf02_check, axis=1)['SJF02']
+        print('SJF02',tmp_errors)
         return tmp_errors
+
     
     def sjf03(self):
         #FACILITY_TYPE|FACILITY_TYPE must exist where F_SYSTEM in (1;2;3;4;5;6;7)  and must not be NULL
-        tmp_errors = (((self.facility_type.notna())&\
-        (self.f_system.isin(f_system_list))))
+        tmp_errors = self.f_system.isin(range(1,8)) <= self.facility_type.notna()
         print('SJF03 Completed',tmp_errors)
         return tmp_errors
     
@@ -152,13 +164,25 @@ class full_spatial_functions():
     
     def sjf05(self):
         #ACCESS_CONTROL|ACCESS_CONTROL must exist where (F_SYSTEM in (1;2;3) or Sample or NHS) AND FACILITY_TYPE IN (1;2) and must not be NULL
-        tmp_errors = (( (self.access_control.notna())&(self.f_system.isin([1,2,3]))& (self.facility_type.isin([1,2])) ) )
-        print('sjf05 Completed',tmp_errors)
+        def sjf05_check(row):
+                if row['F_SYSTEM'] in [1,2,3] or row['IS_SAMPLE'] != np.nan or row['NHS'] != np.nan:
+                    if row['FACILITY_TYPE'] in [1,2] and row['ACCESS_CONTROL'] != np.nan:
+                        row['SJF05'] = True
+                        return row
+                    else:
+                        row['SJF05'] = False
+                        return row
+                else:
+                    row['SJF05'] = True
+                    return row
+                
+        tmp_errors = df.apply(sjf05_check, axis=1)['SJF05']
+        print('SJF05',tmp_errors)
         return tmp_errors
     
     def sjf06(self):
         #OWNERSHIP|OWNERSHIP must exist where (F_SYSTEM in (1;2;3;4;5;6;7) and FACILITY_TYPE (1;2;5;6) and must not be NULL
-        tmp_errors = (((self.ownership.notna())&(self.f_system.isin([1,2,3,4,5,6,7]))&(self.facility_type.isin([1,2,5,6]))))
+        tmp_errors = (self.f_system.isin(range(1,8)) & self.facility_type.isin([1,2,5,6])) <= self.ownership.notna()
         print('sjf06 Completed',tmp_errors)
         return tmp_errors
     
@@ -430,10 +454,10 @@ class full_spatial_functions():
 
     def sjf50(self):
         # PSR|"PSR ValueNumeric Must Exist Where IRI ValueNumeric IS NULL AND FACILITY_TYPE IN (1;2) AND SURFACE_TYPE >1 AND(Sample exists AND (F_SYSTEM in (4;6) AND URBAN_ID <99999 OR F_SYSTEM = 5) OR (F_SYSTEM = 1 or NHS ValueNumeric <>NULL) AND PSR ValueText = ‘A’)"
-        tmp_errors = ((self.psr.isna())|((self.psr.notna())&(self.facility_type.isin([1,2]))&\
-        (self.surface_type>1)&((self.samples.notna())&(((self.f_system.isin([4,6]))&\
-        (self.urban_id<99999)|(self.f_system==5))|((self.f_system==1)|(self.nhs.notna()))&\
-        (self.psr_value_text=='A')))))
+        tmp_errors = ((self.psr.notna())|((~self.facility_type.isin([1,2]))|\
+        (self.surface_type<1)|((self.samples.isna())|(((~self.f_system.isin([4,6]))|\
+        (self.urban_id>99999)|(self.f_system!=5))|((self.f_system!=1)|(self.nhs.isna()))|\
+        (self.psr_value_text!='A')|(self.iri.isna())))))
         print('sjf50',tmp_errors)
         return tmp_errors
 
@@ -441,72 +465,31 @@ class full_spatial_functions():
 
     def sjf51(self):
         #SURACE_TYPE|"SURFACE_TYPE ValueNumeric Must Exist Where FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS ValueNumeric <> NULL OR Sample exists) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL) "
-        def sjf51_check(row):
-            if row['FACILITY_TYPE'] in [1,2]:
-                if row['F_SYSTEM']==1 or row['NHS'] != np.nan or row['IS_SAMPLE'] != np.nan:
-                    if row['SURFACE_TYPE'] != np.nan:
-                        row['SJF51'] = True
+        tmp_errors = pd.DataFrame(np.nan, index=range(self.df.shape[0]+1),columns='SJF51')
+        tmp_df = self.df.copy(deep = True)
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([3,4,9,10])]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([])]
 
-                        return row
-                    else:
-                        row['SJF51'] = False
-                        return row
-                elif row['DIR_THROUGH_LANES']>0 and (row['IRI']!=np.nan or row['PSR']!=np.nan):
-                    if row['SURFACE_TYPE'] != np.nan:
-                        row['SJF51'] = True
-                        print('What art thou',row)
-                        return row
-                    else:
-                        row['SJF51'] = False
-                        return row
-            else:
-                row['SJF51'] = False
-                return row
-                    
-            
-    
-        tmp_errors =df.apply(sjf51_check, axis=1)['SJF51']
-        print('sjf51',tmp_errors)
+
         return tmp_errors
-
 
     
     def sjf52(self):
         #RUTTING|"RUTTING ValueNumeric Must Exist Where SURFACE_TYPE in (2;6;7;8) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS OR Sample) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
-        def sjf52_check(row):
-            if row['SURFACE_TYPE'] in [2,6,7,8]:
-                if row['FACILITY_TYPE'] in [1,2] and (row['F_SYSTEM'] ==1 or row['NHS'] != np.nan or row['IS_SAMPLE'] != np.nan):
-                    if row['RUTTING'] != np.nan:
-                        row['SJF52'] =True
-                        return row
-                    else:
-                        row['SJF52']=False
-                        return row
-                elif row['DIR_THROUGH_LANES']>0:
-                    if (row['IRI'] != np.nan or row['PSR'] != np.nan):
-                        if row['RUTTING'] !=np.nan:
-                            row['SJF52'] =True
-                            return row
-                        else:
-                            row['SJF52']=False
-                            return row
-            else:
-                row['SJF52'] = False
-                return row
-
-        tmp_errors = df.apply(sjf52_check,axis = 1)['SJF52']
-        print('SJF52',tmp_errors)
+        tmp_errors = (((self.rutting.notna()))|((~self.surface_type.isin([2,6,7,8]))|\
+        ((~self.facility_type.isin([1,2]))|((self.f_system!=1)|(self.nhs.isna())|\
+        (self.samples.isna()))|(self.dir_through_lanes<0)&((self.iri.isna())|(self.psr.isna())))))
+        print('sjf52',tmp_errors)
         return tmp_errors
-
     
     def sjf53(self):
         #FAULTING|"Faulting ValueNumeric Must Exist Where SURFACE_TYPE in (3;4;9;10) AND (FACILITY_TYPE in (1;2)  AND  (F_SYSTEM = 1 OR NHS OR Sample) OR  DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
-        tmp_errors = ((self.surface_type.isin([3,4,9,10]))|((self.faulting.notna())&(self.surface_type.isin([3,4,9,10]))&\
-        ((self.facility_type.isin([1,2]))&((self.f_system==1)|(self.nhs.notna())|\
-        (self.samples.notna()))|(self.dir_through_lanes>0)&((self.iri.notna())|(self.psr.notna())))))
+        tmp_errors = ((self.faulting.notna())|((~self.surface_type.isin([3,4,9,10]))|\
+        ((~self.facility_type.isin([1,2]))|((self.f_system!=1)|(self.nhs.isna())|\
+        (self.samples.isna()))|(self.dir_through_lanes<0)&((self.iri.isna())|(self.psr.isna())))))
         print('sjf53',tmp_errors)
         return tmp_errors
-    
+
     def sjf54(self):
         #CRACKING_PERCENT|"SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
         tmp_errors = (((self.cracking_percent.notna())&(self.surface_type.isin([2,3,4,5,6,7,8,9,10]))&\
@@ -672,8 +655,8 @@ class full_spatial_functions():
         # self.df['SJF-47'] = self.sjf47()
         # self.df['SJF-48'] = self.sjf48()
         # self.df['SJF-49'] = self.sjf49()
-        # self.df['SJF-50'] = self.sjf50()
-        # self.df['SJF-51'] = self.sjf51()
+        self.df['SJF-50'] = self.sjf50()
+        self.df['SJF-51'] = self.sjf51()
         self.df['SJF-52'] = self.sjf52()
         # self.df['SJF-53'] = self.sjf53()
         # self.df['SJF-54'] = self.sjf54()
