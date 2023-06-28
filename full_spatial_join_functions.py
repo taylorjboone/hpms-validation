@@ -22,7 +22,9 @@ f_system_dict = {
 facility_list = [1,2,4,5,6]
 facility_list2 = [1,2,4]
 f_system_list = [1,2,3,4,5,6,7]
-urban_id_list = ['06139','15481','21745','36190','40753','59275','67672','93592','94726']
+URBAN_CODE_list = ['06139','15481','21745','36190','40753','59275','67672','93592','94726']
+
+column_list = []
 
 
 
@@ -37,71 +39,12 @@ class full_spatial_functions():
     def __init__(self,df):
         self.error_df = pd.DataFrame()
         self.df = df
-        self.urban_id = self.df['URBAN_ID']
-        self.facility_type = self.df['FACILITY_TYPE']
-        self.f_system = self.df['F_SYSTEM']
-        self.dir_through_lanes = self.df['DIR_THROUGH_LANES']
-        self.iri = self.df['IRI']
-        self.samples = self.df['IS_SAMPLE']
-        self.through_lanes = self.df['THROUGH_LANES']
-        self.access_control = self.df['ACCESS_CONTROL']
-        self.turn_lanes_l = self.df['TURN_LANES_L']
-        self.turn_lanes_r = self.df['TURN_LANES_R']
-        self.peak_lanes = self.df['PEAK_LANES']
-        self.counter_peak_lanes = self.df['COUNTER_PEAK_LANES']
-        self.speed_limit = self.df['SPEED_LIMIT']
-        self.nhs = self.df['NHS']
-        self.ownership = self.df['OWNERSHIP']
-        self.toll_id = self.df['TOLL_ID']
-        self.route_number = self.df['ROUTE_NUMBER']
-        self.route_signing = self.df['ROUTE_SIGNING']
-        self.route_qualifier = self.df['ROUTE_QUALIFIER']
-        self.route_name = self.df['ROUTE_NAME']
-        self.aadt = self.df['AADT']
-        self.aadt_single_unit = self.df['AADT_SINGLE_UNIT']
-        self.pct_dh_single_unit = self.df['PCt_DH_SINGLE_UNIT']
-        self.aad_combination = self.df['AADT_COMBINATION']
-        self.pct_dh_combination = self.df['PCT_DH_COMBINATION']
-        self.k_factor = self.df['K_FACTOR']
-        self.dir_factor = self.df['DIR_FACTOR']
-        self.future_aadt = self.df['FUTURE_AADT']
-        self.signal_type = self.df['SIGNAL_TYPE']
-        self.number_signals = self.df['NUMBER_SIGNALS']
-        self.pct_green_time = self.df['PCT_GREEN_TIME']
-        self.stop_signs = self.df['STOP_SIGNS']
-        self.at_grade_other = self.df['AT_GRADE_OTHER']
-        self.lane_width = self.df['LANE_WIDTH']
-        self.median_type = self.df['MEDIAN_TYPE']
-        self.median_width = self.df['MEDIAN_WIDTH']
-        self.shoulder_type = self.df['SHOULDER_TYPE']
-        self.shoulder_width_r = self.df['SHOULDER_WIDTH_R']
-        self.shoulder_width_l = self.df['SHOULDER_WIDTH_L']
-        self.widening_potential = self.df['WIDENING_POTENTIAL']
-        self.peak_parking = self.df['PEAK_PARKING']
-        self.curve_classification = self.df['CURVE_CLASSIFICATION']
-        self.surface_type = self.df['SURFACE_TYPE']
-        self.terrain_type = self.df['TERRAIN_TYPE']
-        self.grade_classification = self.df['GRADE_CLASSIFICATION']
-        self.pct_pass_sight = self.df['PCT_PASS_SIGHT']
-        self.psr_value_text = self.df['PSR_VALUE_TEXT']
-        self.psr = self.df['PSR']
-        self.rutting = self.df['RUTTING']
-        self.cracking_percent = self.df['CRACKING_PERCENT']
-        self.faulting = self.df['FAULTING']
-        self.year_last_improvement_value_date = self.df['YEAR_LAST_IMPROVEMENT_VALUE_DATE']
-        self.year_last_construction_value_date = self.df['YEAR_LAST_CONSTRUCTION_VALUE_DATE']
-        self.begin_date = self.df['BEGIN_DATE']
-        self.last_overlay_thickness = self.df['LAST_OVERLAY_THICKNESS']
-        self.thickness_rigid = self.df['THICKNESS_RIGID']
-        self.base_type = self.df['BASE_TYPE']
-        self.base_thickness = self.df['BASE_THICKNESS']
-        self.thickness_flexible = self.df['THICKNESS_FLEXIBLE']
-        self.county_id = self.df['COUNTY_ID']
+        
 
     def check_rule_sjf43(self):
         #sums up the section lengths of samples and the section length of curves in order to execute rule sjf43
         sum_curve = self.df.loc[( self.curve_classification.notna()),'Section_Length'].sum()
-        sum_sample = self.df.loc[ (((self.samples.notna())&( self.f_system.isin([1,2,3]) )) | ( (self.f_system==4) & (self.urban_id==99999) ) ),'Section_Length'].sum()
+        sum_sample = self.df.loc[ (((self.samples.notna())&( self.f_system.isin([1,2,3]) )) | ( (self.f_system==4) & (self.URBAN_CODE==99999) ) ),'Section_Length'].sum()
         if sum_curve != sum_sample:
             return True
         else:
@@ -110,7 +53,7 @@ class full_spatial_functions():
     def check_rule_sjf47(self):
         #sums up the section lengths of samples and the section length of grades in order to execute rule sjf47
         sum_grade = self.df.loc[( self.grade_classification.notna()),'Section_Length'].sum()
-        sum_sample = self.df.loc[ (((self.samples.notna())&( self.f_system.isin([1,2,3]) )) | ( (self.f_system==4) & (self.urban_id==99999) ) ),'Section_Length'].sum()
+        sum_sample = self.df.loc[ (((self.samples.notna())&( self.f_system.isin([1,2,3]) )) | ( (self.f_system==4) & (self.URBAN_CODE==99999) ) ),'Section_Length'].sum()
         if sum_grade != sum_sample:
             print('Sums are not equal, please review')
             return True
@@ -119,486 +62,544 @@ class full_spatial_functions():
             return False
     
     def sjf01(self):
-        #F_SYSTEM|F_SYSTEM must exist where FACILITY_TYPE is in (1;2;4;5;6) and Must not be NULL
-        #This works the same  as P -> Q (P implies Q)
-        tmp_errors = self.facility_type.isin([1,2,4,5,6]) <= self.f_system.notna()
-        print('SJF01',tmp_errors)
-        return tmp_errors
-    
-    def sjf02(self):
-        #URBAN_ID|"URBAN_ID must exist and must not be NULL where: 1. FACILITY_TYPE in (1;2;4) AND F_SYSTEM in (1;2;3;4;5) [OR] 2. FACILITY_TYPE = 6 AND DIR_THROUGH_LANES > 0 and F_SYSTEM = 1 AND (IRI IS NOT NULL OR PSR IS NOT NULL)"
-        def sjf02_check(row):
-                if row['FACILITY_TYPE'] in [1,2,4] and row['F_SYSTEM'] in range(1,6):
-                    if row['URBAN_ID'] != np.nan:
-                        row['SJF02'] = True
-                        return row
-                    else:
-                        row['SJF02'] = False
-                        return row
-                
-                elif row['FACILITY_TYPE']==6 and row['DIR_THROUGH_LANES'] > 0 and row['F_SYSTEM'] == 1 and (row['IRI'].notna() or row['PSR'].notna()):
-                    if row['URBAN_ID'] != np.nan:
-                        row['SJF02'] = True
-                        return row
-                    else:
-                        row['SJF02'] = False
-                        return row
-                    
-                else:
-                    row['SJF02'] = True
-                    return row
-        tmp_errors = df.apply(sjf02_check, axis=1)['SJF02']
-        print('SJF02',tmp_errors)
-        return tmp_errors
+        #F_SYSTEM must exist where FACILITY_TYPE is in (1;2;4;5;6) and Must not be NULL
+        self.df['SJF01'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2,4,5,6]) & tempDF['F_SYSTEM'].isna()]
+        self.df['SJF01'].iloc[tempDF.index.tolist()] = False
 
-    
+    def sjf02(self):
+        #URBAN_CODE must exist and must not be NULL where: 1. FACILITY_TYPE in (1;2;4) AND F_SYSTEM in (1;2;3;4;5) 
+        # [OR] 2. FACILITY_TYPE = 6 AND DIR_THROUGH_LANES > 0 and F_SYSTEM = 1 AND (IRI IS NOT NULL OR PSR IS NOT NULL)
+        self.df['SJF02'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2,4])]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4,5])]
+        tempDF = tempDF[tempDF['URBAN_CODE'].isna()]
+        self.df['SJF02'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FACILITY_TYPE']==6]
+        tempDF = tempDF[tempDF['DIR_THROUGH_LANES']>0]
+        tempDF = tempDF[tempDF['F_SYSTEM']==1]
+        # tempDF = tempDF[tempDF['IRI'].notna() | tempDF['PSR'].notna()]
+        tempDF = tempDF[tempDF['IRI'].notna()]
+        tempDF = tempDF[tempDF['URBAN_CODE'].isna()]
+        
+        self.df['SJF02'].iloc[tempDF.index.tolist()] = False
+
     def sjf03(self):
-        #FACILITY_TYPE|FACILITY_TYPE must exist where F_SYSTEM in (1;2;3;4;5;6;7)  and must not be NULL
-        tmp_errors = self.f_system.isin(range(1,8)) <= self.facility_type.notna()
-        print('SJF03 Completed',tmp_errors)
-        return tmp_errors
-    
+        #FACILITY_TYPE must exist where F_SYSTEM in (1;2;3;4;5;6;7)  and must not be NULL
+        self.df['SJF03'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin(range(1,8)) & tempDF['FACILITY_TYPE'].isna()]
+        self.df['SJF03'].iloc[tempDF.index.tolist()] = False
+
     def sjf04(self):
-        print('sjf04 : Do not submit to HPMS')
-        return True
-    
+        #No validation 
+        self.df['SJF04'] = True
+
     def sjf05(self):
-        #ACCESS_CONTROL|ACCESS_CONTROL must exist where (F_SYSTEM in (1;2;3) or Sample or NHS) AND FACILITY_TYPE IN (1;2) and must not be NULL
-        def sjf05_check(row):
-                if row['F_SYSTEM'] in [1,2,3] or row['IS_SAMPLE'] != np.nan or row['NHS'] != np.nan:
-                    if row['FACILITY_TYPE'] in [1,2] and row['ACCESS_CONTROL'] != np.nan:
-                        row['SJF05'] = True
-                        return row
-                    else:
-                        row['SJF05'] = False
-                        return row
-                else:
-                    row['SJF05'] = True
-                    return row
-                
-        tmp_errors = df.apply(sjf05_check, axis=1)['SJF05']
-        print('SJF05',tmp_errors)
-        return tmp_errors
-    
+        #ACCESS_CONTROL must exist where (F_SYSTEM in (1;2;3) or Sample or NHS) AND FACILITY_TYPE IN (1;2) and must not be NULL
+        self.df['SJF05'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | tempDF['sample_Value_Numeric'].notna() | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['ACCESS_CONTROL'].isna()]
+        self.df['SJF05'].iloc[tempDF.index.tolist()] = False
+
+
     def sjf06(self):
-        #OWNERSHIP|OWNERSHIP must exist where (F_SYSTEM in (1;2;3;4;5;6;7) and FACILITY_TYPE (1;2;5;6) and must not be NULL
-        tmp_errors = (self.f_system.isin(range(1,8)) & self.facility_type.isin([1,2,5,6])) <= self.ownership.notna()
-        print('sjf06 Completed',tmp_errors)
-        return tmp_errors
-    
+        #OWNERSHIP must exist where (F_SYSTEM in (1;2;3;4;5;6;7) and FACILITY_TYPE (1;2;5;6) and must not be NULL
+        self.df['SJF06'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin(range(1,8))]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2,5,6])]
+        tempDF = tempDF[tempDF['OWNERSHIP'].isna()]
+        self.df['SJF06'].iloc[tempDF.index.tolist()] = False
+
     def sjf07(self):
-        #THROUGH_LANES|THROUGH_LANES must exist where FACILITY_TYPE in (1;2;4) AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_ID <99999) or NHS ValueNumeric <> NULL) and must not be NULL
-        tmp_errors = (((self.through_lanes.notna())&\
-        (self.facility_type.isin([1,2,4]))&\
-        ((self.f_system.isin([1,2,3,4,5]))|\
-        ((self.f_system==6)&(self.urban_id<99999))|\
-        (self.nhs.notna()))))
-        print('sjf07 Completed',tmp_errors)
-        return tmp_errors
-    
+        #THROUGH_LANES must exist where FACILITY_TYPE in (1;2;4) 
+        # AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_CODE <99999) or NHS ValueNumeric <> NULL) and must not be NULL
+        #Q or (R AND S) or T === (Q or R or T) AND (Q or S or T)
+        self.df['SJF07'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2,4])]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin(range(1,6)) | (tempDF['F_SYSTEM'] == 6) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin(range(1,6)) | (tempDF['URBAN_CODE'] < 99999) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['THROUGH_LANES'].isna()]
+        self.df['SJF07'].iloc[tempDF.index.tolist()] = False
+
     def sjf08(self):
-        print('sjf08 : Do not submit to HPMS')
-        return True
-    
+        #MANAGED_LANES_TYPE must exist where MANAGED_LANES is not Null
+        self.df['SJF08'] = True
+        # tempDF = self.df.copy()
+        # tempDF[tempDF['MANAGED_LANES'].notna() & tempDF['MANAGED_LANES_TYPE'].isna()]
+        # self.df['SJF08'].iloc[tempDF.index.tolist()] = False
+
     def sjf09(self):
-        print('sjf09 : Do not submit to HPMS')
-        return True
-    
+        #MANAGED_LANES must exist where MANAGED_LANES_TYPE is not Null
+        self.df['SJF09'] = True
+        # tempDF = self.df.copy()
+        # tempDF[tempDF['MANAGED_LANES_TYPE'].notna() & tempDF['MANAGED_LANES'].isna()]
+        # self.df['SJF09'].iloc[tempDF.index.tolist()] = False
+
     def sjf10(self):
-        #PEAK_LANES|"PEAK_LANES must exist on Samples"
-        tmp_errors = (((self.peak_lanes.notna())&(self.samples.notna())))
-        print('sjf10 Completed',tmp_errors)
-        return tmp_errors
-    
+        #PEAK_LANES must exist on Samples
+        self.df['SJF10'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna() & tempDF['PEAK_LANES'].isna()]
+        self.df['SJF10'].iloc[tempDF.index.tolist()] = False    
+
     def sjf11(self):
-        #COUNTER_PEAK_LANES|COUNTER_PEAK_LANES must exist on Samples where FACILITY_TYPE = 2 AND (URBAN_ID < 99999 OR THROUGH_LANES >=4)
-        tmp_errors = (((self.counter_peak_lanes.notna())&\
-        (self.samples.notna())&\
-        (self.facility_type==2)&\
-        ((self.urban_id<99999)|(self.through_lanes>=4))))
-        print('sjf11 Completed',tmp_errors)
-        return tmp_errors
-    
+        #COUNTER_PEAK_LANES must exist on Samples where FACILITY_TYPE = 2 AND (URBAN_CODE < 99999 OR THROUGH_LANES >=4)
+        self.df['SJF11'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE']==2]
+        tempDF = tempDF[(tempDF['URBAN_CODE']<99999) | (tempDF['THROUGH_LANES'] >= 4)]
+        tempDF = tempDF[tempDF['COUNTER_PEAK_LANES'].isna()]
+        self.df['SJF11'].iloc[tempDF.index.tolist()] = False
+
     def sjf12(self):
-        #TURN_LANES_R|TURN_LANES_R must exist on Samples where URBAN_ID  < 99999 and ACCESS_CONTROL >1
-        tmp_errors = (((self.turn_lanes_r.notna())&(self.samples.notna())&(self.urban_id<99999)&(self.access_control>1)))
-        print('sjf12 Completed',tmp_errors)
-        return tmp_errors
-    
+        #TURN_LANES_R must exist on Samples where URBAN_CODE  < 99999 and ACCESS_CONTROL >1
+        self.df['SJF12'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[(tempDF['URBAN_CODE'] < 99999) & (tempDF['ACCESS_CONTROL'] > 1)]
+        tempDF = tempDF[tempDF['TURN_LANES_R'].isna()]
+        self.df['SJF12'].iloc[tempDF.index.tolist()] = False
+
     def sjf13(self):
-        #TURN_LANES_L|TURN_LANES_L must exist on Samples where URBAN_ID  < 99999 and ACCESS_CONTROL >1
-        tmp_errors = (((self.turn_lanes_l.notna()) & (self.samples.notna())&(self.urban_id<99999)&(self.access_control>1)))
-        print('sjf13 Completed',tmp_errors)
-        return tmp_errors
-    
+        #TURN_LANES_L must exist on Samples where URBAN_CODE  < 99999 and ACCESS_CONTROL >1
+        self.df['SJF13'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[(tempDF['URBAN_CODE'] < 99999) & (tempDF['ACCESS_CONTROL'] > 1)]
+        tempDF = tempDF[tempDF['TURN_LANES_L'].isna()]
+        self.df['SJF13'].iloc[tempDF.index.tolist()] = False
+
     def sjf14(self):
-        tmp_errors = (((self.speed_limit.notna())&(self.samples.notna())&(self.nhs.notna())))
-        print('sjf14',tmp_errors)
-        return tmp_errors
-    
+        #SPEED_LIMIT must exist on Samples and  the NHS
+        self.df['SJF14'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna() | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['SPEED_LIMIT'].isna()]
+        self.df['SJF14'].iloc[tempDF.index.tolist()] = False
+
     def sjf15(self):
-        tmp_errors = ((self.toll_id.notna()))
-        print('sjf15 Completed',tmp_errors)
-        return tmp_errors
-    
+        #No validation 
+        self.df['SJF15'] = True
+
     def sjf16(self):
-        tmp_errors = (((self.route_number.notna())&\
-        (((self.f_system.isin([1,2,3,4]))|(self.nhs.notna()))&\
-        (self.facility_type.isin([1,2]))&\
-        (self.route_signing.isin([2,3,4,5,6,7,8,9]))|\
-        ((self.f_system==1)&(self.facility_type==6)&\
-        (self.dir_through_lanes>0)&(self.iri.notna())))))
-        print('sjf16',tmp_errors)
-        return tmp_errors
-    
+        #ROUTE_NUMBER ValueNumeric Must Exist where (F_SYSTEM in (1;2;3;4) or NHS ValueNumeric <> NULL ) and FACILITY_TYPE (1;2) and ROUTE_SIGNING in (2;3;4;5;6;7;8;9)  
+        # OR F_SYSTEM=1 AND FACILITY_TYPE=6 AND DIR_THROUGH_LANES > 0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)
+        self.df['SJF16'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4]) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['ROUTE_SIGNING'].isin(range(2,10))]
+        tempDF = tempDF[tempDF['ROUTE_NUMBER'].isna()]
+        self.df['SJF16'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'] == 1 ]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'] == 6]
+        tempDF = tempDF[tempDF['DIR_THROUGH_LANES'] > 0]
+        # tempDF = tempDF[tempDF['IRI'].notna() | tempDF['PSR'].notna()]
+        tempDF = tempDF[tempDF['IRI'].notna()]
+        tempDF = tempDF[tempDF['ROUTE_NUMBER'].isna()]
+        self.df['SJF16'].iloc[tempDF.index.tolist()] = False
+
     def sjf17(self):
-        tmp_errors = (((self.route_signing.notna())&\
-        ((self.f_system.isin([1,2,3,4]))|(self.nhs.notna()))&\
-        (self.facility_type.isin([1,2]))))
-        print('sjf17 Completed',tmp_errors)
-        return tmp_errors
-    
+        #ROUTE_SIGNING must exist where (F_SYSTEM in (1;2;3;4) or NHS) and FACILITY_TYPE (1;2)
+        self.df['SJF17'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4]) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['ROUTE_SIGNING'].isna()]
+        self.df['SJF17'].iloc[tempDF.index.tolist()] = False   
+
     def sjf18(self):
-        tmp_errors = (((self.route_qualifier.notna())&\
-        ((self.f_system.isin([1,2,3,4]))|\
-        (self.nhs.notna()))&(self.facility_type.isin([1,2]))))
-        print('sjf18',tmp_errors)
-        return tmp_errors
-    
+        #ROUTE_QUALIFIER must exist where (F_SYSTEM in (1;2;3;4) or NHS) and FACILITY_TYPE (1;2)
+        self.df['SJF18'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4]) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['ROUTE_QUALIFIER'].isna()]
+        self.df['SJF18'].iloc[tempDF.index.tolist()] = False   
+
     def sjf19(self):
-        tmp_errors = (((self.route_name.notna())&\
-        ((self.f_system.isin([1,2,3,4]))|(self.nhs.notna()))&\
-        (self.facility_type.isin([1,2]))))
-        print('sjf19 Completed',tmp_errors)
-        return tmp_errors
-    
-    def sjf20(self):
-        tmp_errors = (((self.aadt.notna())&((self.facility_type.isin([1,2,4]))&(self.f_system.isin([1,2,3,4,5]))|((self.f_system==6)&(self.urban_id<99999))|(self.nhs.notna()))))
-        print('sjf20',tmp_errors)
-        return tmp_errors
-    
+        #ROUTE_NAME must exist where (F_SYSTEM in (1;2;3;4) or NHS) and FACILITY_TYPE (1;2)
+        self.df['SJF19'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4]) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['ALTERNATIVE_ROUTE_NAME'].isna()]
+        self.df['SJF19'].iloc[tempDF.index.tolist()] = False
+
+    def sjf20(self):    
+        #AADT must exist WHERE: (FACILITY_TYPE in (1;2;4) AND (F_SYSTEM in (1;2;3;4;5)) OR (F_SYSTEM = 6 and URBAN_CODE  <99999) OR NHS ValueNumeric <> NULL 
+        self.df['SJF20'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2,4])]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin(range(1,6))]
+        tempDF = tempDF[tempDF['AADT'].isna()]
+        self.df['SJF20'].iloc[tempDF.index.tolist()] = False
+
+        #(Q and R) OR S === (Q or S) AND (R or S)
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM']==6 | tempDF['NHS'].notna()]
+        tempDF = tempDF[(tempDF['URBAN_CODE'] < 99999) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['AADT'].isna()]
+        self.df['SJF20'].iloc[tempDF.index.tolist()] = False
+
     def sjf21(self):
-        tmp_errors = (((self.aadt_single_unit.notna())&(((self.f_system==1)|(self.nhs.notna()))&(self.facility_type.isin([1,2])))& self.samples.notna()))
-        print('sjf21',tmp_errors)
-        return tmp_errors
+        #AADT_SINGLE_UNIT must exist WHERE ((F_SYSTEM in (1) or NHS ValueNumeric <> NULL) and FACILITY_TYPE (1;2)) and on Samples
+        self.df['SJF21'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['AADT_SINGLE_UNIT'].isna()]
+        self.df['SJF21'].iloc[tempDF.index.tolist()] = False
+        
+        tempDF = self.df.copy() 
+        tempDF = tempDF[(tempDF['F_SYSTEM']==1) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['AADT_SINGLE_UNIT'].isna()]
+        self.df['SJF21'].iloc[tempDF.index.tolist()] = False
 
     def sjf22(self):
-        tmp_errors = (((self.pct_dh_single_unit.notna())&(self.samples.notna())))
-        print('sjf22',tmp_errors)
-        return tmp_errors
-    
+        #PCT_DH_SINGLE_UNIT must exist on Samples
+        self.df['SJF22'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna() & tempDF['PCT_DH_SINGLE_UNIT'].isna()]
+        self.df['SJF22'].iloc[tempDF.index.tolist()] = False
+
     def sjf23(self):
-        tmp_errors = (((self.aad_combination.notna())&(((self.f_system==1)|(self.nhs.notna()))&(self.facility_type.isin([1,2])))& self.samples.notna()))
-        print('sjf23',tmp_errors)
-        return tmp_errors
-    
+        #AADT_COMBINATION must exist WHERE ((F_SYSTEM in (1) or NHS ValueNumeric <> NULL) and FACILITY_TYPE (1;2)) and on Samples
+        self.df['SJF23'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['AADT_COMBINATION'].isna()]
+        self.df['SJF23'].iloc[tempDF.index.tolist()] = False
+        
+        tempDF = self.df.copy() 
+        tempDF = tempDF[(tempDF['F_SYSTEM']==1) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['AADT_COMBINATION'].isna()]
+        self.df['SJF23'].iloc[tempDF.index.tolist()] = False
+
     def sjf24(self):
-        tmp_errors = (((self.pct_dh_combination.notna())&(self.samples.notna())))
-        print('sjf24',tmp_errors)
-        return tmp_errors
-    
+        #PCT_DH_COMBINATION must exist on Samples
+        self.df['SJF24'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna() & tempDF['PCT_DH_COMBINATION'].isna()]
+        self.df['SJF24'].iloc[tempDF.index.tolist()] = False
+
     def sjf25(self):
-        tmp_errors = (((self.k_factor.notna())&(self.samples.notna())))
-        print('sjf25',tmp_errors)
-        return tmp_errors
-    
+        #K_FACTOR must exist on Samples
+        self.df['SJF25'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna() & tempDF['K_FACTOR'].isna()]
+        self.df['SJF25'].iloc[tempDF.index.tolist()] = False
+
     def sjf26(self):
-        tmp_errors = (((self.dir_factor.notna())&(self.samples.notna())))
-        print('sjf26',tmp_errors)
-        return tmp_errors
-    
+        #DIR_FACTOR must exist on Samples
+        self.df['SJF26'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna() & tempDF['DIR_FACTOR'].isna()]
+        self.df['SJF26'].iloc[tempDF.index.tolist()] = False
+
     def sjf27(self):
-        tmp_errors = (((self.future_aadt.notna())&(self.samples.notna())))
-        print('sjf27',tmp_errors)
-        return tmp_errors 
-    
+        #FUTURE_AADT must exist on Samples
+        self.df['SJF27'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna() & tempDF['FUTURE_AADT'].isna()]
+        self.df['SJF27'].iloc[tempDF.index.tolist()] = False
+
     def sjf28(self):
-        tmp_errors = (((self.signal_type.notna())&(self.urban_id!=99999)&(self.number_signals>=1)&(self.samples.notna())))
-        print('sjf28',tmp_errors)
-        return tmp_errors
-    
+        #SIGNAL_TYPE must exist on Samples WHERE (URBAN_CODE <> 99999 AND NUMBER_SIGNALS >=1)
+        self.df['SJF28'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['URBAN_CODE'] != 99999]
+        tempDF = tempDF[tempDF['NUMBER_SIGNALS'] >= 1]
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['SIGNAL_TYPE'].isna()]
+        self.df['SJF28'].iloc[tempDF.index.tolist()] = False 
+
     def sjf29(self):
-        tmp_errors = (((self.pct_green_time.notna())&(self.number_signals>=1)&(self.urban_id<99999)&(self.samples.notna())))
-        print('sjf29',tmp_errors)
-        return tmp_errors
-    
+        #PCT_GREEN_TIME must exist on Samples WHERE (NUMBER_SIGNALS >=1 AND URBAN_CODE <99999)
+        self.df['SJF29'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['URBAN_CODE'] < 99999]
+        tempDF = tempDF[tempDF['NUMBER_SIGNALS'] >= 1]
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['PCT_GREEN_TIME'].isna()]
+        self.df['SJF29'].iloc[tempDF.index.tolist()] = False
+
     def sjf30(self):
-        tmp_errors = (((self.number_signals.notna())&(self.signal_type.isin([1,2,3,4]))&(self.samples.notna())))
-        print('sjf30',tmp_errors)
-        return tmp_errors
-    
+        #NUMBER_SIGNALS must exist on Samples WHERE SIGNAL_TYPE IN (1;2;3;4)
+        self.df['SJF30'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SIGNAL_TYPE'].isin([1,2,3,4])]
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['NUMBER_SIGNALS'].isna()]
+        self.df['SJF30'].iloc[tempDF.index.tolist()] = False  
+
     def sjf31(self):
-        tmp_errors = (((self.stop_signs.notna())&(self.samples.notna())))
-        print('sjf31',tmp_errors)
-        return tmp_errors
-    
+        #STOP_SIGNS (the number of stop sign controlled intersections) must exist on Samples
+        self.df['SJF31'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['STOP_SIGNS'].isna()]
+        self.df['SJF31'].iloc[tempDF.index.tolist()] = False
+
     def sjf32(self):
-        tmp_errors = (((self.at_grade_other.notna())&(self.samples.notna())))
-        print('sjf32',tmp_errors)
-        return tmp_errors
-    
+        #AT_GRADE_OTHER (the number of intersections; type 'other') must exist on Samples
+        self.df['SJF32'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['AT_GRADE_OTHER'].isna()]
+        self.df['SJF32'].iloc[tempDF.index.tolist()] = False 
+
     def sjf33(self):
-        tmp_errors = (((self.lane_width.notna())&(self.samples.notna())))
-        print('sjf33',tmp_errors)
-        return tmp_errors
-    
+        #LANE_WIDTH must exist on Samples
+        self.df['SJF33'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['LANE_WIDTH'].isna()]
+        self.df['SJF33'].iloc[tempDF.index.tolist()] = False
+
     def sjf34(self):
-        tmp_errors = (((self.median_type.notna())&(self.samples.notna())))
-        print('sjf34',tmp_errors)
-        return tmp_errors
-    
+        #MEDIAN_TYPE must exist on Samples
+        self.df['SJF34'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['MEDIAN_TYPE'].isna()]
+        self.df['SJF34'].iloc[tempDF.index.tolist()] = False
+
     def sjf35(self):
-        tmp_errors = (((self.median_width.notna())&(self.median_type.isin([2,3,4,5,6,7]))&(self.samples.notna())))
-        print('sjf35',tmp_errors)
-        return tmp_errors
-    
+        #MEDIAN_WIDTH must exist on Samples where MEDIAN_TYPE in (2;3;4;5;6;7) 
+        self.df['SJF35'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['MEDIAN_TYPE'].isin(range(2,8))]
+        tempDF = tempDF[tempDF['MEDIAN_WIDTH'].isna()]
+        self.df['SJF35'].iloc[tempDF.index.tolist()] = False
+
     def sjf36(self):
-        tmp_errors = ((self.samples.isna())|((self.shoulder_type.notna())&(self.samples.notna())))
-        print('sjf36',tmp_errors)
-        return tmp_errors
-    
+        #SHOULDER_TYPE must exist on Samples
+        self.df['SJF36'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['SHOULDER_TYPE'].isna()]
+        self.df['SJF36'].iloc[tempDF.index.tolist()] = False
+
     def sjf37(self):
-        tmp_errors = ((self.samples.isna())|((self.shoulder_width_r.notna())&\
-        (self.shoulder_type.isin([2,3,4,5,6]))&\
-        (self.samples.notna())))
-        print('sjf37',tmp_errors)
-        return tmp_errors
-    
+        #SHOULDER_WIDTH_R must exist on Samples where SHOULDER_TYPE in (2;3;4;5;6)
+        self.df['SJF37'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['SHOULDER_TYPE'].isin(range(2,7))]
+        tempDF = tempDF[tempDF['SHOULDER_WIDTH_R'].isna()]
+        self.df['SJF37'].iloc[tempDF.index.tolist()] = False
+
     def sjf38(self):
-        tmp_errors = ((self.samples.isna())|((self.shoulder_width_l.notna())&\
-        (self.shoulder_type.isin([2,3,4,5,6]))&\
-        (self.median_type.isin([2,3,4,5,6,7]))&\
-        (self.samples.notna())))
-        print('sjf38',tmp_errors)
-        return tmp_errors
-    
+        #SHOULDER_WIDTH_L must exist on Samples where (SHOULDER_TYPE in (2;3;4;5;6) and MEDIAN_TYPE in (2;3;4;5;6;7))
+        self.df['SJF38'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['SHOULDER_TYPE'].isin(range(2,7))]
+        tempDF = tempDF[tempDF['MEDIAN_TYPE'].isin(range(2,8))]
+        tempDF = tempDF[tempDF['SHOULDER_WIDTH_L'].isna()]
+        self.df['SJF38'].iloc[tempDF.index.tolist()] = False
+
     def sjf39(self):
-        tmp_errors = ((self.samples.isna())|((self.peak_parking.notna())&\
-        (self.urban_id<99999)&(self.samples.notna())))
-        print('sjf39',tmp_errors)
-        return tmp_errors
-    
+        #PEAK_PARKING must exist on Samples where URBAN_CODE < 99999
+        self.df['SJF39'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['URBAN_CODE'] < 99999]
+        tempDF = tempDF[tempDF['PEAK_PARKING'].isna()]
+        self.df['SJF39'].iloc[tempDF.index.tolist()] = False
+
     def sjf40(self):
-        tmp_errors = ((self.samples.isna())|((self.widening_potential.notna())&\
-        (self.samples.notna())))
-        print('sjf40',tmp_errors)
-        return tmp_errors
-    
+        #WIDENING_POTENTIAL must exist on Samples
+        self.df['SJF40'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['WIDENING_POTENTIAL'].isna()]
+        self.df['SJF40'].iloc[tempDF.index.tolist()] = False
+
     def sjf41(self):
-        tmp_errors = (((self.curve_classification.notna())&\
-        ((self.f_system.isin([1,2,3]))|\
-        ((self.f_system==4)&(self.urban_id==99999)&\
-        (self.surface_type>1)))))
-        print('sjf41',tmp_errors)
-        return tmp_errors
-    
-    def sjf42(self):#revisit, this may not suppose to be a direct copy of SJF41
-        tmp_errors = (((self.curve_classification.notna())&\
-        ((self.f_system.isin([1,2,3]))|\
-        ((self.f_system==4)&(self.urban_id==99999)&\
-        (self.surface_type>1)))))
-        print('sjf42',tmp_errors)
-        return tmp_errors
-    
+        #CURVES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
+        self.df['SJF41'] = True
+
+    def sjf42(self):
+        #At least one CURVES_A-F must be coded for each Sample WHERE (F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999) and SURFACE_TYPE > 1.
+        self.df['SJF42'] = True
+
     def sjf43(self):
-        tmp_errors = self.check_rule_sjf43()
-        print('sjf43',tmp_errors)
-        return tmp_errors
-    
+        #Sum Length (CURVES_A + CURVES_B + CURVES_C + CURVES_D + CURVES_E + CURVES_E) Must Equal to the Sample Length on 
+        # (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)))
+        self.df['SJF43'] = True
+
     def sjf44(self):
-        #TERRAIN_TYPE must exist on Samples WHERE (URBAN_ID = 99999 AND F_SYSTEM in (1;2;3;4;5))
-        tmp_error = ((self.urban_id<99999)|((self.terrain_type.notna())&\
-        (self.urban_id==99999)&(self.f_system.isin([1,2,3,4,5]))))
-        print('sjf44',tmp_error)
-        return tmp_error
-    
+        #TERRAIN_TYPE must exist on Samples WHERE (URBAN_CODE = 99999 AND F_SYSTEM in (1;2;3;4;5))
+        self.df['SJF44'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['URBAN_CODE']==99999]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4,5])]
+        tempDF = tempDF[tempDF['TERRAIN_TYPE'].isna()]
+        self.df['SJF44'].iloc[tempDF.index.tolist()] = False
+
     def sjf45(self):
-        tmp_errors = (((self.grade_classification.notna())&\
-        ((self.f_system.isin([1,2,3]))|\
-        ((self.f_system==4)&(self.urban_id==99999)&\
-        (self.surface_type>1)))))
-        print('sjf45',tmp_errors)
-        return tmp_errors
-    
+        #GRADES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
+        self.df['SJF45'] = True
+
     def sjf46(self):
-        tmp_errors = (((self.grade_classification.notna())&\
-        ((self.f_system.isin([1,2,3]))|\
-        ((self.f_system==4)&(self.urban_id==99999)&\
-        (self.surface_type>1)))))
-        print('sjf46',tmp_errors)
-        return tmp_errors
-    
+        #At least one GRADES_A-F must be coded for each Sample WHERE F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1.
+        self.df['SJF46'] = True
+
     def sjf47(self):
-        tmp_errors = self.check_rule_sjf47()
-        print('sjf47',tmp_errors)
-        return tmp_errors
-    
+        #Sum Length (GRADES_A + GRADES_B + GRADES_C + GRADES_D + GRADES_E + GRADES_E) Must Equal to the Sample Length on (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)))
+        self.df['SJF47'] = True
+
     def sjf48(self):
-        #PCT_PASS_SIGHT must exist on Samples WHERE: (URBAN_ID = 99999 and THROUGH_LANES =2 and MEDIAN_TYPE in (1;2) and SURFACE_TYPE > 1
-        tmp_errors = ((self.urban_id<99999)|((self.pct_pass_sight.notna())&\
-        (self.urban_id==99999)&(self.through_lanes==2)&\
-        (self.median_type.isin([1,2]))&(self.surface_type>1)&\
-        (self.samples.notna())))
-        print('sjf48',tmp_errors)
-        return tmp_errors
-    
+        #PCT_PASS_SIGHT must exist on Samples WHERE: (URBAN_CODE = 99999 and THROUGH_LANES =2 and MEDIAN_TYPE in (1;2) and SURFACE_TYPE > 1)
+        self.df['SJF48'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['URBAN_CODE']==99999]
+        tempDF = tempDF[tempDF['THROUGH_LANES'] == 2]
+        tempDF = tempDF[tempDF['MEDIAN_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        tempDF = tempDF[tempDF['PCT_PASS_SIGHT'].isna()]
+        self.df['SJF48'].iloc[tempDF.index.tolist()] = False
+
     def sjf49(self):
-        #IRI|"IRI ValueNumeric Must Exist Where SURFACE_TYPE >1 AND (FACILITY_TYPE IN (1;2) AND (PSR ValueText <> 'A' AND (F_SYSTEM in (1;2;3) OR NHS ValueNumeric <>1) OR Sample sections WHERE (F_SYSTEM = 4 and URBAN_ID = 99999)OR DIR_THROUGH_LANES >0"
-        tmp_errors = ((self.iri.notna())|((self.iri.isna())&(((self.surface_type<=1)|\
-        (~self.facility_type.isin([1,2]))|(self.psr_value_text=='A')|\
-        ((~self.f_system.isin([1,2,3]))|(self.nhs!=1)))|((self.f_system!=4)|\
-        (self.urban_id!=99999)&(self.samples.isna()))|(self.dir_through_lanes<=0))))
-        print('sjf49',tmp_errors)
-        return tmp_errors
-    
+        #IRI ValueNumeric Must Exist Where SURFACE_TYPE >1 AND (FACILITY_TYPE IN (1;2) AND (PSR ValueText <> 'A' AND (F_SYSTEM in (1;2;3) OR NHS ValueNumeric <>1) 
+        # OR Sample sections WHERE (F_SYSTEM = 4 and URBAN_CODE = 99999)OR DIR_THROUGH_LANES >0
+        self.df['SJF49'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | tempDF['NHS'] != 1]
+        # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'] != 'A']
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        tempDF = tempDF[tempDF['IRI'].isna()]
+        self.df['SJF49'].iloc[tempDF.index.tolist()] = False  
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[(tempDF['F_SYSTEM'] == 4) | (tempDF['DIR_THROUGH_LANES'] > 0)]
+        tempDF = tempDF[(tempDF['URBAN_CODE'] == 99999) | (tempDF['DIR_THROUGH_LANES'] > 0)]
+        tempDF = tempDF[tempDF['IRI'].isna()]
+        self.df['SJF49'].iloc[tempDF.index.tolist()] = False  
 
     def sjf50(self):
-        # PSR|"PSR ValueNumeric Must Exist Where IRI ValueNumeric IS NULL AND FACILITY_TYPE IN (1;2) AND SURFACE_TYPE >1 AND(Sample exists AND (F_SYSTEM in (4;6) AND URBAN_ID <99999 OR F_SYSTEM = 5) OR (F_SYSTEM = 1 or NHS ValueNumeric <>NULL) AND PSR ValueText = ‘A’)"
-        tmp_errors = ((self.psr.notna())|((~self.facility_type.isin([1,2]))|\
-        (self.surface_type<1)|((self.samples.isna())|(((~self.f_system.isin([4,6]))|\
-        (self.urban_id>99999)|(self.f_system!=5))|((self.f_system!=1)|(self.nhs.isna()))|\
-        (self.psr_value_text!='A')|(self.iri.isna())))))
-        print('sjf50',tmp_errors)
-        return tmp_errors
+        #PSR ValueNumeric Must Exist Where IRI ValueNumeric IS NULL AND FACILITY_TYPE IN (1;2) AND SURFACE_TYPE >1 
+        # AND(Sample exists AND (F_SYSTEM in (4;6) AND URBAN_CODE <99999 OR F_SYSTEM = 5) 
+        # OR (F_SYSTEM = 1 or NHS ValueNumeric <>NULL) AND PSR ValueText = ‘A’)
+        self.df['SJF50'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['IRI'].isna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([4,6]) | (tempDF['F_SYSTEM']==5)]
+        tempDF = tempDF[(tempDF['URBAN_CODE'] < 99999) | (tempDF['F_SYSTEM'] == 5)]
+        # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'].isna()]
+        self.df['SJF50'].iloc[tempDF.index.tolist()] = False   
 
-#1-50 being rewrote by Tyler the co-op, will look at and change base on what he writes.
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['IRI'].isna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1] 
+        tempDF = tempDF[tempDF['F_SYSTEM'] == 1 | tempDF['NHS'].notna()]
+        # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'] == 'A']
+        # tempDF = tempDF[tempDF['PSR'].isna()]
+        self.df['SJF50'].iloc[tempDF.index.tolist()] = False   
 
     def sjf51(self):
         #SURACE_TYPE|"SURFACE_TYPE ValueNumeric Must Exist Where FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS ValueNumeric <> NULL OR Sample exists) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL) "
-        tmp_errors = pd.DataFrame(np.nan, index=range(self.df.shape[0]+1),columns='SJF51')
+        self.df['SJF51'] = True
         tmp_df = self.df.copy(deep = True)
-        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([3,4,9,10])]
-        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([])]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS']!=np.nan) | (tmp_df['sample_Value_Numeric']!=np.nan)]
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isna()]
+        self.df['SJF51'].iloc[tmp_df.index.tolist()] = False
 
-
-        return tmp_errors
 
     
     def sjf52(self):
         #RUTTING|"RUTTING ValueNumeric Must Exist Where SURFACE_TYPE in (2;6;7;8) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS OR Sample) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
-        tmp_errors = (((self.rutting.notna()))|((~self.surface_type.isin([2,6,7,8]))|\
-        ((~self.facility_type.isin([1,2]))|((self.f_system!=1)|(self.nhs.isna())|\
-        (self.samples.isna()))|(self.dir_through_lanes<0)&((self.iri.isna())|(self.psr.isna())))))
-        print('sjf52',tmp_errors)
-        return tmp_errors
+        self.df['SJF52'] = True
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,6,7,8])]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['sample_Value_Numeric'].notna()) |(tmp_df['DIR_THROUGH_LANES']>0)]
+        tmp_df = tmp_df[tmp_df['RUTTING'].isna()]
+        self.df['SJF52'].iloc[tmp_df.index.tolist()] = False
     
     def sjf53(self):
-        #FAULTING|"Faulting ValueNumeric Must Exist Where SURFACE_TYPE in (3;4;9;10) AND (FACILITY_TYPE in (1;2)  AND  (F_SYSTEM = 1 OR NHS OR Sample) OR  DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
-        tmp_errors = ((self.faulting.notna())|((~self.surface_type.isin([3,4,9,10]))|\
-        ((~self.facility_type.isin([1,2]))|((self.f_system!=1)|(self.nhs.isna())|\
-        (self.samples.isna()))|(self.dir_through_lanes<0)&((self.iri.isna())|(self.psr.isna())))))
-        print('sjf53',tmp_errors)
-        return tmp_errors
-
+        # Faulting ValueNumeric Must Exist Where SURFACE_TYPE in (3;4;9;10) AND (FACILITY_TYPE in (1;2)  AND  (F_SYSTEM = 1 OR NHS OR Sample) OR  DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+        self.df['SJF53'] = True
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([3,4,9,10])]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['sample_Value_Numeric'].notna()) |(tmp_df['DIR_THROUGH_LANES']>0)]
+        tmp_df = tmp_df[tmp_df['FAULTING'].isna()]
+        self.df['SJF53'].iloc[tmp_df.index.tolist()] = False
+    
     def sjf54(self):
-        #CRACKING_PERCENT|"SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
-        tmp_errors = (((self.cracking_percent.notna())&(self.surface_type.isin([2,3,4,5,6,7,8,9,10]))&\
-        ((self.facility_type.isin([1,2]))&((self.f_system==1)|(self.nhs.notna())|\
-        (self.samples.notna()))|(self.dir_through_lanes>0)&((self.iri.notna())|(self.psr.notna())))))
-        print('sjf54',tmp_errors)
-        return tmp_errors
-    
-    def sjf55(self):
-        #YEAR_LAST_IMPROVEMENT|YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
-        tmp_errors = ((self.surface_type.isin([1]))|((self.year_last_improvement_value_date.notna())&\
-        (self.samples.notna())&((self.surface_type.isin([2,3,4,5,6,7,8,9,10]))|\
-        (pd.to_datetime(self.year_last_construction_value_date)<(pd.to_datetime(self.begin_date)-timedelta(days =7305 ))))))
-        print('sjf55',tmp_errors)
-        return tmp_errors
-    
-    def sjf56(self):
-        #YEAR_LAST_CONSTRUCTION|YEAR_LAST_CONSTRUCTION must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10)
-        tmp_errors = ((self.surface_type.isin([1]))|((self.year_last_construction_value_date.notna())&\
-        (self.samples.notna())&(self.surface_type.isin([2,3,4,5,6,7,8,9,10]))))
-        print('sjf56',tmp_errors)
-        return tmp_errors
-    
-    def sjf57(self):
-        #LAST_OVERLAY_THICKNESS|Sample and YEAR_LAST_IMPROVEMENT exist
-        tmp_errors = (((self.samples.notna())&(self.year_last_improvement_value_date.notna())))
-        print('sjf57',tmp_errors)
-        return tmp_errors
-    
-    def sjf58(self):
-        #THICKNESS_RIGID|SURFACE_TYPE (3;4;5;7;8;9;10) and Sample
-        tmp_errors = (((self.thickness_rigid.notna())&(self.samples.notna())&(self.surface_type.isin([3,4,5,7,8,9,10]))))
-        print('sjf58',tmp_errors)
-        return tmp_errors
-    
-    def sjf59(self):
-        #THICKNESS_FLEXIBLE|SURFACE_TYPE (2;6;7;8) and Sample
-        tmp_errors = (((self.thickness_flexible.notna())&(self.surface_type.isin([2,6,7,8]))&(self.samples.notna())))
-        print('sjf59',tmp_errors)
-        return tmp_errors
+        # SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
+        self.df['SJF54'] = True
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['sample_Value_Numeric'].notna()) |(tmp_df['DIR_THROUGH_LANES']>0)]
+        tmp_df = tmp_df[tmp_df['CRACKING_PERCENT'].isna()]
+        self.df['SJF54'].iloc[tmp_df.index.tolist()] = False
 
-    def sjf60(self):
-        #BASE_TYPE|Sample and SURFACE_TYPE >1
-        tmp_errors = (((self.base_type.notna())&(self.samples.notna())&(self.surface_type>1)))
-        print('sjf60',tmp_errors)
-        return tmp_errors
-    
-    def sjf61(self):
-        #BASE_THICKNESS|Where BASE_TYPE >1; SURFACE_TYPE >1  and Sample
-        tmp_errors = ((self.base_type<1)|((self.base_type>1)&(self.surface_type>1)&(self.samples.notna())&(self.base_thickness.notna())))
-        print('sjf61',tmp_errors)
-        return tmp_errors
-    
-    def sjf62(self):
-        print('Do not collect soil type data item')
-        return False
-    
-    def sjf63(self):
-        #COUNTY_ID|FACILITY_TYPE in (1;2) AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_ID <99999) or NHS
-        tmp_errors = (((self.county_id.notna())&(self.facility_type.isin([1,2]))&\
-        ((self.f_system.isin([1,2,3,4,5]))|((self.f_system==6)&(self.urban_id<99999))|\
-        (self.nhs.notna()))))
-        print('sjf63',tmp_errors)
-        return tmp_errors
-    
-    def sjf64(self):
-        #NHS|(F_SYSTEM = 1 AND (FACILITY_TYPE  in 1;2;6))|
-        tmp_errors = (((self.nhs.notna())&(self.f_system==1)&(self.facility_type.isin([1,2,6]))))
-        print('sjf64',tmp_errors)
-        return tmp_errors
-    
-    def sjf65(self):
-        #strhanet
-        print('STRAHNET: No coverage validations')
-        return False
-    
-    def sjf66(self):
-        #NN
-        print("NN : No coverage validations")
-        return False
-    
-    def sjf67(self):
-        #Maintenance Operations
-        print('MAINTENANCE OPERATIONS: No coverage validations')
-        return False
-    
-    def sjf68(self):
-        #DIR_THROUGH_LANES|F_SYSTEM =1 AND (FACILITY_TYPE = 6) AND (IRI OR PSR >0)
-        tmp_errors = (((self.dir_through_lanes.notna())&(self.f_system==1)&\
-        (self.facility_type==6)&((self.iri>0)|(self.psr>0))))
-        print('sjf68',tmp_errors)
-        return tmp_errors
-    
-    def sjf69(self):
-        #THROUGH_LANES|THROUGH_LANES must be >1 WHERE FACILITY_TYPE = 2|
-        tmp_errors = ((self.facility_type!=2)|(self.through_lanes>1)&(self.facility_type==2))
-        print('sjf69',tmp_errors)
-        return tmp_errors
-    
-    def sjf70(self):
-        #THROUGH_LANES|The sum of COUNTER_PEAK_LANES + PEAK_LANES must be >= THROUGH_LANES
-        tmp_errors = ((((self.counter_peak_lanes)+(self.peak_lanes))>=(self.through_lanes)))
-        print('sjf70',tmp_errors)
-        return tmp_errors
-    
-    def sjf71(self):
-        #COUNTER_PEAK_LANES|COUNTER_PEAK_LANES must be NULL if FACILITY_TYPE is 1|
-        tmp_errors = ((self.facility_type!=1)|((self.facility_type==1)&(self.counter_peak_lanes.isna())))
-    
+    def sjf55(self):
+        # YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
+        self.df['SJF55'] = True
+        tmp_df = self.df.copy()
+        tmp_df['BEGIN_DATE'] = pd.to_datetime(tmp_df['BEGIN_DATE'], '%m/%d/%Y')
+        tmp_df['YEAR_LAST_CONSTRUCTION'] = pd.to_datetime(tmp_df['YEAR_LAST_CONSTRUCTION'], '%Y')
+        tmp_df = tmp_df[(tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]))|(tmp_df['YEAR_LAST_CONSTRUCTION']< (tmp_df['BEGIN_DATE'] - relativedelta(years=20))) ]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT'].isna()]
+        self.df['SJF55'].iloc[tmp_df.index.tolist()] = False
+
+    def sjf56(self):
+        # YEAR_LAST_CONSTRUCTION	YEAR_LAST_CONSTRUCTION must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10)
+        self.df['SJF56'] = True
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])]
+        tmp_df = tmp_df[tmp_df['sample_Value_Numeric'].notna()]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_CONSTRUCTION'].isna()]
+        self.df['SJF56'].iloc[tmp_df.index.tolist()] = False
+
+    def sjf57(self):
+        # LAST_OVERLAY_THICKNESS	Sample and YEAR_LAST_IMPROVEMENT exists	
+        self.df['SJF57'] = True
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['sample_Value_Numeric'].notna()]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT'].notna()]
+        tmp_df = tmp_df[tmp_df['LAST_OVERLAY_THICKNESS'].isna()]
+        self.df['SJF57'].iloc[tmp_df.index.tolist()] = False
+
+    def sjf58(self):
+        # THICKNESS_RIGID	SURFACE_TYPE (3;4;5;7;8;9;10) and Sample
+        self.df['SJF58'] = True
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([3,4,5,7,8,9,10])]
+        tmp_df = tmp_df[tmp_df['sample_Value_Numeric'].notna()]
+        tmp_df = tmp_df[tmp_df['THICKNESS_RIGID'].isna()]
+        self.df['SJF58'].iloc[tmp_df.index.tolist()] = False
+
+
 
     
     
@@ -606,81 +607,122 @@ class full_spatial_functions():
     
     def run(self):
         #when it returns True, it means the data has no errors itself
-        # self.df['SJF-01'] = self.sjf01()
-        # self.df['SJF-02'] = self.sjf02()
-        # self.df['SJF-03'] = self.sjf03()
-        # self.df['SJF-04'] = self.sjf04()
-        # self.df['SJF-05'] = self.sjf05()
-        # self.df['SJF-06'] = self.sjf06()
-        # self.df['SJF-07'] = self.sjf07()
-        # self.df['SJF-08'] = self.sjf08()
-        # self.df['SJF-09'] = self.sjf09()
-        # self.df['SJF-10'] = self.sjf10()
-        # self.df['SJF-11'] = self.sjf11()
-        # self.df['SJF-12'] = self.sjf12()
-        # self.df['SJF-13'] = self.sjf13()
-        # self.df['SJF-14'] = self.sjf14()
-        # self.df['SJF-15'] = self.sjf15()
-        # self.df['SJF-16'] = self.sjf16()
-        # self.df['SJF-17'] = self.sjf17()
-        # self.df['SJF-18'] = self.sjf18()
-        # self.df['SJF-19'] = self.sjf19()
-        # self.df['SJF-20'] = self.sjf20()
-        # self.df['SJF-21'] = self.sjf21()
-        # self.df['SJF-22'] = self.sjf22()
-        # self.df['SJF-23'] = self.sjf23()
-        # self.df['SJF-24'] = self.sjf24()
-        # self.df['SJF-25'] = self.sjf25()
-        # self.df['SJF-26'] = self.sjf26()
-        # self.df['SJF-27'] = self.sjf27()
-        # self.df['SJF-28'] = self.sjf28()
-        # self.df['SJF-29'] = self.sjf29()
-        # self.df['SJF-30'] = self.sjf30()
-        # self.df['SJF-31'] = self.sjf31()
-        # self.df['SJF-32'] = self.sjf32()
-        # self.df['SJF-33'] = self.sjf33()
-        # self.df['SJF-34'] = self.sjf34()
-        # self.df['SJF-35'] = self.sjf35()
-        # self.df['SJF-36'] = self.sjf36()
-        # self.df['SJF-37'] = self.sjf37()
-        # self.df['SJF-38'] = self.sjf38()
-        # self.df['SJF-39'] = self.sjf39()
-        # self.df['SJF-40'] = self.sjf40()
-        # self.df['SJF-41'] = self.sjf41()
-        # self.df['SJF-42'] = self.sjf42()
-        # self.df['SJF-43'] = self.sjf43()
-        # self.df['SJF-44'] = self.sjf44()
-        # self.df['SJF-45'] = self.sjf45()
-        # self.df['SJF-46'] = self.sjf46()
-        # self.df['SJF-47'] = self.sjf47()
-        # self.df['SJF-48'] = self.sjf48()
-        # self.df['SJF-49'] = self.sjf49()
-        self.df['SJF-50'] = self.sjf50()
-        self.df['SJF-51'] = self.sjf51()
-        self.df['SJF-52'] = self.sjf52()
-        # self.df['SJF-53'] = self.sjf53()
-        # self.df['SJF-54'] = self.sjf54()
-        # self.df['SJF-55'] = self.sjf55()
-        # self.df['SJF-56'] = self.sjf56()
-        # self.df['SJF-57'] = self.sjf57()
-        # self.df['SJF-58'] = self.sjf58()
-        # self.df['SJF-59'] = self.sjf59()
-        # self.df['SJF-60'] = self.sjf60()
-        # self.df['SJF-61'] = self.sjf61()
-        # self.df['SJF-62'] = self.sjf62()
-        # self.df['SJF-63'] = self.sjf63()
-        # self.df['SJF-64'] = self.sjf64()
-        # self.df['SJF-65'] = self.sjf65()
-        # self.df['SJF-66'] = self.sjf66()
-        # self.df['SJF-67'] = self.sjf67()
-        # self.df['SJF-68'] = self.sjf68()
-        # self.df['SJF-69'] = self.sjf69()
-        # self.df['SJF-70'] = self.sjf70()
+        # self.sjf01()
+        # self.sjf02()
+        # self.sjf03()
+        # self.sjf04()
+        # self.sjf05()
+        # self.sjf06()
+        # self.sjf07()
+        # self.sjf08()
+        # self.sjf09()
+        # self.sjf10()
+        # self.sjf11()
+        # self.sjf12()
+        # self.sjf13()
+        self.sjf14()
+        self.sjf15()
+        self.sjf16()
+        self.sjf17()
+        self.sjf18()
+        self.sjf19()
+        self.sjf20()
+        self.sjf21()
+        self.sjf22()
+        self.sjf23()
+        self.sjf24()
+        self.sjf25()
+        self.sjf26()
+        # self.sjf27()
+        # self.sjf28()
+        # self.sjf29()
+        # self.sjf30()
+        # self.sjf31()
+        # self.sjf32()
+        # self.sjf33()
+        # self.sjf34()
+        # self.sjf35()
+        # self.sjf36()
+        # self.sjf37()
+        # self.sjf38()
+        # self.sjf39()
+        # self.sjf40()
+        # self.sjf41()
+        # self.sjf42()
+        # self.sjf43()
+        # self.sjf44()
+        # self.sjf45()
+        # self.sjf46()
+        # self.sjf47()
+        # self.sjf48()
+        # self.sjf49()
+        # self.sjf50()
+        # self.sjf51()
+        # self.sjf52()
+        # self.sjf53()
+        # self.sjf54()
+        # self.sjf55()
+        # self.sjf56()
+        # self.sjf57()
+        # self.sjf58()
+        # self.sjf59()
+        # self.sjf60()
+        # self.sjf61()
+        # self.sjf62()
+        # self.sjf63()
+        # self.sjf64()
+        # self.sjf65()
+        # self.sjf66()
+        # self.sjf67()
+        # self.sjf68()
+        # self.sjf69()
+        # self.sjf70()
+        # self.sjf71()
+        # self.sjf72()
+        # self.sjf73()
+        # self.sjf74()
+        # self.sjf75()
+        # self.sjf76()
+        # self.sjf77()
+        # self.sjf78()
+        # self.sjf79()
+        # self.sjf80()
+        # self.sjf81()
+        # self.sjf82()
+        # self.sjf82b()
+        # self.sjf82c()
+        # self.sjf82d()
+        # self.sjf83()
+        # self.sjf83b()
+        # self.sjf83c()
+        # self.sjf83d()
+        # self.sjf84()
+        # self.sjf85()
+        # self.sjf86()
+        # self.sjf87()
+        # self.sjf88()
+        # self.sjf89()
+        # self.sjf90()
+        # self.sjf91()
+        # self.sjf92()
+        # self.sjf93()
+        # self.sjf94()
+        # self.sjf96()
+        # self.sjf96()
+        # self.sjf97()
+        # self.sjf98()
+        # self.sjf99()
+        # self.sjf100()
 
 
 
-df = pd.read_csv('better_test_data.csv')
+
+
+df = pd.read_excel('test_data_sjf_newest.xlsx')
 
 c = full_spatial_functions(df)  
 # c.run()
 c.run()
+print(c.df)
+
+c.df.to_excel('test_functions_matt_sucks.xlsx', index=False)
