@@ -235,7 +235,7 @@ class full_spatial_functions():
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4]) | tempDF['NHS'].notna()]
         tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
-        tempDF = tempDF[tempDF['ALTERNATIVE_ROUTE_NAME'].isna()]
+        tempDF = tempDF[tempDF['ALTERNATIVE_ROUTE_NAME_VALUE_TEXT'].isna()]
         self.df['SJF19'].iloc[tempDF.index.tolist()] = False
 
     def sjf20(self):    
@@ -247,12 +247,20 @@ class full_spatial_functions():
         tempDF = tempDF[tempDF['AADT'].isna()]
         self.df['SJF20'].iloc[tempDF.index.tolist()] = False
 
-        #(Q and R) OR S === (Q or S) AND (R or S)
         tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['F_SYSTEM']==6 | tempDF['NHS'].notna()]
-        tempDF = tempDF[(tempDF['URBAN_CODE'] < 99999) | tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2,4])]
+        tempDF = tempDF[(tempDF['F_SYSTEM']==6)]
+        tempDF = tempDF[(tempDF['URBAN_CODE'] < 99999)]
         tempDF = tempDF[tempDF['AADT'].isna()]
         self.df['SJF20'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2,4])]
+        tempDF = tempDF[tempDF['NHS'].notna()]
+        tempDF = tempDF[tempDF['AADT'].isna()]
+        self.df['SJF20'].iloc[tempDF.index.tolist()] = False
+
+
 
     def sjf21(self):
         #AADT_SINGLE_UNIT must exist WHERE ((F_SYSTEM in (1) or NHS ValueNumeric <> NULL) and FACILITY_TYPE (1;2)) and on Samples
@@ -272,7 +280,8 @@ class full_spatial_functions():
         #PCT_DH_SINGLE_UNIT must exist on Samples
         self.df['SJF22'] = True
         tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna() & tempDF['PCT_DH_SINGLE_UNIT'].isna()]
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['PCT_DH_SINGLE_UNIT'].isna()]
         self.df['SJF22'].iloc[tempDF.index.tolist()] = False
 
     def sjf23(self):
@@ -433,16 +442,43 @@ class full_spatial_functions():
 
     def sjf41(self):
         #CURVES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
+        #REVIEW LATER
         self.df['SJF41'] = True
+
+
 
     def sjf42(self):
         #At least one CURVES_A-F must be coded for each Sample WHERE (F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999) and SURFACE_TYPE > 1.
         self.df['SJF42'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['F_SYSTEM'] == 4)]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'] == 99999)]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        tempDF = tempDF[tempDF['CURVE_F'].isna()]
+        self.df['SJF42'].iloc[tempDF.index.tolist()] = False
 
     def sjf43(self):
         #Sum Length (CURVES_A + CURVES_B + CURVES_C + CURVES_D + CURVES_E + CURVES_E) Must Equal to the Sample Length on 
         # (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)))
-        self.df['SJF43'] = True
+
+        #ENTIRE column ('SJF43') should either be True or False as this rule does not check individual rows
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CURVE_F'].notna()]
+        tempDF['CURVE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
+        curve_len_sum = tempDF['CURVE_LEN'].sum()
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['F_SYSTEM'] == 4)]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'] == 99999)]
+        tempDF['SAMPLE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
+        sample_len_sum = tempDF['SAMPLE_LEN'].sum()
+
+        if curve_len_sum == sample_len_sum:
+            self.df['SJF43'] = True
+        else:
+            self.df['SJF43'] = False 
 
     def sjf44(self):
         #TERRAIN_TYPE must exist on Samples WHERE (URBAN_CODE = 99999 AND F_SYSTEM in (1;2;3;4;5))
@@ -456,15 +492,40 @@ class full_spatial_functions():
 
     def sjf45(self):
         #GRADES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
+        #REVIEW LATER
         self.df['SJF45'] = True
 
     def sjf46(self):
         #At least one GRADES_A-F must be coded for each Sample WHERE F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1.
         self.df['SJF46'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['F_SYSTEM'] == 4)]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'] == 99999)]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        tempDF = tempDF[tempDF['GRADE_F'].isna()]
+        self.df['SJF46'].iloc[tempDF.index.tolist()] = False
 
     def sjf47(self):
         #Sum Length (GRADES_A + GRADES_B + GRADES_C + GRADES_D + GRADES_E + GRADES_E) Must Equal to the Sample Length on (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)))
-        self.df['SJF47'] = True
+        #ENTIRE column (SJF47) should be either TRUE or False as this rule does not check individual rows
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['GRADE_F'].notna()]
+        tempDF['GRADE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
+        grade_len_sum = tempDF['GRADE_LEN'].sum()
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['F_SYSTEM'] == 4)]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'] == 99999)]
+        tempDF['SAMPLE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
+        sample_len_sum = tempDF['SAMPLE_LEN'].sum()
+
+        if sample_len_sum == grade_len_sum:
+            self.df['SJF47'] = True
+        else:
+            self.df['SJF47'] = False
+
 
     def sjf48(self):
         #PCT_PASS_SIGHT must exist on Samples WHERE: (URBAN_CODE = 99999 and THROUGH_LANES =2 and MEDIAN_TYPE in (1;2) and SURFACE_TYPE > 1)
@@ -483,10 +544,10 @@ class full_spatial_functions():
         # OR Sample sections WHERE (F_SYSTEM = 4 and URBAN_CODE = 99999)OR DIR_THROUGH_LANES >0
         self.df['SJF49'] = True
         tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | tempDF['NHS'] != 1]
-        # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'] != 'A']
-        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
         tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['NHS'] != 1)]
+        # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'] != 'A']
         tempDF = tempDF[tempDF['IRI'].isna()]
         self.df['SJF49'].iloc[tempDF.index.tolist()] = False  
 
@@ -501,25 +562,27 @@ class full_spatial_functions():
         #PSR ValueNumeric Must Exist Where IRI ValueNumeric IS NULL AND FACILITY_TYPE IN (1;2) AND SURFACE_TYPE >1 
         # AND(Sample exists AND (F_SYSTEM in (4;6) AND URBAN_CODE <99999 OR F_SYSTEM = 5) 
         # OR (F_SYSTEM = 1 or NHS ValueNumeric <>NULL) AND PSR ValueText = ‘A’)
-        self.df['SJF50'] = True
-        tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['IRI'].isna()]
-        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
-        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
-        tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([4,6]) | (tempDF['F_SYSTEM']==5)]
-        tempDF = tempDF[(tempDF['URBAN_CODE'] < 99999) | (tempDF['F_SYSTEM'] == 5)]
-        # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'].isna()]
-        self.df['SJF50'].iloc[tempDF.index.tolist()] = False   
 
-        tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['IRI'].isna()]
-        tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
-        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1] 
-        tempDF = tempDF[tempDF['F_SYSTEM'] == 1 | tempDF['NHS'].notna()]
-        # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'] == 'A']
-        # tempDF = tempDF[tempDF['PSR'].isna()]
-        self.df['SJF50'].iloc[tempDF.index.tolist()] = False   
+        #PSR NOT CHECKED
+        self.df['SJF50'] = True
+        # tempDF = self.df.copy()
+        # tempDF = tempDF[tempDF['IRI'].isna()]
+        # tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        # tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        # tempDF = tempDF[tempDF['sample_Value_Numeric'].notna()]
+        # tempDF = tempDF[tempDF['F_SYSTEM'].isin([4,6]) | (tempDF['F_SYSTEM']==5)]
+        # tempDF = tempDF[(tempDF['URBAN_CODE'] < 99999) | (tempDF['F_SYSTEM'] == 5)]
+        # # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'].isna()]
+        # self.df['SJF50'].iloc[tempDF.index.tolist()] = False   
+
+        # tempDF = self.df.copy()
+        # tempDF = tempDF[tempDF['IRI'].isna()]
+        # tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
+        # tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1] 
+        # tempDF = tempDF[tempDF['F_SYSTEM'] == 1 | tempDF['NHS'].notna()]
+        # # tempDF = tempDF[tempDF['PSR_VALUE_TEXT'] == 'A']
+        # # tempDF = tempDF[tempDF['PSR'].isna()]
+        # self.df['SJF50'].iloc[tempDF.index.tolist()] = False  
 
     def sjf51(self):
         #SURACE_TYPE|"SURFACE_TYPE ValueNumeric Must Exist Where FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS ValueNumeric <> NULL OR Sample exists) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL) "
@@ -566,9 +629,12 @@ class full_spatial_functions():
         # YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
         self.df['SJF55'] = True
         tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['sample_Value_Numeric'].notna()]
         tmp_df['BEGIN_DATE'] = pd.to_datetime(tmp_df['BEGIN_DATE'], '%m/%d/%Y')
-        tmp_df['YEAR_LAST_CONSTRUCTION'] = pd.to_datetime(tmp_df['YEAR_LAST_CONSTRUCTION'], '%Y')
-        tmp_df = tmp_df[(tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]))|(tmp_df['YEAR_LAST_CONSTRUCTION']< (tmp_df['BEGIN_DATE'] - relativedelta(years=20))) ]
+        tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'], format='%Y',errors='ignore')
+        # print("thunder muck",tmp_df[['YEAR_LAST_CONSTRUCTION_VALUE_DATE','BEGIN_DATE']])
+        tmp_df['BEGIN_20_LESS'] = tmp_df['BEGIN_DATE'].apply(lambda x: x-relativedelta(years=20))
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < tmp_df['BEGIN_20_LESS'])]
         tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT'].isna()]
         self.df['SJF55'].iloc[tmp_df.index.tolist()] = False
 
@@ -598,6 +664,7 @@ class full_spatial_functions():
         tmp_df = tmp_df[tmp_df['sample_Value_Numeric'].notna()]
         tmp_df = tmp_df[tmp_df['THICKNESS_RIGID'].isna()]
         self.df['SJF58'].iloc[tmp_df.index.tolist()] = False
+        
 
 
 
@@ -620,19 +687,19 @@ class full_spatial_functions():
         # self.sjf11()
         # self.sjf12()
         # self.sjf13()
-        self.sjf14()
-        self.sjf15()
-        self.sjf16()
-        self.sjf17()
-        self.sjf18()
-        self.sjf19()
-        self.sjf20()
-        self.sjf21()
-        self.sjf22()
-        self.sjf23()
-        self.sjf24()
-        self.sjf25()
-        self.sjf26()
+        # self.sjf14()
+        # self.sjf15()
+        # self.sjf16()
+        # self.sjf17()
+        # self.sjf18()
+        # self.sjf19()
+        # self.sjf20()
+        # self.sjf21()
+        # self.sjf22()
+        # self.sjf23()
+        # self.sjf24()
+        # self.sjf25()
+        # self.sjf26()
         # self.sjf27()
         # self.sjf28()
         # self.sjf29()
@@ -657,14 +724,14 @@ class full_spatial_functions():
         # self.sjf48()
         # self.sjf49()
         # self.sjf50()
-        # self.sjf51()
-        # self.sjf52()
-        # self.sjf53()
-        # self.sjf54()
-        # self.sjf55()
-        # self.sjf56()
-        # self.sjf57()
-        # self.sjf58()
+        self.sjf51()
+        self.sjf52()
+        self.sjf53()
+        self.sjf54()
+        self.sjf55()
+        self.sjf56()
+        self.sjf57()
+        self.sjf58()
         # self.sjf59()
         # self.sjf60()
         # self.sjf61()
