@@ -641,7 +641,7 @@ class full_spatial_functions():
         self.df['SJF51'] = True
         tmp_df = self.df.copy(deep = True)
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
-        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS']!=np.nan) | (tmp_df['sample_Value_Numeric']!=np.nan)]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS']!=np.nan) | (tmp_df['sample_Value_Numeric'].notna())|(tmp_df['DIR_THROUGH_LANES']>0)]
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isna()]
         self.df['SJF51'].iloc[tmp_df.index.tolist()] = False
 
