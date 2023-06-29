@@ -637,6 +637,7 @@ class full_spatial_functions():
 
     def sjf51(self):
         #SURACE_TYPE|"SURFACE_TYPE ValueNumeric Must Exist Where FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS ValueNumeric <> NULL OR Sample exists) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL) "
+        print("Running rule SJF51...")
         self.df['SJF51'] = True
         tmp_df = self.df.copy(deep = True)
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
@@ -648,6 +649,7 @@ class full_spatial_functions():
     
     def sjf52(self):
         #RUTTING|"RUTTING ValueNumeric Must Exist Where SURFACE_TYPE in (2;6;7;8) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS OR Sample) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+        print("Running rule SJF52...")
         self.df['SJF52'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,6,7,8])]
@@ -658,6 +660,7 @@ class full_spatial_functions():
     
     def sjf53(self):
         # Faulting ValueNumeric Must Exist Where SURFACE_TYPE in (3;4;9;10) AND (FACILITY_TYPE in (1;2)  AND  (F_SYSTEM = 1 OR NHS OR Sample) OR  DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+        print("Running rule SJF53...")
         self.df['SJF53'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([3,4,9,10])]
@@ -668,6 +671,7 @@ class full_spatial_functions():
     
     def sjf54(self):
         # SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
+        print("Running rule SJF54...")
         self.df['SJF54'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])]
@@ -678,19 +682,22 @@ class full_spatial_functions():
 
     def sjf55(self):
         # YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
+        print("Running rule SJF55...")
         self.df['SJF55'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['sample_Value_Numeric'].notna()]
-        tmp_df['BEGIN_DATE'] = pd.to_datetime(tmp_df['BEGIN_DATE'], '%m/%d/%Y')
+        # tmp_df['BEGIN_DATE'] = pd.to_datetime(tmp_df['BEGIN_DATE'], '%m/%d/%Y')
+        beginDate = datetime.now() - relativedelta(years=21)
+        beginDate_less_20 = datetime.strptime(str(beginDate.year), '%Y')
         tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'], format='%Y',errors='ignore')
-        # print("thunder muck",tmp_df[['YEAR_LAST_CONSTRUCTION_VALUE_DATE','BEGIN_DATE']])
-        tmp_df['BEGIN_20_LESS'] = tmp_df['BEGIN_DATE'].apply(lambda x: x-relativedelta(years=20))
-        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < tmp_df['BEGIN_20_LESS'])]
+        # tmp_df['BEGIN_20_LESS'] = tmp_df['BEGIN_DATE'].apply(lambda x: x-relativedelta(years=20))
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < beginDate_less_20)]
         tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT'].isna()]
         self.df['SJF55'].iloc[tmp_df.index.tolist()] = False
 
     def sjf56(self):
         # YEAR_LAST_CONSTRUCTION	YEAR_LAST_CONSTRUCTION must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10)
+        print("Running rule SJF56...")
         self.df['SJF56'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])]
@@ -700,6 +707,7 @@ class full_spatial_functions():
 
     def sjf57(self):
         # LAST_OVERLAY_THICKNESS	Sample and YEAR_LAST_IMPROVEMENT exists	
+        print("Running rule SJF57...")
         self.df['SJF57'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['sample_Value_Numeric'].notna()]
@@ -709,6 +717,7 @@ class full_spatial_functions():
 
     def sjf58(self):
         # THICKNESS_RIGID	SURFACE_TYPE (3;4;5;7;8;9;10) and Sample
+        print("Running rule SJF58...")
         self.df['SJF58'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([3,4,5,7,8,9,10])]
@@ -718,6 +727,7 @@ class full_spatial_functions():
         
     def sjf59(self):
         # THICKNESS_FLEXIBLE SURFACE_TYPE (2;6;7;8) and Sample
+        print("Running rule SJF59...")
         self.df['SJF59'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,6,7,8])]
@@ -727,6 +737,7 @@ class full_spatial_functions():
 
     def sjf60(self):
         # BASE_TYPE	Sample and SURFACE_TYPE >1
+        print("Running rule SJF60...")
         self.df['SJF60'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'] > 1]
@@ -736,7 +747,7 @@ class full_spatial_functions():
 
     def sjf61(self):
         # BASE_THICKNESS	Where BASE_TYPE >1; SURFACE_TYPE >1  and Sample
-
+        print("Running rule SJF61...")
         self.df['SJF61'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['sample_Value_Numeric'].notna()]
@@ -751,6 +762,7 @@ class full_spatial_functions():
     
     def sjf63(self):
         # COUNTY_ID	FACILITY_TYPE in (1;2) AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_ID <99999) or NHS
+        print("Running rule SJF63...")
         self.df['SJF63'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
@@ -760,6 +772,7 @@ class full_spatial_functions():
 
     def sjf64(self):
         # NHS	(F_SYSTEM = 1 AND (FACILITY_TYPE  in 1;2;6))
+        print("Running rule SJF64...")
         self.df['SJF64'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['F_SYSTEM']==1]
@@ -769,18 +782,22 @@ class full_spatial_functions():
 
     def sjf65(self):
         # STRAHNET DO NOT VALIDATE
+        print("Running rule SJF65...")
         self.df['SJF65'] = True
 
     def sjf66(self):
         # NN DO NOT VALIDATE
+        print("Running rule SJF66...")
         self.df['SJF66'] = True
 
     def sjf67(self):
         # MAINTENANCE_OPERATIONS DO NOT VALIDATE
+        print("Running rule SJF67...")
         self.df['SJF67'] = True
 
     def sjf68(self):
         # DIR_THROUGH_LANES	F_SYSTEM =1 AND (FACILITY_TYPE = 6) AND (IRI OR PSR >0)
+        print("Running rule SJF68...")
         self.df['SJF68'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['F_SYSTEM']==1]
@@ -791,6 +808,7 @@ class full_spatial_functions():
 
     def sjf69(self):
         # THROUGH_LANES	THROUGH_LANES must be >1 WHERE FACILITY_TYPE = 2
+        print("Running rule SJF69...")
         self.df['SJF69'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE']==2]
@@ -800,6 +818,7 @@ class full_spatial_functions():
 
     def sjf70(self):
         # THROUGH_LANES	The sum of COUNTER_PEAK_LANES + PEAK_LANES must be >= THROUGH_LANES
+        print("Running rule SJF70...")
         self.df['SJF70'] = True
         tmp_df = self.df.copy()
         sum = tmp_df['COUNTER_PEAK_LANES'] + tmp_df['PEAK_LANES']
@@ -809,6 +828,7 @@ class full_spatial_functions():
 
     def sjf71(self):
         # COUNTER_PEAK_LANES	COUNTER_PEAK_LANES must be NULL if FACILITY_TYPE is 1
+        print("Running rule SJF71...")
         self.df['SJF71'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE']==1]
@@ -1155,7 +1175,7 @@ class full_spatial_functions():
         self.sjf11()
         self.sjf12()
         self.sjf13()
-        self.sjf14()
+        # self.sjf14()
         self.sjf15()
         self.sjf16()
         self.sjf17()
@@ -1213,7 +1233,7 @@ class full_spatial_functions():
         self.sjf69()
         self.sjf70()
         self.sjf71()
-        self.sjf72()
+        # self.sjf72()
         self.sjf73()
         self.sjf74()
         self.sjf75()
@@ -1254,11 +1274,11 @@ class full_spatial_functions():
 
 
 
-df = pd.read_excel('test_data_sjf_newest.xlsx')
+df = pd.read_csv('all_submission_data.csv')
 
 c = full_spatial_functions(df)  
 # c.run()
 c.run()
 print(c.df)
 
-c.df.to_excel('test_functions_matt_sucks.xlsx', index=False)
+c.df.to_csv('test_functions_matt_sucks.csv', index=False)
