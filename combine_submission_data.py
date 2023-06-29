@@ -73,7 +73,8 @@ for file in unique_items:
     print(f"{pos+1} / {num_files}: {file['title']}")
     download = drive.CreateFile({'id':file['id']})
     download.GetContentFile('example.csv')
-    df = pd.read_csv('example.csv', sep='|')
+    # casting value text to string
+    df = pd.read_csv('example.csv', sep='|',dtype={'ValueText':str,'Value_Text':str})
 
     if 'Data_Item' in df.columns.tolist():
         data_item = df['Data_Item'].iloc[0].upper()
@@ -85,6 +86,9 @@ for file in unique_items:
     else:
         print('COLUMN FORMAT ERROR')
     
+    # accounting for the fucked value_numeric issue with urban code, really this should be value text so were 
+    # zfilling this value to 5
+    if data_item == 'URBAN_CODE': df['URBAN_CODE'] = df.URBAN_CODE.astype(str).str.zfill(5)
     cols = [f'{data_item}', f'{data_item}_VALUE_DATE', f'{data_item}_VALUE_TEXT']
     filename = f'tmp/{data_item}.csv'
     # if data_item == 'F_SYSTEM':
@@ -122,7 +126,6 @@ myjson = {'operations':operations}
 with open('myfile.json','w') as f:
     f.write(json.dumps(myjson))
 os.system('lrsops overlay --operations myfile.json')
-
 shutil.rmtree('tmp')
 
 
