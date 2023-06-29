@@ -40,10 +40,13 @@ traffic_data = [file for file in traffic_data if (file['mimeType'] == 'text/csv'
 district_data = drive.ListFile({'q': "'1cSF7v6WhTS7hWIddER37yaZppUbO3j62' in parents and trashed=False"}).GetList()
 district_data = [file for file in district_data if (file['mimeType'] == 'text/csv')]
 
+samples_folder = drive.ListFile({'q': "'1uyW5wI7UxNeX1RlTA58kJ1mr_IFZ6WHN' in parents and trashed=False"}).GetList()
+samples_folder = [file for file in samples_folder if (file['mimeType'] == 'text/csv')]
 
 
 
-dataset_list = [fixed_files, june_submission, traffic_data, abril_submission, pavement_data, district_data]
+
+dataset_list = [fixed_files, june_submission, traffic_data, abril_submission, pavement_data, district_data, samples_folder]
 unique_titles = []
 unique_items = []
 for dataset in dataset_list:
@@ -74,17 +77,23 @@ for file in unique_items:
     download = drive.CreateFile({'id':file['id']})
     download.GetContentFile('example.csv')
     # casting value text to string
-    df = pd.read_csv('example.csv', sep='|',dtype={'ValueText':str,'Value_Text':str})
+    if file['title'] == 'LRSE_HPMS_SAMPLE_evw.csv':
+        df = pd.read_csv('example.csv', dtype={'ValueText':str,'Value_Text':str})
+    else: 
+        df = pd.read_csv('example.csv', sep='|',dtype={'ValueText':str,'Value_Text':str})
 
     if 'Data_Item' in df.columns.tolist():
         data_item = df['Data_Item'].iloc[0].upper()
-        data_item = data_item
         df.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'}, inplace=True)
     elif 'DataItem' in df.columns.tolist():
         data_item = df['DataItem'].iloc[0]
         df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
+    elif 'HPMS_SAMPLE_NO' in df.columns.tolist():
+        data_item = 'HPMS_SAMPLE_NO'
+        df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
     else:
         print('COLUMN FORMAT ERROR')
+        print(df)
     
     # accounting for the fucked value_numeric issue with urban code, really this should be value text so were 
     # zfilling this value to 5
@@ -94,6 +103,8 @@ for file in unique_items:
     # if data_item == 'F_SYSTEM':
     #     print('**************************mattsucks\n', df[['ROUTEID', 'BMP', 'EMP', 'Value']])
     df.to_csv(filename)
+
+
 
     if pos == 0:
         op = {
