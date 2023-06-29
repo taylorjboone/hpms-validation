@@ -102,7 +102,7 @@ for file in unique_items:
     filename = f'tmp/{data_item}.csv'
     # if data_item == 'F_SYSTEM':
     #     print('**************************mattsucks\n', df[['ROUTEID', 'BMP', 'EMP', 'Value']])
-    df.to_csv(filename)
+    df.to_csv(filename,index=False)
 
 
 
@@ -137,7 +137,7 @@ myjson = {'operations':operations}
 with open('myfile.json','w') as f:
     f.write(json.dumps(myjson))
 os.system('lrsops overlay --operations myfile.json')
-shutil.rmtree('tmp')
+# shutil.rmtree('tmp')
 
 
 # for file in june_submission:
