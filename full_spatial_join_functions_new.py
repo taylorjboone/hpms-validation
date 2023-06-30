@@ -1326,7 +1326,7 @@ class full_spatial_functions():
         return f'=HYPERLINK("#{rule}!A1", "{rule}")'
     
     def create_output_tyler(self, template='fullSpatialErrors_template.xlsx', outfilename='rules_summary.xlsx'):
-        dataItemsDF = pd.read_excel('fullspatialerrors_template.xlsx', sheet_name="ruleDataItems", usecols='A,B', nrows=108)
+        dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=108)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
         dataItemsDF['Data_Items'] = dataItemsDF['Data_Items'].str.split(",")
         ruleDict = dict(zip(dataItemsDF['Rule'], dataItemsDF['Data_Items']))
