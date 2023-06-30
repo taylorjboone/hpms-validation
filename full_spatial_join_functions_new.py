@@ -8,6 +8,7 @@ import copy
 import string
 import os
 import shutil
+from openpyxl.styles import Font
 warnings.filterwarnings("ignore")
 
 # the combine apply function
@@ -1326,7 +1327,7 @@ class full_spatial_functions():
         return f'=HYPERLINK("#{rule}!A1", "{rule}")'
     
     def create_output_tyler(self, template='fullSpatialErrors_template.xlsx', outfilename='rules_summary.xlsx'):
-        dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=108)
+        dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=106)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
         dataItemsDF['Data_Items'] = dataItemsDF['Data_Items'].str.split(",")
         ruleDict = dict(zip(dataItemsDF['Rule'], dataItemsDF['Data_Items']))
@@ -1341,7 +1342,7 @@ class full_spatial_functions():
             lenFailed = []
 
             #Get counts for failed/passed/length of failed
-            print("Updating summary sheet on ",outfilename,"...")
+            print("Updating summary sheet on",outfilename,"...")
             for rule in ruleDict.keys():
                 #Assumes all passes for rules not ran
                 try:
@@ -1358,9 +1359,9 @@ class full_spatial_functions():
             lengthDF = pd.DataFrame(lenFailed)
 
             #Write counts to Summary sheet
-            failedDF.to_excel(writer, sheet_name='Summary', startcol=3, startrow=1, header=False, index=False)
-            passedDF.to_excel(writer, sheet_name='Summary', startcol=4, startrow=1, header=False, index=False)
-            lengthDF.to_excel(writer, sheet_name='Summary', startcol=5, startrow=1, header=False, index=False)
+            failedDF.to_excel(writer, sheet_name='Summary', startcol=4, startrow=1, header=False, index=False)
+            passedDF.to_excel(writer, sheet_name='Summary', startcol=5, startrow=1, header=False, index=False)
+            lengthDF.to_excel(writer, sheet_name='Summary', startcol=6, startrow=1, header=False, index=False)
 
             #Create sheets for each rule containing all failed rows (using only columns that the specific rule references)
             for rule in ruleDict.keys():
@@ -1373,14 +1374,17 @@ class full_spatial_functions():
                             [dataItems.append(x) for x in ruleDict[rule] if x not in dataItems]
                             tempDF = tempDF[tempDF[rule]==False]
                             tempDF = tempDF[dataItems]
-                            tempDF.to_excel(writer, sheet_name=rule, index=False)
+                            tempDF.to_excel(writer, sheet_name=rule, startrow=1, index=False)
+                            worksheet = writer.sheets[rule]
+                            worksheet['A1'] = f'=HYPERLINK("#Summary!A1", "Summary Worksheet")'
+                            worksheet['A1'].font = Font(underline='single', color='0000EE')
                         else:
-                            print("No failed rows for rule: ", rule)
+                            print("No failed rows for rule:", rule)
 
                     except KeyError:
                         print(rule, "not found in DF. Sheet was not created in rules_summary.xlsx")
                 else:
-                    print("No data items for rule ", rule, ", Sheet not created.")
+                    print("No data items for rule", rule, ", Sheet not created.")
 
     
 
