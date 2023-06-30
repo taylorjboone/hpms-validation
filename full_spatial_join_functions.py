@@ -1362,48 +1362,65 @@ class full_spatial_functions():
             val['Description'] = rules_description.get(i,'')
             val['Data Item'] = rules_name.get(i,'')
             vals.append(val)
-
+        
+        # making into df and renaming True and False columns
         sumdf = pd.DataFrame(vals).fillna(value=0)
         sumdf.rename(columns={False:'Failed Rows',True:'Passed Rows'},inplace=True)
 
+        # creating writer, selecting used columns and writing out
         writer = pd.ExcelWriter(outfilename,engine='xlsxwriter')
         sumdf = sumdf[['Rule','Data Item','Description','Failed Rows','Passed Rows','Length']]
         sumdf.to_excel(writer,sheet_name='Summary',index=False)
 
+        # getting book and sheet and creating formats
         workbook = writer.book # Access the workbook
         worksheet= writer.sheets['Summary'] # Access the Worksheet
         text_format = workbook.add_format({'text_wrap': True})
         cell_format_hl = workbook.add_format({'font_color': 'blue','font':'Calibri (Body)','underline':'single'})
         
+        # iterating through each header and apply relevant formatting
         header_list = sumdf.columns.values.tolist() # Generate list of headers
         for i in range(0, len(header_list)):
-            if header_list[i] == 'Rule':
+            if header_list[i] == 'Rule': # this column gets a hyperlink format
                 for ii in range(len(sumdf)):
                     worksheet.write(f'A{ii+2}',sumdf['Rule'].iloc[ii],cell_format_hl)
-            elif header_list[i] == 'Description':
+            elif header_list[i] == 'Description': # this column gets a text wrap
                 worksheet.set_column(i, i, 30) # Set column widths based on len(header)
                 for ii in range(len(sumdf)):
                     worksheet.write(f'C{ii+2}',sumdf['Description'].iloc[ii],text_format)
             else:
                 worksheet.set_column(i, i, max([sumdf[header_list[i]].astype(str).str.len().max(),len(header_list[i])]),None) # Set column widths based on len(header)
+        
+        # creating filter and filtering based on Failed Rows 
         worksheet.autofilter(0, 0, len(sumdf)-1, len(sumdf.columns)-1)
-        pos = 0
         worksheet.filter_column('D', 'x > 0')
+        
+        # hiding rows 
         for row_num in (sumdf.index[(sumdf['Failed Rows'] == 0)].tolist()):
             worksheet.set_row(row_num + 1, options={'hidden': True})
+        
+        # iterating through each rule 
         pos = 0
         for k,v in rules_col_used.items():
             if k in df.columns:
-                v = [i for i in v if i in df.columns]
-                tmpdf = df[~df[k]][v+['RouteID','BMP','EMP']]
+                v = [i for i in v if i in df.columns] # if used columns dont exist in df.columns filter 
+
+                # where the rule fails select the used columns and the RouteID,BMP,EMP
+                tmpdf = df[~df[k]][v+['RouteID','BMP','EMP']] 
+
+                # performing this part only if tmpdf is not zero and tmpdf is less than size_limit 
+                # if combine_segs is set to False then the df needs have at least 1 row
+                # the size_limit filters out rules that are not currently useful due to high volume
+                # and reduces the time on the combine_df function
                 if len(tmpdf) > 0 and ((len(tmpdf) < size_limit and combine_segs) or not combine_segs):
+                    # combining segments if designated
                     if combine_segs: tmpdf = combine_df(tmpdf,columns=v)
                     tmpdf.to_excel(writer,sheet_name=k,index=False)
                     workbook = writer.book # Access the workbook
                     worksheet= writer.sheets[k] # Access the Worksheet
                     header_list = tmpdf.columns.values.tolist() # Generate list of headers
                     for i in range(0, len(header_list)):
-                        if i >= len(header_list)-2:
+                        if i >= len(header_list)-2: # bmp and emp set to width 5
                             worksheet.set_column(i,i,5)
                         else:
                             worksheet.set_column(i, i, max([tmpdf[header_list[i]].astype(str).str.len().max(),len(header_list[i])])) # Set column widths based on len(header)
