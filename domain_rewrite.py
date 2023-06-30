@@ -37,7 +37,7 @@ class DomainCheck():
         self.errors = pd.concat([self.errors,errors])    
 
     def ownership(self,df):
-        errors = df[~df['OWNERSHIP'].isin([1,2,3,4,11,12,21,25,26,27,31])]
+        errors = df[~df['OWNERSHIP'].isin([1,2,3,4,11,12,21,25,26,27,31,32,40,50,60,62,63,64,66,67,68,69,70,72,73,74,80])]
         self.errors = pd.concat([self.errors,errors])
 
     def signal_type(self,df):
@@ -107,6 +107,48 @@ class DomainCheck():
     def route_qualifier(self,df):
         errors = df[~df['ROUTE_QUALIFIER'].isin([1,2,3,4,5,6,7,8,9,10])]
         self.errors = pd.concat([self.errors,errors])
+
+    def structure_type(self,df):
+        errors = df[~df['STRUCTURE_TYPE'].isin(range(1,4))]
+        self.errors = pd.concat([self.errors,errors])
+    
+    def through_lanes(self,df):
+        errors = df[~df['THROUGH_LANES']>0]
+        self.errors = pd.concat([self.errors,errors])
+
+    def peak_lanes(self,df):
+        errors = df[~df['PEAK_LANES']>0]
+        self.errors = pd.concat([self.errors,errors])
+
+    def counter_peak_lanes(self,df):
+        errors = df[~df['COUNTER_PEAK_LANES']>0]
+        self.errors = pd.concat([self.errors,errors])
+
+    def turn_lanes_r(self,df):
+        errors = df[~df['TURN_LANES_R'].isin(range(1,7))]
+        self.errors = pd.concat([self.errors,errors])
+
+    def turn_lanes_l(self,df):
+        errors = df[~df['TURN_LANES_L'].isin(range(1,7))]
+        self.errors = pd.concat([self.errors,errors])
+
+    def speed_limit(self,df):
+        errors = df[~df['SPEED_LIMIT'].isin(range(0,100))]
+        self.errors = pd.concat([self.errors,errors])
+
+    def route_number(self,df):
+        errors = df[~df['ROUTE_NUMBER']>0]
+        self.errors = pd.concat([self.errors,errors])
+
+    def route_name(self,df):
+        errors = df[~df['ROUTE_NAME'].dtype()==str]
+        self.errors = pd.concat([self.errors, errors])
+
+    
+
+    
+
+
 
     def main(self):
         self.f_system(self.master)
