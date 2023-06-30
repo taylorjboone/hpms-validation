@@ -6,6 +6,8 @@ import json
 import warnings
 import copy
 import string
+import os
+import shutil
 warnings.filterwarnings("ignore")
 
 # the combine apply function
@@ -78,12 +80,12 @@ URBAN_CODE_list = ['06139','15481','21745','36190','40753','59275','67672','9359
 column_list = []
 
 # reading in rule information
-rules = pd.read_excel('new_rules_used.xlsx')
-rules['UsedColumns'] = rules.UsedColumns.map(lambda x: json.loads(x.replace("'", '"').replace("URBAN_ID",'URBAN_CODE')))
-rules = rules[(rules.FileName == 'Spatial Join Full')&(rules['Data Item Name'] !='STRUCTURE_TYPE')]
-rules_col_used = rules.set_index('Rule')['UsedColumns'].to_dict()
-rules_description = rules.set_index('Rule')['Message'].to_dict()
-rules_name = rules.set_index('Rule')['Data Item Name'].to_dict()
+# rules = pd.read_excel('new_rules_used.xlsx')
+# rules['UsedColumns'] = rules.UsedColumns.map(lambda x: json.loads(x.replace("'", '"').replace("URBAN_ID",'URBAN_CODE')))
+# rules = rules[(rules.FileName == 'Spatial Join Full')&(rules['Data Item Name'] !='STRUCTURE_TYPE')]
+# rules_col_used = rules.set_index('Rule')['UsedColumns'].to_dict()
+# rules_description = rules.set_index('Rule')['Message'].to_dict()
+# rules_name = rules.set_index('Rule')['Data Item Name'].to_dict()
 
 
 class full_spatial_functions():
@@ -899,13 +901,12 @@ class full_spatial_functions():
         tmp_df = self.df.copy()
         
         tmp_df = tmp_df[tmp_df['SPEED_LIMIT'].notna()]
-        tmp_df = tmp_df[(tmp_df['SPEED_LIMIT'].astype(int) % 5) ==0]
-        tmp_df = tmp_df[(tmp_df['SPEED_LIMIT'] < 90) | (tmp_df['SPEED_LIMIT'] == 999)]
+        tmp_df = tmp_df[((tmp_df['SPEED_LIMIT'].astype(int)%5) != 0) | ((tmp_df['SPEED_LIMIT'] >= 90) & (tmp_df['SPEED_LIMIT'] != 999))]
         self.df['SJF72'].iloc[tmp_df.index.tolist()] = False
 
     def sjf73(self):
         # SIGNAL_TYPE	Where F_SYSTEM = 1 and URBAN_ID <> 99999; SIGNAL_TYPE must = 5
-        print('Running rule sjf73...')
+        print('Running rule SJF73...')
         self.df['SJF73'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['F_SYSTEM']==1]
@@ -915,7 +916,7 @@ class full_spatial_functions():
 
     def sjf74(self):
         # LANE_WIDTH	LANE_WIDTH ValueNumeric should be > 5 and <19
-        print('Running rule sjf74...')
+        print('Running rule SJF74...')
         self.df['SJF74'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[(tmp_df['LANE_WIDTH']<=5)|(tmp_df['LANE_WIDTH']>=19)]
@@ -924,7 +925,7 @@ class full_spatial_functions():
 
     def sjf75(self):
         # MEDIAN_TYPE	Where MEDIAN_TYPE is in the range (2;3;4;5;6) THEN MEDIAN_WIDTH MUST BE > 0
-        print('Running rule sjf75...')
+        print('Running rule SJF75...')
         self.df['SJF75'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['MEDIAN_TYPE'].isin([2,3,4,5,6])]
@@ -1226,7 +1227,7 @@ class full_spatial_functions():
         self.sjf11()
         self.sjf12()
         self.sjf13()
-        # self.sjf14()
+        self.sjf14()
         self.sjf15()
         self.sjf16()
         self.sjf17()
@@ -1284,7 +1285,7 @@ class full_spatial_functions():
         self.sjf69()
         self.sjf70()
         self.sjf71()
-        # self.sjf72()
+        self.sjf72()
         self.sjf73()
         self.sjf74()
         self.sjf75()
@@ -1323,6 +1324,60 @@ class full_spatial_functions():
 
     def _create_link(self,rule):
         return f'=HYPERLINK("#{rule}!A1", "{rule}")'
+    
+    def create_output_tyler(self, template='fullSpatialErrors_template.xlsx', outfilename='rules_summary.xlsx'):
+        dataItemsDF = pd.read_excel('fullspatialerrors_template.xlsx', sheet_name="ruleDataItems", usecols='A,B', nrows=108)
+        dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
+        dataItemsDF['Data_Items'] = dataItemsDF['Data_Items'].str.split(",")
+        ruleDict = dict(zip(dataItemsDF['Rule'], dataItemsDF['Data_Items']))
+
+        shutil.copy(template, outfilename)
+
+
+        with pd.ExcelWriter(outfilename, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            tempDF = self.df.copy()
+            numFailed = []
+            numPassed = []
+            lenFailed = []
+
+            #Get counts for failed/passed/length of failed
+            print("Updating summary sheet on ",outfilename,"...")
+            for rule in ruleDict.keys():
+                #Assumes all passes for rules not ran
+                try:
+                    numFailed.append(tempDF[tempDF[rule]==False].shape[0])
+                    numPassed.append(tempDF[tempDF[rule]==True].shape[0])
+                    lenFailed.append((tempDF[tempDF[rule]==False]['EMP'] - tempDF[tempDF[rule]==False]['BMP']).sum())
+                except KeyError:
+                    numFailed.append(0)
+                    numPassed.append(self.df.shape[0])
+                    lenFailed.append(0)
+
+            failedDF = pd.DataFrame(numFailed)
+            passedDF = pd.DataFrame(numPassed)
+            lengthDF = pd.DataFrame(lenFailed)
+
+            #Write counts to Summary sheet
+            failedDF.to_excel(writer, sheet_name='Summary', startcol=3, startrow=1, header=False, index=False)
+            passedDF.to_excel(writer, sheet_name='Summary', startcol=4, startrow=1, header=False, index=False)
+            lengthDF.to_excel(writer, sheet_name='Summary', startcol=5, startrow=1, header=False, index=False)
+
+            #Create sheets for each rule containing all failed rows (using only columns that the specific rule references)
+            for rule in ruleDict.keys():
+                tempDF = self.df.copy()
+                if type(ruleDict[rule])==list:
+                    print("Creating error sheet for rule: ", rule)
+                    try:
+                        dataItems = ['RouteID', 'BMP', 'EMP']
+                        [dataItems.append(x) for x in ruleDict[rule] if x not in dataItems]
+                        tempDF = tempDF[tempDF[rule]==False]
+                        tempDF = tempDF[dataItems]
+                        tempDF.to_excel(writer, sheet_name=rule, index=False)
+                    except KeyError:
+                        print(rule, "not found in DF. Sheet was not created in rules_summary.xlsx")
+                else:
+                    print("No data items for rule ", rule, ", Sheet not created.")
+
     
 
     
@@ -1419,7 +1474,7 @@ df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str})
 c = full_spatial_functions(df)  
 # c.run()
 c.run()
-w = c.create_output()
+c.create_output_tyler()
 print(c.df)
 
 c.df.to_csv('test_functions_matt_sucks.csv', index=False) 
