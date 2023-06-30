@@ -1366,13 +1366,17 @@ class full_spatial_functions():
             for rule in ruleDict.keys():
                 tempDF = self.df.copy()
                 if type(ruleDict[rule])==list:
-                    print("Creating error sheet for rule: ", rule)
                     try:
-                        dataItems = ['RouteID', 'BMP', 'EMP']
-                        [dataItems.append(x) for x in ruleDict[rule] if x not in dataItems]
-                        tempDF = tempDF[tempDF[rule]==False]
-                        tempDF = tempDF[dataItems]
-                        tempDF.to_excel(writer, sheet_name=rule, index=False)
+                        if tempDF[tempDF[rule]==False].shape[0] > 0:
+                            print("Creating error sheet for rule: ", rule)
+                            dataItems = ['RouteID', 'BMP', 'EMP']
+                            [dataItems.append(x) for x in ruleDict[rule] if x not in dataItems]
+                            tempDF = tempDF[tempDF[rule]==False]
+                            tempDF = tempDF[dataItems]
+                            tempDF.to_excel(writer, sheet_name=rule, index=False)
+                        else:
+                            print("No failed rows for rule: ", rule)
+
                     except KeyError:
                         print(rule, "not found in DF. Sheet was not created in rules_summary.xlsx")
                 else:
