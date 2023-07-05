@@ -544,7 +544,7 @@ class full_spatial_functions():
 
     def sjf41(self):
         #CURVES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
-        #REVIEW LATER
+        #Rule ignored: If curves exist according to rule 42, then this will always be true (with how all submission data is built)
         print("Running rule SJF41...")
         self.df['SJF41'] = True
 
@@ -564,26 +564,15 @@ class full_spatial_functions():
 
     def sjf43(self):
         #Sum Length (CURVES_A + CURVES_B + CURVES_C + CURVES_D + CURVES_E + CURVES_E) Must Equal to the Sample Length on 
-        # (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)))
-
-        #ENTIRE column ('SJF43') should either be True or False as this rule does not check individual rows
+        # (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)
         print("Running rule SJF43...")
+        self.df['SJF43'] = True
         tempDF = self.df.copy()
+        #Find any curves that aren't samples (shouldn't exist)
         tempDF = tempDF[tempDF['CURVES_F'].notna()]
-        tempDF['CURVE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
-        curve_len_sum = tempDF['CURVE_LEN'].sum()
-
-        tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['F_SYSTEM'] == 4)]
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'].astype(float) == 99999)]
-        tempDF['SAMPLE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
-        sample_len_sum = tempDF['SAMPLE_LEN'].sum()
-
-        if curve_len_sum == sample_len_sum:
-            self.df['SJF43'] = True
-        else:
-            self.df['SJF43'] = False 
+        tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].isna()]
+        self.df['SJF43'].iloc[tempDF.index.tolist()] = False
+        #Rest of the logic is already checked by rule SJF42
 
     def sjf44(self):
         #TERRAIN_TYPE must exist on Samples WHERE (URBAN_CODE = 99999 AND F_SYSTEM in (1;2;3;4;5))
@@ -598,7 +587,7 @@ class full_spatial_functions():
 
     def sjf45(self):
         #GRADES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
-        #REVIEW LATER
+        #Rule ignored: If Grades exist according to rule SJF46, then this will always be true (with how all submission data is built)
         print("Running rule SJF45...")
         self.df['SJF45'] = True
 
@@ -616,24 +605,14 @@ class full_spatial_functions():
 
     def sjf47(self):
         #Sum Length (GRADES_A + GRADES_B + GRADES_C + GRADES_D + GRADES_E + GRADES_E) Must Equal to the Sample Length on (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)))
-        #ENTIRE column (SJF47) should be either TRUE or False as this rule does not check individual rows
         print("Running rule SJF47...")
+        self.df['SJF47'] = True
         tempDF = self.df.copy()
+        #Find any grades that aren't samples (shouldn't exist)
         tempDF = tempDF[tempDF['GRADES_F'].notna()]
-        tempDF['GRADE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
-        grade_len_sum = tempDF['GRADE_LEN'].sum()
-
-        tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['F_SYSTEM'] == 4)]
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'].astype(float) == 99999)]
-        tempDF['SAMPLE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
-        sample_len_sum = tempDF['SAMPLE_LEN'].sum()
-
-        if sample_len_sum == grade_len_sum:
-            self.df['SJF47'] = True
-        else:
-            self.df['SJF47'] = False
+        tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].isna()]
+        self.df['SJF47'].iloc[tempDF.index.tolist()] = False
+        #Rest of the logic is already checked by rule SJF46
 
 
     def sjf48(self):
@@ -1119,7 +1098,7 @@ class full_spatial_functions():
         self.df['SJF90'] = True
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['SURFACE_TYPE'].isin([3,4,5,9,10])]
-        tempDF = tempDF[tempDF['CRACKING_PERCENT'] >= .75]
+        tempDF = tempDF[tempDF['CRACKING_PERCENT'] >= 75]
         self.df['SJF90'].iloc[tempDF.index.tolist()] = False
 
     def sjf91(self):
