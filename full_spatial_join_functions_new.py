@@ -9,6 +9,7 @@ import string
 import os
 import shutil
 from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
 warnings.filterwarnings("ignore")
 
 # the combine apply function
@@ -935,7 +936,7 @@ class full_spatial_functions():
 
     def sjf76(self):
         # MEDIAN_WIDTH	MEDIAN_WIDTH should be NULL if (FACILITY_TYPE ValueNumeric is = 1 or=  4; OR WHERE MEDIAN_TYPE ValueNumeric = 1
-        print('Running rule sjf76...')
+        print('Running rule SJF76...')
         self.df['SJF76'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[(tmp_df['FACILITY_TYPE'].isin([1,4]))| (tmp_df['MEDIAN_TYPE']==1)]
@@ -944,7 +945,7 @@ class full_spatial_functions():
 
     def sjf77(self):
         # SHOULDER_WIDTH_L	SHOULDER_WIDTH_L should be < Median_Width
-        print('Running rule sjf77...')
+        print('Running rule SJF77...')
         self.df['SJF77'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SHOULDER_WIDTH_L']>=tmp_df['MEDIAN_WIDTH']]
@@ -1332,6 +1333,9 @@ class full_spatial_functions():
         dataItemsDF['Data_Items'] = dataItemsDF['Data_Items'].str.split(",")
         ruleDict = dict(zip(dataItemsDF['Rule'], dataItemsDF['Data_Items']))
 
+        ruleDescDF = pd.read_excel(template, sheet_name="Summary", usecols="A,D")
+        ruleDesc = dict(zip(ruleDescDF['Rule'], ruleDescDF['Description']))
+
         shutil.copy(template, outfilename)
 
 
@@ -1369,7 +1373,7 @@ class full_spatial_functions():
                 if type(ruleDict[rule])==list:
                     try:
                         if tempDF[tempDF[rule]==False].shape[0] > 0:
-                            print("Creating error sheet for rule: ", rule)
+                            print("Creating error sheet for rule:",rule)
                             dataItems = ['RouteID', 'BMP', 'EMP']
                             [dataItems.append(x) for x in ruleDict[rule] if x not in dataItems]
                             tempDF = tempDF[tempDF[rule]==False]
@@ -1378,13 +1382,19 @@ class full_spatial_functions():
                             worksheet = writer.sheets[rule]
                             worksheet['A1'] = f'=HYPERLINK("#Summary!A1", "Summary Worksheet")'
                             worksheet['A1'].font = Font(underline='single', color='0000EE')
+                            #Autofit columns
+                            for i in range(1, worksheet.max_column+1):
+                                worksheet.column_dimensions[get_column_letter(i)].width = 20
+                            #Add rule description to sheet
+                            worksheet['B1'] = ruleDesc[rule]
+
                         else:
-                            print("No failed rows for rule:", rule)
+                            print("No failed rows for rule:",rule)
 
                     except KeyError:
-                        print(rule, "not found in DF. Sheet was not created in rules_summary.xlsx")
+                        print(rule,"not found in DF. Sheet was not created in rules_summary.xlsx")
                 else:
-                    print("No data items for rule", rule, ", Sheet not created.")
+                    print("No data items for rule",rule,", Sheet not created.")
 
     
 
