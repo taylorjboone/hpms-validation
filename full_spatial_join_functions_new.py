@@ -316,7 +316,7 @@ class full_spatial_functions():
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4]) | tempDF['NHS'].notna()]
         tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
-        tempDF = tempDF[tempDF['ROUTE_NAME'].isna()]
+        tempDF = tempDF[tempDF['ROUTE_NAME_VALUE_TEXT'].isna()]
         self.df['SJF19'].iloc[tempDF.index.tolist()] = False
 
     def sjf20(self):    
@@ -681,8 +681,17 @@ class full_spatial_functions():
         self.df['SJF51'] = True
         tmp_df = self.df.copy(deep = True)
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
-        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS']!=np.nan) | (tmp_df['HPMS_SAMPLE_NO'].notna())|(tmp_df['DIR_THROUGH_LANES']>0)]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['HPMS_SAMPLE_NO'].notna())]
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isna()]
+        print(tmp_df)
+        self.df['SJF51'].iloc[tmp_df.index.tolist()] = False
+
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[tmp_df['DIR_THROUGH_LANES'] > 0]
+        tmp_df = tmp_df[tmp_df['IRI'].notna()]
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isna()]
+        print(tmp_df)
         self.df['SJF51'].iloc[tmp_df.index.tolist()] = False
 
 
@@ -742,7 +751,7 @@ class full_spatial_functions():
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])]
         tmp_df = tmp_df[tmp_df['HPMS_SAMPLE_NO'].notna()]
-        tmp_df = tmp_df[tmp_df['YEAR_LAST_CONSTRUCTION'].isna()]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'].isna()]
         self.df['SJF56'].iloc[tmp_df.index.tolist()] = False
 
     def sjf57(self):
