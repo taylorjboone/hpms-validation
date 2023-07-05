@@ -766,7 +766,7 @@ class full_spatial_functions():
         tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'], format='%Y',errors='ignore')
         # tmp_df['BEGIN_20_LESS'] = tmp_df['BEGIN_DATE'].apply(lambda x: x-relativedelta(years=20))
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < beginDate_less_20)]
-        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT'].isna()]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT_VALUE_DATE'].isna()]
         self.df['SJF55'].iloc[tmp_df.index.tolist()] = False
 
     def sjf56(self):
@@ -785,7 +785,7 @@ class full_spatial_functions():
         self.df['SJF57'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['HPMS_SAMPLE_NO'].notna()]
-        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT'].notna()]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT_VALUE_DATE'].notna()]
         tmp_df = tmp_df[tmp_df['LAST_OVERLAY_THICKNESS'].isna()]
         self.df['SJF57'].iloc[tmp_df.index.tolist()] = False
 
