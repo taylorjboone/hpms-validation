@@ -1030,30 +1030,63 @@ class full_spatial_functions():
     def sjf82a(self):
         #Cracking Percent
         #ValueDate Must = BeginDate  Where ValueText is Null AND F_SYSTEM =1
-        #Rule not created as we don't have ValueText information
         print("Running rule SJF82a...")
+
+        beginDate = datetime.now() - relativedelta(years=1)
+        beginDate = datetime.strptime(str(beginDate.year), '%Y')
+
         self.df['SJF82a'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CRACKING_PERCENT_VALUE_TEXT'].isna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'] == 1]
+        tempDF = tempDF[pd.to_datetime(tempDF['CRACKING_PERCENT_VALUE_DATE'], format='%m/%d/%Y').dt.year != beginDate.year]
+        self.df['SJF82a'].iloc[tempDF.index.tolist()] = False
+
 
     def sjf82b(self):
         #Faulting
         #ValueDate Must = BeginDate  Where ValueText is Null AND F_SYSTEM =1
-        #Rule not created as we don't have ValueText information
         print("Running rule SJF82b...")
+
+        beginDate = datetime.now() - relativedelta(years=1)
+        beginDate = datetime.strptime(str(beginDate.year), '%Y')
+
         self.df['SJF82b'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FAULTING_VALUE_TEXT'].isna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'] == 1]
+        tempDF = tempDF[pd.to_datetime(tempDF['FAULTING_VALUE_DATE'], format='%m/%d/%Y').dt.year != beginDate.year]
+        self.df['SJF82b'].iloc[tempDF.index.tolist()] = False
 
     def sjf82c(self):
         #IRI
         #ValueDate Must = BeginDate  Where ValueText is Null AND F_SYSTEM =1
-        #Rule not created as we don't have ValueText information
         print("Running rule SJF82c...")
+
+        beginDate = datetime.now() - relativedelta(years=1)
+        beginDate = datetime.strptime(str(beginDate.year), '%Y')
+
         self.df['SJF82c'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['IRI_VALUE_TEXT'].isna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'] == 1]
+        tempDF = tempDF[pd.to_datetime(tempDF['IRI_VALUE_DATE'], format='%m/%d/%Y').dt.year != beginDate.year]
+        self.df['SJF82c'].iloc[tempDF.index.tolist()] = False
 
     def sjf82d(self):
         #Rutting
         #ValueDate Must = BeginDate  Where ValueText is Null AND F_SYSTEM =1
-        #Rule not created as we don't have ValueText information
         print("Running rule SJF82d...")
+
+        beginDate = datetime.now() - relativedelta(years=1)
+        beginDate = datetime.strptime(str(beginDate.year), '%Y')
+
         self.df['SJF82d'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['RUTTING_VALUE_TEXT'].isna()]
+        tempDF = tempDF[tempDF['F_SYSTEM'] == 1]
+        tempDF = tempDF[pd.to_datetime(tempDF['RUTTING_VALUE_DATE'], format='%m/%d/%Y').dt.year != beginDate.year]
+        self.df['SJF82d'].iloc[tempDF.index.tolist()] = False
 
     def sjf83a(self):
         #CRACKING_PERCENT
