@@ -683,7 +683,6 @@ class full_spatial_functions():
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
         tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['HPMS_SAMPLE_NO'].notna())]
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isna()]
-        print(tmp_df)
         self.df['SJF51'].iloc[tmp_df.index.tolist()] = False
 
         tmp_df = self.df.copy()
@@ -691,7 +690,6 @@ class full_spatial_functions():
         tmp_df = tmp_df[tmp_df['DIR_THROUGH_LANES'] > 0]
         tmp_df = tmp_df[tmp_df['IRI'].notna()]
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isna()]
-        print(tmp_df)
         self.df['SJF51'].iloc[tmp_df.index.tolist()] = False
 
 
@@ -703,7 +701,15 @@ class full_spatial_functions():
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,6,7,8])]
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
-        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['HPMS_SAMPLE_NO'].notna()) |(tmp_df['DIR_THROUGH_LANES']>0)]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['HPMS_SAMPLE_NO'].notna())]
+        tmp_df = tmp_df[tmp_df['RUTTING'].isna()]
+        self.df['SJF52'].iloc[tmp_df.index.tolist()] = False
+
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,6,7,8])]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[tmp_df['DIR_THROUGH_LANES'] > 0]
+        tmp_df = tmp_df[tmp_df['IRI'].notna()]
         tmp_df = tmp_df[tmp_df['RUTTING'].isna()]
         self.df['SJF52'].iloc[tmp_df.index.tolist()] = False
     
@@ -714,20 +720,39 @@ class full_spatial_functions():
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([3,4,9,10])]
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
-        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['HPMS_SAMPLE_NO'].notna()) |(tmp_df['DIR_THROUGH_LANES']>0)]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['HPMS_SAMPLE_NO'].notna())]
         tmp_df = tmp_df[tmp_df['FAULTING'].isna()]
         self.df['SJF53'].iloc[tmp_df.index.tolist()] = False
+
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([3,4,9,10])]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[tmp_df['DIR_THROUGH_LANES'] > 0]
+        tmp_df = tmp_df[tmp_df['IRI'].notna()]
+        tmp_df = tmp_df[tmp_df['FAULTING'].isna()]
+        self.df['SJF53'].iloc[tmp_df.index.tolist()] = False
+
     
     def sjf54(self):
-        # SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
+        #Data Item:CRACKING_PERCENT
+        #SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
         print("Running rule SJF54...")
         self.df['SJF54'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])]
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
-        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['HPMS_SAMPLE_NO'].notna()) |(tmp_df['DIR_THROUGH_LANES']>0)]
+        tmp_df = tmp_df[(tmp_df['F_SYSTEM']==1) | (tmp_df['NHS'].notna()) | (tmp_df['HPMS_SAMPLE_NO'].notna())]
         tmp_df = tmp_df[tmp_df['CRACKING_PERCENT'].isna()]
         self.df['SJF54'].iloc[tmp_df.index.tolist()] = False
+
+        tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[tmp_df['DIR_THROUGH_LANES'] > 0]
+        tmp_df = tmp_df[tmp_df['IRI'].notna()]
+        tmp_df = tmp_df[tmp_df['CRACKING_PERCENT'].isna()]
+        self.df['SJF54'].iloc[tmp_df.index.tolist()] = False
+
 
     def sjf55(self):
         # YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
@@ -1176,12 +1201,14 @@ class full_spatial_functions():
         self.df['SJF97'] = True
 
     def sjf98(self):
-        #REVIEW THIS RULE
         #MAINTENANCE_OPERATIONS ValueNumeric <> OWNERSHIP ValueNumeric
+        #Treating this rule as "MAINTENANCE_OPERATIONS must equal OWNERSHIP"
         print("Running rule SJF98...")
         self.df['SJF98'] = True
-        # tempDF = self.df.copy() 
-        # self.df['SJF'].iloc[tempDF.index.tolist()] = False
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['MAINTENANCE_OPERATIONS'].notna() | tempDF['OWNERSHIP'].notna()]
+        tempDF = tempDF[tempDF['MAINTENANCE_OPERATIONS'] != tempDF['OWNERSHIP']] 
+        self.df['SJF98'].iloc[tempDF.index.tolist()] = False
 
     def sjf99(self):
         #Sample crosses TOPS.  
