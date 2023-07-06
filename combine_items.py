@@ -4,6 +4,7 @@ import json
 import shutil
 import time
 import hashlib
+import geopandas as gpd
 
 def get_sep(fn):
     with open(fn,'r') as f:
@@ -155,7 +156,7 @@ def combine_items(fns,outfilename='all_submission_data.csv'):
         # defining columns to be carried over
         cols = [f'{data_item}', f'{data_item}_VALUE_DATE', f'{data_item}_VALUE_TEXT']
         if 'CURVES_' in data_item and df[itemcol].nunique()>1:
-            df.drop(cols,axis=1,inplace=True)
+            df = pd.read_csv(file,sep=sep,dtype={'ValueText':str,'Value_Text':str})
             pos2 = 0
             nuniq = df[itemcol].nunique()
             for ind,tmpdf in df.groupby(itemcol):
@@ -166,14 +167,19 @@ def combine_items(fns,outfilename='all_submission_data.csv'):
                 else:
                     cd['seen'] = cd['seen']+1
                     item_dict[data_item] = cd
-                tmpdf.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
+                if itemcol == 'DataItem':
+                    tmpdf.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
+                elif itemcol == 'Data_Item': 
+                    tmpdf.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'}, inplace=True)
+
                 filename = f'tmp/{data_item}.csv'
-                df.to_csv(filename,index=False)
+                tmpdf.to_csv(filename,index=False)
                 cols = [f'{data_item}', f'{data_item}_VALUE_DATE', f'{data_item}_VALUE_TEXT']
                 operations.append(create_op(filename,cols,is_beg=pos==0 and pos2==0,is_end=pos==(numfns-1) and pos2==(nuniq-1),outfilename=outfilename,prefix=item_dict.get(data_item,{}).get('seen',0)))
                 pos2+=1
         elif 'GRADES_' in data_item and df[itemcol].nunique()>1:
-            df.drop(cols,axis=1,inplace=True)
+            df = pd.read_csv(file,sep=sep,dtype={'ValueText':str,'Value_Text':str})
+            # df.drop(cols,axis=1,inplace=True)
             pos2 = 0
             nuniq = df[itemcol].nunique()
             for ind,tmpdf in df.groupby(itemcol):
@@ -184,9 +190,14 @@ def combine_items(fns,outfilename='all_submission_data.csv'):
                 else:
                     cd['seen'] = cd['seen']+1
                     item_dict[data_item] = cd
-                tmpdf.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
+                if itemcol == 'DataItem':
+                    tmpdf = tmpdf.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'})
+                elif itemcol == 'Data_Item': 
+                    tmpdf = tmpdf.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'})
+
+                # tmpdf.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
                 filename = f'tmp/{data_item}.csv'
-                df.to_csv(filename,index=False)
+                tmpdf.to_csv(filename,index=False)
                 cols = [f'{data_item}', f'{data_item}_VALUE_DATE', f'{data_item}_VALUE_TEXT']
                 operations.append(create_op(filename,cols,is_beg=pos==0 and pos2==0,is_end=pos==(numfns-1) and pos2==(nuniq-1),outfilename=outfilename,prefix=item_dict.get(data_item,{}).get('seen',0)))
                 pos2+=1
@@ -211,7 +222,7 @@ def combine_items(fns,outfilename='all_submission_data.csv'):
     with open('myfile.json','w') as f:
         f.write(json.dumps(myjson))
     os.system('lrsops overlay --operations myfile.json')
-    shutil.rmtree('tmp')
+    # shutil.rmtree('tmp')
     # os.remove('myfile.json')
     print(time.time()-s,'Time to Overlay HPMS Files')
     newlist = []
@@ -310,11 +321,49 @@ def convert_files(mylist,outdir='tmp_normalized'):
     return newlist 
 
 
+'''
+
+this combines the errors from the fhwa file gdb to 
+'''
+def combine_errors(df,combined_file):
+    if not os.path.exists('error_full'):
+        os.mkdir('error_full')
+    df['ValidationRule'] = df.ValidationRule.str.replace("-",'')
+    df.rename(columns={'RouteId':'RouteID','BeginPoint':'BMP','EndPoint':'EMP'},inplace=True)
+    num_errs = df['ValidationRule'].nunique()
+    pos,ops = 0 ,[]
+    rule_cols = []
+    for name,tmpdf in df.groupby('ValidationRule'):
+        rule = name+'_FHWA'
+        outfile = f'error_full/{name}.csv'
+        tmpdf[rule] = False 
+        rule_cols.append(rule)
+        ops.append(create_op(outfile,[rule],is_beg=pos==0,is_end=pos==(num_errs-1),outfilename='tot_errors.csv'))
+        tmpdf[['RouteID','BMP','EMP',rule]].to_csv(outfile,index=False)
+        pos+=1
+    init_file('tot_errors.csv')
+    with open('myerrors.json','w') as f:
+        f.write(json.dumps({'operations':ops}))
+
+    os.system('lrsops overlay --operations myerrors.json')
+    os.system(f'lrsops overlay -b {combined_file} -s tot_errors.csv -c {",".join(rule_cols)} -o tmpout.csv')
+    
+    df = pd.read_csv('tmpout.csv',dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str})
+    df[rule_cols] = df[rule_cols].fillna(value=True)
+    os.remove('tmpout.csv')
+    os.remove('tot_errors.csv')
+    shutil.rmtree('error_full')
+    return df
+
 mypath = '/Users/charlesbmurphy/Downloads/hpms-validation/tmp2'
 
 onlyfiles = [os.path.join(mypath,f) for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) and f.endswith('.csv')]
+# print(combine_errors('/Users/charlesbmurphy/Downloads/Non-Conformances_2023a.gdb','all_submission_data.csv'))
+# df = pd.read_csv('/Users/charlesbmurphy/Downloads/full_spatial_errors_table.csv')
+# print(combine_errors(df,'all_submission_data.csv'))
+
 # myfiles = convert_files(onlyfiles)
 df = combine_items(onlyfiles)
 print(df)
-df.to_excel('summary_combined.xlsx',index=False)
-print(len(myfiles))
+# df.to_excel('summary_combined.xlsx',index=False)
+# print(len(myfiles))

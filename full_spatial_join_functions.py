@@ -8,10 +8,11 @@ import copy
 import string
 import time
 import os
+from combine_items import combine_errors
 s = time.time()
 # import combine_items
 warnings.filterwarnings("ignore")
-debug = int('0' if os.getenv("DEBUG") == '' else os.getenv("DEBUG"))==1
+debug = int('0' if os.getenv("DEBUG") is None else os.getenv("DEBUG"))==1
 
 def combine_df(df,columns=[]):
     df.to_csv('tmp.csv',index=False)
@@ -91,7 +92,39 @@ class FullSpatial():
                 print(f'Could not run {k} missing the column: {failed_col}')
             else:
                 myfunc()
-    
+
+    def consolidate_errors_rules(self):
+        '''
+        Logically for every error that has an a,b,c,d 
+        Adds one column representing that with ors  
+        '''
+        real_dict = {}
+        for k in self.rules.keys():
+            if k[-1].isalpha(): 
+                real_rule = k[:-1]
+                col_list = real_dict.get(real_rule,[])
+                col_list.append(k)
+                real_dict[real_rule] = col_list
+            else: 
+                pass 
+        
+        for k,v in real_dict.items():
+            self.df[k] = self.df[v].all(axis=1)
+
+
+    def conflate_fhwa(self):
+        df = self.df.copy()
+        fhwa_cols = [i for i in df.columns if 'SJF' in i and '_FHWA' in i]
+        newlist = []
+        for col in fhwa_cols:
+            nor_col = col.replace('_FHWA','')
+            if nor_col in df.columns:
+                newlist.append([nor_col,len(df[~df[col]]),len(df[~df[nor_col]])])
+                # print(nor_col,len(df[~df[col]]),len(df[~df[nor_col]]))
+        summ = pd.DataFrame(newlist,columns=['Rule','FHWA Num Rows','Our Num Rows'])
+        return summ 
+
+
     def sjf01(self):
         #F_SYSTEM must exist where FACILITY_TYPE is in (1;2;4;5;6) and Must not be NULL
         print("Running rule SJF01...")
@@ -132,7 +165,7 @@ class FullSpatial():
     def sjf04(self):
         #No validation
         print("Running rule SJF04...")
-        self.df['SJF04'] = True
+        # self.df['SJF04'] = True
 
     def sjf05(self):
         #ACCESS_CONTROL must exist where (F_SYSTEM in (1;2;3) or Sample or NHS) AND FACILITY_TYPE IN (1;2) and must not be NULL
@@ -170,8 +203,8 @@ class FullSpatial():
 
     def sjf08(self):
         #MANAGED_LANES_TYPE must exist where MANAGED_LANES is not Null
-        print("Running rule SJF08...")
-        self.df['SJF08'] = True
+        print("  rule SJF08...")
+        # self.df['SJF08'] = True
         # tempDF = self.df.copy()
         # tempDF[tempDF['MANAGED_LANES'].notna() & tempDF['MANAGED_LANES_TYPE'].isna()]
         # self.df['SJF08'].iloc[tempDF.index.tolist()] = False
@@ -179,7 +212,7 @@ class FullSpatial():
     def sjf09(self):
         #MANAGED_LANES must exist where MANAGED_LANES_TYPE is not Null
         print("Running rule SJF09...")
-        self.df['SJF09'] = True
+        # self.df['SJF09'] = True
         # tempDF = self.df.copy()
         # tempDF[tempDF['MANAGED_LANES_TYPE'].notna() & tempDF['MANAGED_LANES'].isna()]
         # self.df['SJF09'].iloc[tempDF.index.tolist()] = False
@@ -235,7 +268,7 @@ class FullSpatial():
     def sjf15(self):
         #No validation
         print("Running rule SJF15...")
-        self.df['SJF15'] = True
+        # self.df['SJF15'] = True
 
     def sjf16(self):
         #ROUTE_NUMBER ValueNumeric Must Exist where (F_SYSTEM in (1;2;3;4) or NHS ValueNumeric <> NULL ) and FACILITY_TYPE (1;2) and ROUTE_SIGNING in (2;3;4;5;6;7;8;9)  
@@ -515,7 +548,7 @@ class FullSpatial():
         #CURVES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
         #REVIEW LATER
         print("Running rule SJF41...")
-        self.df['SJF41'] = True
+        # self.df['SJF41'] = True
 
 
 
@@ -544,8 +577,12 @@ class FullSpatial():
 
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['F_SYSTEM'] == 4)]
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'].astype(float) == 99999)]
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | ((tempDF['F_SYSTEM'] == 4)&(tempDF['URBAN_CODE'].astype(float) == 99999))]
+
+        for name,tmpdf in tempDF.groupby("HPMS_SAMPLE_NO"):
+            print(name,tmpdf[['CURVES_A','CURVES_B','CURVES_C','CURVES_D','CURVES_E','RouteID','BMP','EMP']])
+
+        # tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'].astype(float) == 99999)]
         tempDF['SAMPLE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
         sample_len_sum = tempDF['SAMPLE_LEN'].sum()
 
@@ -645,7 +682,7 @@ class FullSpatial():
         print("Running rule SJF50...")
 
         #PSR NOT CHECKED
-        self.df['SJF50'] = True
+        # self.df['SJF50'] = True
         # tempDF = self.df.copy()
         # tempDF = tempDF[tempDF['IRI'].isna()]
         # tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
@@ -792,7 +829,8 @@ class FullSpatial():
 
     def sjf62(self):
         # SOIL TYPE DO NOT REPORT
-        self.df['SJF62'] = True
+        # self.df['SJF62'] = True
+        pass
     
     def sjf63(self):
         # COUNTY_ID	FACILITY_TYPE in (1;2) AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_ID <99999) or NHS
@@ -817,17 +855,17 @@ class FullSpatial():
     def sjf65(self):
         # STRAHNET DO NOT VALIDATE
         print("Running rule SJF65...")
-        self.df['SJF65'] = True
+        # self.df['SJF65'] = True
 
     def sjf66(self):
         # NN DO NOT VALIDATE
         print("Running rule SJF66...")
-        self.df['SJF66'] = True
+        # self.df['SJF66'] = True
 
     def sjf67(self):
         # MAINTENANCE_OPERATIONS DO NOT VALIDATE
         print("Running rule SJF67...")
-        self.df['SJF67'] = True
+        # self.df['SJF67'] = True
 
     def sjf68(self):
         # DIR_THROUGH_LANES	F_SYSTEM =1 AND (FACILITY_TYPE = 6) AND (IRI OR PSR >0)
@@ -846,8 +884,8 @@ class FullSpatial():
         self.df['SJF69'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE']==2]
-        tmp_df = tmp_df[tmp_df['THROUGH_LANES']>1]
-        tmp_df = tmp_df[tmp_df['THROUGH_LANES'].isna()]
+        tmp_df = tmp_df[(tmp_df['THROUGH_LANES']<=1)|(tmp_df['THROUGH_LANES'].isna())]
+        # tmp_df = tmp_df[tmp_df['THROUGH_LANES'].isna()]
         self.df['SJF69'].iloc[tmp_df.index.tolist()] = False
 
     def sjf70(self):
@@ -855,9 +893,10 @@ class FullSpatial():
         print("Running rule SJF70...")
         self.df['SJF70'] = True
         tmp_df = self.df.copy()
+        tmp_df = tmp_df[tmp_df[['COUNTER_PEAK_LANES','PEAK_LANES','THROUGH_LANES']].notna().apply(lambda x:x.all(),axis=1)]
         sum = tmp_df['COUNTER_PEAK_LANES'] + tmp_df['PEAK_LANES']
         tmp_df = tmp_df[sum < tmp_df['THROUGH_LANES']]
-        tmp_df = tmp_df[tmp_df['THROUGH_LANES'].notna()]
+        # tmp_df = tmp_df[tmp_df['THROUGH_LANES'].notna()]
         self.df['SJF70'].iloc[tmp_df.index.tolist()] = False
 
     def sjf71(self):
@@ -1074,7 +1113,7 @@ class FullSpatial():
         self.df['SJF83b'] = True
         tempDF = self.df.copy()
         bv = pd.to_datetime(tempDF.FAULTING_VALUE_DATE,errors='coerce')<(pd.to_datetime(tempDF.Begin_Date,errors='coerce')-pd.Timedelta(days=1))
-        tempDF = tempDF[((tempDF.FAULTING_VALUE_DATE!=tempDF.Begin_Date)&(df['F_SYSTEM']==1&tempDF.NHS.notna()))|bv]
+        tempDF = tempDF[((tempDF.FAULTING_VALUE_DATE!=tempDF.Begin_Date)&(tempDF['F_SYSTEM']==1&tempDF.NHS.notna()))|bv]
 
         # print(tempDF.CRACKING_PERCENT_VALUE_TEXT.unique())
         tempDF = tempDF[~tempDF.FAULTING_VALUE_TEXT.isin(['A','B','C','D'])]
@@ -1091,7 +1130,7 @@ class FullSpatial():
 
         tempDF = self.df.copy()
         bv = pd.to_datetime(tempDF.IRI_VALUE_DATE,errors='coerce')<(pd.to_datetime(tempDF.Begin_Date,errors='coerce')-pd.Timedelta(days=1))
-        tempDF = tempDF[((tempDF.IRI_VALUE_DATE!=tempDF.Begin_Date)&(df['F_SYSTEM']==1&tempDF.NHS.notna()))|bv]
+        tempDF = tempDF[((tempDF.IRI_VALUE_DATE!=tempDF.Begin_Date)&(tempDF['F_SYSTEM']==1&tempDF.NHS.notna()))|bv]
 
         # print(tempDF.CRACKING_PERCENT_VALUE_TEXT.unique())
         tempDF = tempDF[~tempDF.IRI_VALUE_TEXT.isin(['A','B','C','D'])]
@@ -1107,7 +1146,7 @@ class FullSpatial():
         self.df['SJF83d'] = True
         tempDF = self.df.copy()
         bv = pd.to_datetime(tempDF.RUTTING_VALUE_DATE,errors='coerce')<(pd.to_datetime(tempDF.Begin_Date,errors='coerce')-pd.Timedelta(days=1))
-        tempDF = tempDF[((tempDF.RUTTING_VALUE_DATE!=tempDF.Begin_Date)&(df['F_SYSTEM']==1&tempDF.NHS.notna()))|bv]
+        tempDF = tempDF[((tempDF.RUTTING_VALUE_DATE!=tempDF.Begin_Date)&(tempDF['F_SYSTEM']==1&tempDF.NHS.notna()))|bv]
 
         # print(tempDF.CRACKING_PERCENT_VALUE_TEXT.unique())
         tempDF = tempDF[~tempDF.RUTTING_VALUE_TEXT.isin(['A','B','C','D'])]
@@ -1132,13 +1171,13 @@ class FullSpatial():
         #ValueDate Must = BeginDate Where PSR ValueText is "A" AND F_SYSTEM =1
         #Rule not implemented as we don't report PSR
         print("Running rule SJF85...")
-        self.df['SJF85'] = True
+        # self.df['SJF85'] = True
 
     def sjf86(self):
         #Where F_SYSTEM =1; and IRI is Null; PSR ValueNumeric Must be >0 and PSR ValueText must = A
         #Rule not implemented as we don't report PSR
         print("Running rule SJF86...")
-        self.df['SJF86'] = True
+        # self.df['SJF86'] = True
 
     def sjf87(self):
         #RUTTING < 1
@@ -1162,7 +1201,7 @@ class FullSpatial():
         #Where SURFACE_TYPE is in (2;6;7;8) CRACKING_PERCENT <= X based on LANE_WIDTH. Where X = Max % AC Cracking on AC Cracking Validation table.
         #Don't have AC Cracking Validation table, skipping rule for now
         print("Running rule SJF89...")
-        self.df['SJF89'] = True
+        # self.df['SJF89'] = True
 
     def sjf90(self):
         #Where SURFACE_TYPE is in (3;4;5;9;10) CRACKING_PERCENT < .75
@@ -1237,7 +1276,7 @@ class FullSpatial():
         #IF TRAVEL_TIME_CODE is reported; it must cover NHS
         #We don't report TRAVEL_TIME
         print("Running rule SJF97...")
-        self.df[rule_name] = True
+        # self.df[rule_name] = True
 
     def sjf98(self):
         rule_name = self.sjf98.__name__.upper()
@@ -1259,7 +1298,7 @@ class FullSpatial():
         # The extent of a given Sample Panel Section extends beyond the extent of the associated TOPS section.  
         # Samples should match the length of TOPS sections or be shorter; but can not be longer.
         print("Running rule SJF99...")
-        self.df['SJF99'] = True
+        # self.df['SJF99'] = True
    
 
     def sjf100(self):
@@ -1297,7 +1336,7 @@ class FullSpatial():
     
 
     
-    def create_output(self,outfilename='full_spatial_validations_error.xlsx',combine_segs=True,size_limit=1000000):
+    def create_output(self,outfilename='full_spatial_validations_error.xlsx',combine_segs=True,size_limit=1000000,fhwa=False):
         '''
         Creates the output xlsx sheet I couldn't figure out the autofit API that tyler got working one time? 
         Maybe you can only use it via windows but anyway here is a good start for the code to create an output. 
@@ -1321,13 +1360,14 @@ class FullSpatial():
             - add a any rule violated table as well 
         '''
         df = self.df.copy()
-        cols = [i for i in df.columns if i[:2].upper() in ["SJ", "SF"]]
+        cols = [i for i in df.columns if i[:2].upper() in ["SJ", "SF"] and not '_FHWA' in i]
         df['Length'] = df['EMP'] - df['BMP']
 
         # creating summary
         vals = []
         for i in cols:
             val = df.groupby(i)['Length'].count().to_dict()
+            print(i)
             val['Failing Length'] = df[~df[i]].Length.sum()
             val['Rule'] = i if val.get(False,0) == 0 else self._create_link(i)
             val['Description'] = rules_description.get(i,'')
@@ -1415,7 +1455,11 @@ class FullSpatial():
         if os.path.exists('tmp.csv'): os.remove('tmp.csv')
         if os.path.exists('tmp2.csv'): os.remove('tmp2.csv')
 
-df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str})
-c = FullSpatial(df)  
+# df = pd.read_csv('/Users/charlesbmurphy/Downloads/full_spatial_errors_table.csv')
+# df = combine_errors(df,'all_submission_data.csv')
+
+# df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str})
+c = FullSpatial(pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str}))  
 c.run_rules()
-w = c.create_output()
+# c.consolidate_errors_rules()
+# w = c.create_output()
