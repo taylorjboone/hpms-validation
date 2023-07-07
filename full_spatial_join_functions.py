@@ -885,8 +885,8 @@ class full_spatial_functions():
         print("Running rule SJF69...")
         self.df['SJF69'] = True
         tmp_df = self.df.copy()
-        tmp_df = tmp_df[tmp_df['FACILITY_TYPE']==2]
-        tmp_df = tmp_df[tmp_df['THROUGH_LANES'] <= 1 | tmp_df['TRHOUGH_LANES'].isna()]
+        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'] == 2]
+        tmp_df = tmp_df[tmp_df['THROUGH_LANES'] <= 1 | tmp_df['THROUGH_LANES'].isna()]
         self.df['SJF69'].iloc[tmp_df.index.tolist()] = False
 
     def sjf70(self):
@@ -1255,9 +1255,13 @@ class full_spatial_functions():
         print("Running rule SJF100...")
         self.df['SJF100'] = True
         tempDF = self.df.copy()
-        tempDF = tempDF[~tempDF['FACILITY_TYPE'].isin([1,2])]
-        tempDF = tempDF[~tempDF['F_SYSTEM'].isin(range(1,6))]
-        tempDF = tempDF[~(tempDF['F_SYSTEM'] == 6) | ~(tempDF['URBAN_CODE'].astype(float) < 99999)]
+        # tempDF = tempDF[~tempDF['FACILITY_TYPE'].isin([1,2])]
+        # tempDF = tempDF[~tempDF['F_SYSTEM'].isin(range(1,6))]
+        # tempDF = tempDF[~(tempDF['F_SYSTEM'] == 6) | ~(tempDF['URBAN_CODE'].astype(float) < 99999)]
+        # tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
+
+        tempDF = tempDF[~tempDF['FACILITY_TYPE'].isin([1,2]) | ~tempDF['F_SYSTEM'].isin(range(1,6))]
+        tempDF = tempDF[~tempDF['FACILITY_TYPE'].isin([1,2]) | (tempDF['F_SYSTEM'] != 6) | (tempDF['URBAN_CODE'].astype(float) >= 99999)]
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
         self.df['SJF100'].iloc[tempDF.index.tolist()] = False 
     
