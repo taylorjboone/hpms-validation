@@ -876,7 +876,7 @@ class full_spatial_functions():
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['F_SYSTEM']==1]
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE']==6]
-        tmp_df = tmp_df[tmp_df['IRI']>0]
+        tmp_df = tmp_df[tmp_df['IRI'].notna()]
         tmp_df = tmp_df[tmp_df['DIR_THROUGH_LANES'].isna()]
         self.df['SJF68'].iloc[tmp_df.index.tolist()] = False
 
@@ -886,8 +886,7 @@ class full_spatial_functions():
         self.df['SJF69'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['FACILITY_TYPE']==2]
-        tmp_df = tmp_df[tmp_df['THROUGH_LANES']>1]
-        tmp_df = tmp_df[tmp_df['THROUGH_LANES'].isna()]
+        tmp_df = tmp_df[tmp_df['THROUGH_LANES'] <= 1 | tmp_df['TRHOUGH_LANES'].isna()]
         self.df['SJF69'].iloc[tmp_df.index.tolist()] = False
 
     def sjf70(self):
