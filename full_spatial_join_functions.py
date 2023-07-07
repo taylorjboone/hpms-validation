@@ -1379,18 +1379,21 @@ class full_spatial_functions():
         return f'=HYPERLINK("#{rule}!A1", "{rule}")'
     
     def create_output_tyler(self, template='fullSpatialErrors_template.xlsx', outfilename='rules_summary.xlsx'):
+        #Reads sheet on template that list all data items associated with each rule and converts to dictionary
         dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=106)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
         dataItemsDF['Data_Items'] = dataItemsDF['Data_Items'].str.split(",")
         ruleDict = dict(zip(dataItemsDF['Rule'], dataItemsDF['Data_Items']))
 
+        #Reads the rule descripts off of summary sheet and converts to dictionary
         ruleDescDF = pd.read_excel(template, sheet_name="Summary", usecols="A,D")
         ruleDesc = dict(zip(ruleDescDF['Rule'], ruleDescDF['Description']))
 
+        #Create copy of template to write to
         shutil.copy(template, outfilename)
 
-
         with pd.ExcelWriter(outfilename, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            
             tempDF = self.df.copy()
             numFailed = []
             numPassed = []
@@ -1421,7 +1424,10 @@ class full_spatial_functions():
             #Create sheets for each rule containing all failed rows (using only columns that the specific rule references)
             for rule in ruleDict.keys():
                 tempDF = self.df.copy()
+                #Checks to make sure rule has data items associated with it (will be a list if dataItems exists, otherwise will be float (np.nan))
                 if type(ruleDict[rule])==list:
+                    #Tries using RULENAME (i.e. SJF01) in dataset which is added if the rule is ran
+                    #If rule is not run, no column will exist with the rulename, catches KeyError and prints message.
                     try:
                         if tempDF[tempDF[rule]==False].shape[0] > 0:
                             print("Creating error sheet for rule:",rule)

@@ -53,7 +53,7 @@ class domain_validations():
 
     def drd72(self):
         #NHFN ValueNumeric must be an integer in the range (1;2;3)
-
+        #NHFN isn't reported, so rule is disabled in the list below
         print("Running rule DRD72...")
         self.df['DRD72'] = True
         tempDF = self.df.copy()
@@ -61,17 +61,6 @@ class domain_validations():
         tempDF = tempDF[~tempDF['NHFN'].isin([1,2,3])]
         self.df['DRD72'].iloc[tempDF.index.tolist()] = False
 
-    def drd200(self):
-        #BeginDate must be a valid date with format MM/DD/YYYY; MM/D/YYYY; M/DD/YYYY; or M/D/YYYY and must be prior to current date
-        #BeginDate isn't in all_submission_data, it's hardcoded instead. Ignoring rule for now
-        print("Running rule DRD200...")
-        self.df['DRD200'] = True
-
-    def drd201(self):
-        #StateID must match the state code of the user; be a valid FIPS state code; and in the format Numeric (2)
-        #StateID isn't in all_submission_data, it's hardcoded instead. Ignoring rule for now
-        print("Running rule DRD201...")
-        self.df['DRD201'] = True
 
     def drd202(self):
         #RouteID field must not be blank and can not contain pipe characters 
@@ -110,32 +99,12 @@ class domain_validations():
         tempDF = tempDF[(tempDF['EMP'].str[0].str.len() > 8) | (tempDF['EMP'].str[1].str.len() > 3)]
         self.df['DRD204'].iloc[tempDF.index.tolist()] = False
 
-    #Skipped rule drd205 Data item name must be a valid RoadDesignations Data Item (F_SYSTEM; NHS; STRAHNET_TYPE; NN; NHFN)
-    #Skipped rule drd206 Where RouteID; StateID; BeginPoint; EndPoint; DataItem; ValueNumeric; ValueText; and BeginDate are all the same as another record; then only one record will load into HPMS.
 
-    def drd207(self):
-        #Where the BeginPoint and EndPoint overlap with another RoadDesignations record in the load file then only one record will load to the Staging Table
 
-        print("Running rule DRD207...")
-        self.df['DRD207'] = True
-        for routeID in self.df['RouteID'].unique():
-            tempDF = self.df[self.df['RouteID'] == routeID].copy()
-            segments = tuple(zip(tempDF['BMP'], tempDF['EMP']))
-            
-            start = tempDF['BMP'].min()
-            end = tempDF['EMP'].max()
-
-            for segment in segments:
-                if (segment[0] not in tempDF['EMP'].tolist()) and (segment[0] != start):
-                    self.df['DRD207'].iloc[tempDF[(tempDF['BMP'] == segment[0]) & (tempDF['EMP'] == segment[1])].index] = False
-                if (segment[1] not in tempDF['BMP'].tolist()) and (segment[1] != end):
-                    self.df['DRD207'].iloc[tempDF[(tempDF['BMP'] == segment[0]) & (tempDF['EMP'] == segment[1])].index] = False
 
                 
 
-
-    # 
-    #    
+ 
     # def drd(self):
     #     print("Running rule DRD...")
     #     self.df['DRD'] = True
@@ -149,12 +118,10 @@ class domain_validations():
         self.drd65()
         self.drd66()
         # self.drd72()
-        self.drd200()
-        self.drd201()
         self.drd202()
         self.drd203()
         self.drd204()
-        self.drd207()
+
 
 
 
