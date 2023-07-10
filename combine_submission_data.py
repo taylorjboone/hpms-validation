@@ -4,6 +4,8 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import json
 import shutil
+import numpy as np
+
 
 gauth = GoogleAuth()
 gauth.LocalWebserverAuth()
@@ -72,6 +74,18 @@ if not os.path.exists('tmp'):
 basedf = pd.DataFrame(columns=['ROUTEID', 'BMP', 'EMP'])
 basedf.to_csv('all_submission_data.csv')
 
+def remove_comma(x):
+    try:
+        x = str(x)
+    except:
+        pass
+    if type(x) == str and ',' in x:
+        # print(f'replacing comma in {x}')
+        x = x.replace(',', '')
+    if x != '<NA>':
+        return x
+
+
 for file in unique_items:
     print(f"{pos+1} / {num_files}: {file['title']}")
     download = drive.CreateFile({'id':file['id']})
@@ -82,23 +96,41 @@ for file in unique_items:
     else: 
         df = pd.read_csv('example.csv', sep='|',dtype={'ValueText':str,'Value_Text':str})
 
-    if 'Data_Item' in df.columns.tolist():
-        data_item = df['Data_Item'].iloc[0].upper()
-        df.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'}, inplace=True)
-    elif 'DataItem' in df.columns.tolist():
-        data_item = df['DataItem'].iloc[0]
-        df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
-    elif 'HPMS_SAMPLE_NO' in df.columns.tolist():
+    # if 'Data_Item' in df.columns.tolist():
+    #     data_item = df['Data_Item'].iloc[0].upper()
+    #     df.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'}, inplace=True)
+    # elif 'DataItem' in df.columns.tolist():
+    #     data_item = df['DataItem'].iloc[0]
+    #     df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
+    # elif 'HPMS_SAMPLE_NO' in df.columns.tolist():
+    #     data_item = 'HPMS_SAMPLE_NO'
+    #     df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
+    # else:
+    #     print('COLUMN FORMAT ERROR')
+    #     print(df)
+
+    if 'HPMS_SAMPLE_NO' in df.columns.tolist():
         data_item = 'HPMS_SAMPLE_NO'
         df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
     else:
-        print('COLUMN FORMAT ERROR')
-        print(df)
+        data_item = df.rename(columns={'Data_Item':'DataItem'})['DataItem'].iloc[0].upper()
+
+        df.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'}, inplace=True)
+        df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
     
+
+
     # accounting for the fucked value_numeric issue with urban code, really this should be value text so were 
     # zfilling this value to 5
     if data_item == 'URBAN_CODE': df['URBAN_CODE'] = df.URBAN_CODE.astype(str).str.zfill(5)
-    cols = [f'{data_item}', f'{data_item}_VALUE_DATE', f'{data_item}_VALUE_TEXT']
+    if data_item == 'ROUTE_NAME':
+        df['ROUTE_NAME'] = df['ROUTE_NAME'].astype('string').map(remove_comma)
+        df['ROUTE_NAME_VALUE_TEXT'] = df['ROUTE_NAME_VALUE_TEXT'].astype('string').map(remove_comma)
+        df['ROUTE_NAME_VALUE_DATE'] = df['ROUTE_NAME_VALUE_DATE'].astype('string').map(remove_comma)
+    if data_item != 'HPMS_SAMPLE_NO':
+        cols = [f'{data_item}', f'{data_item}_VALUE_DATE', f'{data_item}_VALUE_TEXT']
+    else:
+        cols = [f'{data_item}']
     filename = f'tmp/{data_item}.csv'
     # if data_item == 'F_SYSTEM':
     #     print('**************************mattsucks\n', df[['ROUTEID', 'BMP', 'EMP', 'Value']])
@@ -137,7 +169,7 @@ myjson = {'operations':operations}
 with open('myfile.json','w') as f:
     f.write(json.dumps(myjson))
 os.system('lrsops overlay --operations myfile.json')
-shutil.rmtree('tmp')
+# shutil.rmtree('tmp')
 
 
 # for file in june_submission:
