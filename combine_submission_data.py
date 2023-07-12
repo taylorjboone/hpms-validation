@@ -114,6 +114,10 @@ for file in unique_items:
         df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
     else:
         data_item = df.rename(columns={'Data_Item':'DataItem'})['DataItem'].iloc[0].upper()
+        if 'CURVES' in data_item:
+            data_item = 'CURVES'
+        elif 'GRADES' in data_item:
+            data_item = 'GRADES'
 
         df.rename(columns={'Value_Numeric': f'{data_item}', 'Value_Date':f'{data_item}_VALUE_DATE', 'Value_Text':f'{data_item}_VALUE_TEXT', 'Begin_Point':'BMP', 'End_Point':'EMP', 'Route_ID':'ROUTEID'}, inplace=True)
         df.rename(columns={'ValueNumeric': f'{data_item}', 'ValueDate':f'{data_item}_VALUE_DATE', 'ValueText':f'{data_item}_VALUE_TEXT', 'BeginPoint':'BMP', 'EndPoint':'EMP', 'RouteID':'ROUTEID'}, inplace=True)
@@ -123,11 +127,17 @@ for file in unique_items:
     # accounting for the fucked value_numeric issue with urban code, really this should be value text so were 
     # zfilling this value to 5
     if data_item == 'URBAN_CODE': df['URBAN_CODE'] = df.URBAN_CODE.astype(str).str.zfill(5)
-    if data_item == 'ROUTE_NAME':
+    elif data_item == 'ROUTE_NAME':
         df['ROUTE_NAME'] = df['ROUTE_NAME'].astype('string').map(remove_comma)
         df['ROUTE_NAME_VALUE_TEXT'] = df['ROUTE_NAME_VALUE_TEXT'].astype('string').map(remove_comma)
         df['ROUTE_NAME_VALUE_DATE'] = df['ROUTE_NAME_VALUE_DATE'].astype('string').map(remove_comma)
-    if data_item != 'HPMS_SAMPLE_NO':
+    elif data_item in ['CURVES', 'GRADES']:
+        [print(i) for i in df.columns]
+        df = df.pivot_table(values=data_item, index=['ROUTEID', 'BMP', 'EMP'], columns='Data_Item', aggfunc='first').reset_index()
+    
+    if data_item in ['CURVES', 'GRADES']:
+        cols = [f'{data_item}_{letter}' for letter in ['A', 'B', 'C', 'D', 'E', 'F']]
+    elif data_item != 'HPMS_SAMPLE_NO':
         cols = [f'{data_item}', f'{data_item}_VALUE_DATE', f'{data_item}_VALUE_TEXT']
     else:
         cols = [f'{data_item}']
