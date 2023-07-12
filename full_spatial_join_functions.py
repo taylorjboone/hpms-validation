@@ -603,7 +603,7 @@ class full_spatial_functions():
             temp2 = tempDF.copy()
             temp2 = temp2[temp2['HPMS_SAMPLE_NO'] == sampleID]
             sectionLen = temp2['EMP'].max() - temp2['BMP'].min()
-            temp2 = temp2[temp2['sumCurves'] != sectionLen]
+            temp2 = temp2[round(temp2['sumCurves'],3) != round(sectionLen,3)]
             self.df['SJF43'].iloc[temp2.index.tolist()] = False
             
             
@@ -654,7 +654,7 @@ class full_spatial_functions():
             temp2 = tempDF.copy()
             temp2 = temp2[temp2['HPMS_SAMPLE_NO'] == sampleID]
             sectionLen = temp2['EMP'].max() - temp2['BMP'].min()
-            temp2 = temp2[temp2['sumGrades'] != sectionLen]
+            temp2 = temp2[round(temp2['sumGrades'],3) != round(sectionLen,3)]
             self.df['SJF47'].iloc[temp2.index.tolist()] = False
 
 
@@ -786,8 +786,7 @@ class full_spatial_functions():
         self.df['SJF55'] = True
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'])
-        tempDF = tempDF[tempDF['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < (tempDF['BEGIN_DATE'] - pd.DateOffset(years=20)))]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < (tempDF['BEGIN_DATE'].dt.year - 20))]
         tempDF = tempDF[tempDF['YEAR_LAST_IMPROVEMENT_VALUE_DATE'].isna()]
         self.df['SJF55'].iloc[tempDF.index.tolist()] = False
 
@@ -1190,9 +1189,7 @@ class full_spatial_functions():
         print("Running rule SJF91...")
         self.df['SJF91'] = True
         tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'].notna()]
-        tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'])
-        tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] > tempDF['BEGIN_DATE']]
+        tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] > tempDF['BEGIN_DATE'].dt.year]
         self.df['SJF91'].iloc[tempDF.index.tolist()] = False
 
     def sjf92(self):
@@ -1276,7 +1273,6 @@ class full_spatial_functions():
         self.df['SJF100'].iloc[tempDF.index.tolist()] = False 
     
     def run(self):
-        #when it returns True, it means the data has no errors itself
         self.sjf01()
         self.sjf02()
         self.sjf03()
@@ -1476,11 +1472,11 @@ class full_spatial_functions():
     
 
 
-df = pd.read_csv('full_inventory_taylor_with_errors.csv',dtype={'URBAN_CODE':str, 'SampleId':str})
+df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str, 'SampleId':str})
 
 c = full_spatial_functions(df)  
 # c.run()
 c.run()
 c.create_output()
 print(c.df)
-c.df.to_csv('test_functions_matt_sucks.csv', index=False)
+# c.df.to_csv('test_functions_matt_sucks.csv', index=False)
