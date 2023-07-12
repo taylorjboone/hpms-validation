@@ -1171,9 +1171,38 @@ class full_spatial_functions():
 
     def sjf89(self):
         #Where SURFACE_TYPE is in (2;6;7;8) CRACKING_PERCENT <= X based on LANE_WIDTH. Where X = Max % AC Cracking on AC Cracking Validation table.
-        #Don't have AC Cracking Validation table, skipping rule for now
         print("Running rule SJF89...")
         self.df['SJF89'] = True
+        
+        #Lane Width : Max % Cracking
+        """
+        Lane width values 6.0, 7.0, 17.0, and 18.0 were missing from AC validation table, however lane_widths of 6,7,17 and 18 are valid.
+        Made max_cracking_percent 100% for 6,7 and 40% for 17,18. Needs to be updated if we find out correct values for these
+        """
+        acValidation = {
+            6.0 : 100.00, #NOT ON AC VALIDATION TABLE
+            7.0 : 100.00, #NOT ON AC VALIDATION TABLE
+            8.0 : 81.30,
+            9.0 : 72.20,
+            10.0 : 65.00,
+            11.0 : 59.10,
+            12.0 : 54.20,
+            13.0 : 50.00,
+            14.0 : 46.40,
+            15.0 : 43.30,
+            16.0 : 40.60,
+            17.0 : 40.00, #NOT ON AC VALIDATION TABLE
+            18.0 : 40.00  #NOT ON AC VALIDATION TABLE
+        }
+
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SURFACE_TYPE'].isin([2,6,7,8])]
+        tempDF = tempDF[tempDF['CRACKING_PERCENT'].notna()]
+        tempDF['MAX_CRACKING'] = tempDF['LANE_WIDTH'].copy()
+        tempDF['MAX_CRACKING'].replace(acValidation, inplace=True)
+        tempDF = tempDF[tempDF['CRACKING_PERCENT'] > tempDF['MAX_CRACKING']]
+        self.df['SJF89'].iloc[tempDF.index.tolist()] = False 
 
     def sjf90(self):
         #Where SURFACE_TYPE is in (3;4;5;9;10) CRACKING_PERCENT < .75
