@@ -57,6 +57,12 @@ class full_spatial_functions():
     def __init__(self,df):
         self.error_df = pd.DataFrame()
         self.df = df
+
+        try:
+            self.df['BEGIN_DATE']
+        except KeyError:
+            self.df['BEGIN_DATE'] = datetime(2022,1,1)
+
         self.df.rename(columns = {
             "FsystemVn":"F_SYSTEM",
             "NhsVn":"NHS",
@@ -166,10 +172,8 @@ class full_spatial_functions():
         tempDF = tempDF[tempDF['FACILITY_TYPE']==6]
         tempDF = tempDF[tempDF['DIR_THROUGH_LANES']>0]
         tempDF = tempDF[tempDF['F_SYSTEM']==1]
-        # tempDF = tempDF[tempDF['IRI'].notna() | tempDF['PSR'].notna()]
         tempDF = tempDF[tempDF['IRI'].notna()]
         tempDF = tempDF[tempDF['URBAN_CODE'].isna()]
-        
         self.df['SJF02'].iloc[tempDF.index.tolist()] = False
 
     def sjf03(self):
@@ -567,10 +571,6 @@ class full_spatial_functions():
         #CURVES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
         print("Running rule SJF41...")
         self.df['SJF41'] = True
-        tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | ((tempDF['F_SYSTEM'] == 4) & (tempDF['URBAN_CODE'] == 99999) & (tempDF['SURFACE_TYPE'] > 1))]
-
-
 
 
     def sjf42(self):
@@ -786,10 +786,8 @@ class full_spatial_functions():
         self.df['SJF55'] = True
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        beginDate = datetime.now() - relativedelta(years=21)
-        beginDate_less_20 = datetime.strptime(str(beginDate.year), '%Y')
         tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'])
-        tempDF = tempDF[tempDF['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < beginDate_less_20)]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < (tempDF['BEGIN_DATE'] - pd.DateOffset(years=20)))]
         tempDF = tempDF[tempDF['YEAR_LAST_IMPROVEMENT_VALUE_DATE'].isna()]
         self.df['SJF55'].iloc[tempDF.index.tolist()] = False
 
@@ -918,7 +916,8 @@ class full_spatial_functions():
         print("Running rule SJF70...")
         self.df['SJF70'] = True
         tempDF = self.df.copy()
-        tempDF[['COUNTER_PEAK_LANES','PEAK_LANES']].fillna(0, inplace=True)
+        tempDF['COUNTER_PEAK_LANES'].fillna(0, inplace=True)
+        tempDF['PEAK_LANES'].fillna(0, inplace=True)
         tempDF['sumCPL_PL'] = tempDF['COUNTER_PEAK_LANES'] + tempDF['PEAK_LANES']
         tempDF = tempDF[tempDF['THROUGH_LANES'].notna()]
         tempDF = tempDF[tempDF['sumCPL_PL'] < tempDF['THROUGH_LANES']]
@@ -995,18 +994,15 @@ class full_spatial_functions():
         print("Running rule SJF78...")
         self.df['SJF78'] = True
         tempDF = self.df.copy() 
-
-        beginDate = datetime.now() - relativedelta(years=1)
-        beginDate = datetime.strptime(str(beginDate.year), '%Y')
-
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF = tempDF[pd.to_datetime(tempDF['IRI_VALUE_DATE']) < beginDate]
+        tempDF = tempDF[(pd.to_datetime(tempDF['IRI_VALUE_DATE']) < tempDF['BEGIN_DATE']) | tempDF['IRI_VALUE_DATE'].isna()]
         self.df['SJF78'].iloc[tempDF.index.tolist()] = False 
 
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['IRI_VALUE_TEXT'].isna()]
         tempDF = tempDF[tempDF['F_SYSTEM'] > 1]
         tempDF = tempDF[tempDF['NHS'].isin(range(1,10))]
+        tempDF = tempDF[(pd.to_datetime(tempDF['IRI_VALUE_DATE']) < tempDF['BEGIN_DATE']) | tempDF['IRI_VALUE_DATE'].isna()]
         self.df['SJF78'].iloc[tempDF.index.tolist()] = False 
 
     def sjf79(self):
@@ -1015,20 +1011,16 @@ class full_spatial_functions():
         #Assuming ValueDate must be >= BeginDate otherwise all items would fail
         print("Running rule SJF79...")
         self.df['SJF79'] = True
-        tempDF = self.df.copy() 
-
-        beginDate = datetime.now() - relativedelta(years=1)
-        beginDate = datetime.strptime(str(beginDate.year), '%Y')
-
+        tempDF = self.df.copy()
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF = tempDF[pd.to_datetime(tempDF['RUTTING_VALUE_DATE']) < beginDate]
+        tempDF = tempDF[(pd.to_datetime(tempDF['RUTTING_VALUE_DATE']) < tempDF['BEGIN_DATE']) | tempDF['RUTTING_VALUE_DATE'].isna()]
         self.df['SJF79'].iloc[tempDF.index.tolist()] = False  
 
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['RUTTING_VALUE_TEXT'].isna()]
         tempDF = tempDF[tempDF['F_SYSTEM'] > 1]
         tempDF = tempDF[tempDF['NHS'].isin(range(1,10))]
-        tempDF = tempDF[pd.to_datetime(tempDF['RUTTING_VALUE_DATE']) < beginDate]
+        tempDF = tempDF[(pd.to_datetime(tempDF['RUTTING_VALUE_DATE']) < tempDF['BEGIN_DATE']) | tempDF['RUTTING_VALUE_DATE'].isna()]
         self.df['SJF79'].iloc[tempDF.index.tolist()] = False  
 
 
@@ -1040,19 +1032,15 @@ class full_spatial_functions():
         print("Running rule SJF80...")
         self.df['SJF80'] = True
         tempDF = self.df.copy() 
-
-        beginDate = datetime.now() - relativedelta(years=1)
-        beginDate = datetime.strptime(str(beginDate.year), '%Y')
-
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF = tempDF[pd.to_datetime(tempDF['FAULTING_VALUE_DATE']) < beginDate]
+        tempDF = tempDF[(pd.to_datetime(tempDF['FAULTING_VALUE_DATE']) < tempDF['BEGIN_DATE']) | tempDF['FAULTING_VALUE_DATE'].isna()]
         self.df['SJF80'].iloc[tempDF.index.tolist()] = False  
 
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['FAULTING_VALUE_TEXT'].isna()]
         tempDF = tempDF[tempDF['F_SYSTEM'] > 1 ]
         tempDF = tempDF[tempDF['NHS'].isin(range(1,10))]
-        tempDF = tempDF[pd.to_datetime(tempDF['FAULTING_VALUE_DATE']) < beginDate]
+        tempDF = tempDF[(pd.to_datetime(tempDF['FAULTING_VALUE_DATE']) < tempDF['BEGIN_DATE']) | tempDF['FAULTING_VALUE_DATE'].isna()]
         self.df['SJF80'].iloc[tempDF.index.tolist()] = False  
 
 
@@ -1062,33 +1050,26 @@ class full_spatial_functions():
         print("Running rule SJF81...")
         self.df['SJF81'] = True
         tempDF = self.df.copy()
-
-        beginDate_less_one = datetime.now() - relativedelta(years=2)
-        beginDate_less_one = datetime.strptime(str(beginDate_less_one.year), '%Y')
-
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF = tempDF[pd.to_datetime(tempDF['CRACKING_PERCENT_VALUE_DATE']) < beginDate_less_one]
+        tempDF = tempDF[(pd.to_datetime(tempDF['CRACKING_PERCENT_VALUE_DATE']) < (tempDF['BEGIN_DATE'] - pd.DateOffset(years=1))) | tempDF['CRACKING_PERCENT_VALUE_DATE'].isna()]
         self.df['SJF81'].iloc[tempDF.index.tolist()] = False
 
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['CRACKING_PERCENT_VALUE_TEXT'].isna()]
         tempDF = tempDF[tempDF['F_SYSTEM'] > 1]
         tempDF = tempDF[tempDF['NHS'].isin(range(1,10))]
+        tempDF = tempDF[(pd.to_datetime(tempDF['CRACKING_PERCENT_VALUE_DATE']) < (tempDF['BEGIN_DATE'] - pd.DateOffset(years=1))) | tempDF['CRACKING_PERCENT_VALUE_DATE'].isna()]
         self.df['SJF81'].iloc[tempDF.index.tolist()] = False
 
     def sjf82a(self):
         #Cracking Percent
         #ValueDate Must = BeginDate  Where ValueText is Null AND F_SYSTEM =1
         print("Running rule SJF82a...")
-
-        beginDate = datetime.now() - relativedelta(years=1)
-        beginDate = datetime.strptime(str(beginDate.year), '%Y')
-
         self.df['SJF82a'] = True
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['CRACKING_PERCENT_VALUE_TEXT'].isna()]
         tempDF = tempDF[tempDF['F_SYSTEM'] == 1]
-        tempDF = tempDF[pd.to_datetime(tempDF['CRACKING_PERCENT_VALUE_DATE']).dt.year != beginDate.year]
+        tempDF = tempDF[pd.to_datetime(tempDF['CRACKING_PERCENT_VALUE_DATE']).dt.year != tempDF['BEGIN_DATE'].dt.year]
         self.df['SJF82a'].iloc[tempDF.index.tolist()] = False
 
 
@@ -1096,45 +1077,33 @@ class full_spatial_functions():
         #Faulting
         #ValueDate Must = BeginDate  Where ValueText is Null AND F_SYSTEM =1
         print("Running rule SJF82b...")
-
-        beginDate = datetime.now() - relativedelta(years=1)
-        beginDate = datetime.strptime(str(beginDate.year), '%Y')
-
         self.df['SJF82b'] = True
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['FAULTING_VALUE_TEXT'].isna()]
         tempDF = tempDF[tempDF['F_SYSTEM'] == 1]
-        tempDF = tempDF[pd.to_datetime(tempDF['FAULTING_VALUE_DATE']).dt.year != beginDate.year]
+        tempDF = tempDF[pd.to_datetime(tempDF['FAULTING_VALUE_DATE']).dt.year != tempDF['BEGIN_DATE'].dt.year]
         self.df['SJF82b'].iloc[tempDF.index.tolist()] = False
 
     def sjf82c(self):
         #IRI
         #ValueDate Must = BeginDate  Where ValueText is Null AND F_SYSTEM =1
         print("Running rule SJF82c...")
-
-        beginDate = datetime.now() - relativedelta(years=1)
-        beginDate = datetime.strptime(str(beginDate.year), '%Y')
-
         self.df['SJF82c'] = True
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['IRI_VALUE_TEXT'].isna()]
         tempDF = tempDF[tempDF['F_SYSTEM'] == 1]
-        tempDF = tempDF[pd.to_datetime(tempDF['IRI_VALUE_DATE']).dt.year != beginDate.year]
+        tempDF = tempDF[pd.to_datetime(tempDF['IRI_VALUE_DATE']).dt.year != tempDF['BEGIN_DATE'].dt.year]
         self.df['SJF82c'].iloc[tempDF.index.tolist()] = False
 
     def sjf82d(self):
         #Rutting
         #ValueDate Must = BeginDate  Where ValueText is Null AND F_SYSTEM =1
         print("Running rule SJF82d...")
-
-        beginDate = datetime.now() - relativedelta(years=1)
-        beginDate = datetime.strptime(str(beginDate.year), '%Y')
-
         self.df['SJF82d'] = True
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['RUTTING_VALUE_TEXT'].isna()]
         tempDF = tempDF[tempDF['F_SYSTEM'] == 1]
-        tempDF = tempDF[pd.to_datetime(tempDF['RUTTING_VALUE_DATE']).dt.year != beginDate.year]
+        tempDF = tempDF[pd.to_datetime(tempDF['RUTTING_VALUE_DATE']).dt.year != tempDF['BEGIN_DATE'].dt.year]
         self.df['SJF82d'].iloc[tempDF.index.tolist()] = False
 
     def sjf83a(self):
@@ -1190,7 +1159,6 @@ class full_spatial_functions():
         self.df['SJF87'] = True
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['RUTTING'] >= 1]
-
         self.df['SJF87'].iloc[tempDF.index.tolist()] = False
 
     def sjf88(self):
@@ -1219,15 +1187,12 @@ class full_spatial_functions():
 
     def sjf91(self):
         #ValueDate <= BeginDate
-        #Begin date is assumed to be last year (from whenever the program is run)
         print("Running rule SJF91...")
         self.df['SJF91'] = True
-        lastYear = datetime.now() - relativedelta(years=1)
-        lastYear = datetime.strptime(str(lastYear.year), '%Y')
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'].notna()]
         tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'])
-        tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] > lastYear]
+        tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] > tempDF['BEGIN_DATE']]
         self.df['SJF91'].iloc[tempDF.index.tolist()] = False
 
     def sjf92(self):
@@ -1305,11 +1270,6 @@ class full_spatial_functions():
         print("Running rule SJF100...")
         self.df['SJF100'] = True
         tempDF = self.df.copy()
-        # tempDF = tempDF[~tempDF['FACILITY_TYPE'].isin([1,2])]
-        # tempDF = tempDF[~tempDF['F_SYSTEM'].isin(range(1,6))]
-        # tempDF = tempDF[~(tempDF['F_SYSTEM'] == 6) | ~(tempDF['URBAN_CODE'].astype(float) < 99999)]
-        # tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-
         tempDF = tempDF[~tempDF['FACILITY_TYPE'].isin([1,2]) | ~tempDF['F_SYSTEM'].isin(range(1,6))]
         tempDF = tempDF[~tempDF['FACILITY_TYPE'].isin([1,2]) | (tempDF['F_SYSTEM'] != 6) | (tempDF['URBAN_CODE'].astype(float) >= 99999)]
         tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
