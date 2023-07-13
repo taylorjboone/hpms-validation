@@ -911,10 +911,11 @@ class full_spatial_functions():
         self.df['SJF69'].iloc[tempDF.index.tolist()] = False
 
     def sjf70(self):
-        # THROUGH_LANES	The sum of COUNTER_PEAK_LANES + PEAK_LANES must be >= THROUGH_LANES
+        # THROUGH_LANES	The sum of COUNTER_PEAK_LANES + PEAK_LANES must be >= THROUGH_LANES on Samples
         print("Running rule SJF70...")
         self.df['SJF70'] = True
         tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
         tempDF['COUNTER_PEAK_LANES'].fillna(0, inplace=True)
         tempDF['PEAK_LANES'].fillna(0, inplace=True)
         tempDF['sumCPL_PL'] = tempDF['COUNTER_PEAK_LANES'] + tempDF['PEAK_LANES']
