@@ -57,6 +57,13 @@ class full_spatial_functions():
         except KeyError:
             self.df['BEGIN_DATE'] = datetime(2022,1,1)
 
+        try:
+            self.df['YearLastConstructionVd'] = pd.to_datetime(self.df['YearLastConstructionVd'])
+            self.df['YearLastConstructionVd'] = self.df['YearLastConstructionVd'].dt.year
+        except KeyError:
+            pass
+
+
         self.df.rename(columns = {
             "FsystemVn":"F_SYSTEM",
             "NhsVn":"NHS",
@@ -1496,7 +1503,7 @@ class full_spatial_functions():
     
 
 
-df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str, 'SampleId':str})
+df = pd.read_csv('full_inventory_taylor_with_errors.csv',dtype={'URBAN_CODE':str, 'SampleId':str})
 
 c = full_spatial_functions(df)  
 # c.run()
