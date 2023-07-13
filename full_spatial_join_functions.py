@@ -597,7 +597,7 @@ class full_spatial_functions():
             temp2 = tempDF.copy()
             temp2 = temp2[temp2['HPMS_SAMPLE_NO'] == sampleID]
             sectionLen = temp2['EMP'].max() - temp2['BMP'].min()
-            temp2 = temp2[round(temp2['sumCurves'],3) != round(sectionLen,3)]
+            temp2 = temp2[round(temp2['sumCurves'], 3) != round(sectionLen, 3)]
             self.df['SJF43'].iloc[temp2.index.tolist()] = False
             
             
@@ -648,7 +648,7 @@ class full_spatial_functions():
             temp2 = tempDF.copy()
             temp2 = temp2[temp2['HPMS_SAMPLE_NO'] == sampleID]
             sectionLen = temp2['EMP'].max() - temp2['BMP'].min()
-            temp2 = temp2[round(temp2['sumGrades'],3) != round(sectionLen,3)]
+            temp2 = temp2[round(temp2['sumGrades'], 3) != round(sectionLen, 3)]
             self.df['SJF47'].iloc[temp2.index.tolist()] = False
 
 

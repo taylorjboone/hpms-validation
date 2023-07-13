@@ -77,7 +77,7 @@ def get_f_system(value):
     elif value in [9, 19]:
         return int(7)
 
-arnold = gpd.read_file(r'lrs_data/Route_Status_12_31_2022_WGS_84')
+arnold = gpd.read_file(r'lrs_data/Dominant_Routes_2022.gdb')
 arnold_rids = arnold['ROUTE_ID'].unique().tolist()
 
 def load_defaults(df):
@@ -195,9 +195,9 @@ data = pd.read_csv(input_file)
 # print(inventory)
 # print(traffic)
 
-# cross_validation = Cross_Validation(data)
-# isj_errors = cross_validation.inventory_spatial_join()
-# tsj_errors = cross_validation.traffic_spatial_join()
+cross_validation = Cross_Validation(data)
+isj_errors = cross_validation.inventory_spatial_join()
+tsj_errors = cross_validation.traffic_spatial_join()
 
-# print('ISJ Errors', isj_errors)
-# print('TSJ Errors', tsj_errors)
+print('ISJ Errors', isj_errors)
+print('TSJ Errors', tsj_errors)
