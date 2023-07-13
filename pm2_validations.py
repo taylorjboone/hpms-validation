@@ -290,8 +290,6 @@ class pm2_validations():
         tempDF = tempDF[tempDF['RUTTING'].isna()]
         self.df['SJPM218'].iloc[tempDF.index.tolist()] = False
 
-
-
     def SJPM219(self):
         #IRI values < 30 and > 400 should be reviewed and where valid; 
         # explanation provided in submission comments. 
@@ -301,6 +299,35 @@ class pm2_validations():
         tempDF = self.df.copy()
         tempDF = tempDF[(tempDF['IRI'] < 30)| (tempDF['IRI'] > 400)]
         self.df['SJPM219'].iloc[tempDF.index.tolist()] = False
+
+    def SJPM230(self):
+        #Cracking_Percent event segments must align with with the Begin and End points for IRI segments.
+
+        print("Running rule SJPM230")
+        self.df['SJPM230'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[(tempDF['CRACKING_PERCENT'].isna() & tempDF['IRI'].notna()) | (tempDF['CRACKING_PERCENT'].notna() & tempDF['IRI'].isna())]
+        self.df['SJPM230'].iloc[tempDF.index.tolist()] = False
+
+    def SJPM231(self):
+        #Rutting event segments must align with with the Begin and End points for IRI segments.
+
+        print("Running rule SJPM231")
+        self.df['SJPM231'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[(tempDF['RUTTING'].isna() & tempDF['IRI'].notna()) | (tempDF['RUTTING'].notna() & tempDF['IRI'].isna())]
+        self.df['SJPM231'].iloc[tempDF.index.tolist()] = False
+
+    def SJPM232(self):
+        #Faulting event segments must align with with the Begin and End points for IRI segments.
+
+        print("Running rule SJPM232")
+        self.df['SJPM232'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[(tempDF['FAULTING'].isna() & tempDF['IRI'].notna()) | (tempDF['FAULTING'].notna() & tempDF['IRI'].isna())]
+        self.df['SJPM232'].iloc[tempDF.index.tolist()] = False
+
+
 
     def run(self):
         self.SJPM201()
@@ -322,10 +349,13 @@ class pm2_validations():
         self.SJPM217()
         self.SJPM218()
         self.SJPM219()
+        self.SJPM230()
+        self.SJPM231()
+        self.SJPM232()
 
     def create_output(self, template='pm2_rules_summary_template.xlsx', outfilename='pm2_rules_summary.xlsx'):
         #Reads sheet on template that list all data items associated with each rule and converts to dictionary
-        dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=20)
+        dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=23)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
         dataItemsDF['Data_Items'] = dataItemsDF['Data_Items'].str.split(",")
         ruleDict = dict(zip(dataItemsDF['Rule'], dataItemsDF['Data_Items']))
