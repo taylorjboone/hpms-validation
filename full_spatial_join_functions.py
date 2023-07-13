@@ -1,12 +1,7 @@
 import pandas as pd
-from datetime import datetime,timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import datetime
 import numpy as np
-import json
 import warnings
-import copy
-import string
-import os
 import shutil
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
@@ -55,7 +50,6 @@ class full_spatial_functions():
     
     
     def __init__(self,df):
-        self.error_df = pd.DataFrame()
         self.df = df
 
         try:
@@ -1411,7 +1405,7 @@ class full_spatial_functions():
         self.sjf99()
         self.sjf100()
     
-    def create_output(self, template='fullSpatialErrors_template.xlsx', outfilename='rules_summary.xlsx'):
+    def create_output(self, template='sjf_rules_summary_template.xlsx', outfilename='sjf_rules_summary.xlsx'):
         #Reads sheet on template that list all data items associated with each rule and converts to dictionary
         dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=106)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
