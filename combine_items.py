@@ -222,7 +222,7 @@ def combine_items(fns,outfilename='all_submission_data.csv'):
     with open('myfile.json','w') as f:
         f.write(json.dumps(myjson))
     os.system('lrsops overlay --operations myfile.json')
-    # shutil.rmtree('tmp')
+    shutil.rmtree('tmp')
     # os.remove('myfile.json')
     print(time.time()-s,'Time to Overlay HPMS Files')
     newlist = []
@@ -322,12 +322,13 @@ def convert_files(mylist,outdir='tmp_normalized'):
 
 
 '''
-
 this combines the errors from the fhwa file gdb to 
 '''
-def combine_errors(df,combined_file):
+def combine_errors(df,combined_file,dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str}):
     if not os.path.exists('error_full'):
         os.mkdir('error_full')
+    if 'geometry' in df.columns:
+        df.drop(['geometry'],axis=1,inplace=True)
     df['ValidationRule'] = df.ValidationRule.str.replace("-",'')
     df.rename(columns={'RouteId':'RouteID','BeginPoint':'BMP','EndPoint':'EMP'},inplace=True)
     num_errs = df['ValidationRule'].nunique()
@@ -348,7 +349,7 @@ def combine_errors(df,combined_file):
     os.system('lrsops overlay --operations myerrors.json')
     os.system(f'lrsops overlay -b {combined_file} -s tot_errors.csv -c {",".join(rule_cols)} -o tmpout.csv')
     
-    df = pd.read_csv('tmpout.csv',dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str})
+    df = pd.read_csv('tmpout.csv',dtype=dtype)
     df[rule_cols] = df[rule_cols].fillna(value=True)
     os.remove('tmpout.csv')
     os.remove('tot_errors.csv')
@@ -357,13 +358,12 @@ def combine_errors(df,combined_file):
 
 mypath = '/Users/charlesbmurphy/Downloads/hpms-validation/tmp2'
 
-onlyfiles = [os.path.join(mypath,f) for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) and f.endswith('.csv')]
+# onlyfiles = [os.path.join(mypath,f) for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) and f.endswith('.csv')]
 # print(combine_errors('/Users/charlesbmurphy/Downloads/Non-Conformances_2023a.gdb','all_submission_data.csv'))
 # df = pd.read_csv('/Users/charlesbmurphy/Downloads/full_spatial_errors_table.csv')
 # print(combine_errors(df,'all_submission_data.csv'))
 
 # myfiles = convert_files(onlyfiles)
-df = combine_items(onlyfiles)
-print(df)
+# df = combine_items(onlyfiles)
 # df.to_excel('summary_combined.xlsx',index=False)
 # print(len(myfiles))

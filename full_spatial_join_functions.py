@@ -40,6 +40,8 @@ f_system_dict = {
             9:7,
             19:7
         }
+
+
 facility_list = [1,2,4,5,6]
 facility_list2 = [1,2,4]
 f_system_list = [1,2,3,4,5,6,7]
@@ -318,7 +320,7 @@ class FullSpatial():
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3,4]) | tempDF['NHS'].notna()]
         tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
-        tempDF = tempDF[tempDF['ROUTE_NAME'].isna()]
+        tempDF = tempDF[tempDF['ROUTE_NAME_VALUE_TEXT'].isna()]
         self.df['SJF19'].iloc[tempDF.index.tolist()] = False
 
     def sjf20(self):    
@@ -564,32 +566,48 @@ class FullSpatial():
         tempDF = tempDF[tempDF['CURVES_F'].isna()]
         self.df['SJF42'].iloc[tempDF.index.tolist()] = False
 
-    def sjf43(self):
-        #Sum Length (CURVES_A + CURVES_B + CURVES_C + CURVES_D + CURVES_E + CURVES_E) Must Equal to the Sample Length on 
-        # (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)))
+    # def sjf43(self):
+    #     #Sum Length (CURVES_A + CURVES_B + CURVES_C + CURVES_D + CURVES_E + CURVES_E) Must Equal to the Sample Length on 
+    #     # (Sample and (F_SYSTEM (1;2;3) or (F_SYSTEM = 4 and URBAN_CODE = 99999)))
 
-        #ENTIRE column ('SJF43') should either be True or False as this rule does not check individual rows
-        print("Running rule SJF43...")
-        tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['CURVES_F'].notna()]
-        tempDF['CURVE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
-        curve_len_sum = tempDF['CURVE_LEN'].sum()
+    #     #ENTIRE column ('SJF43') should either be True or False as this rule does not check individual rows
+    #     print("Running rule SJF43...")
+    #     tempDF = self.df.copy()
+    #     # tempDF = tempDF[tempDF['CURVES_F'].notna()]
+    #     tempDF['CURVE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
+    #     curve_len_sum = tempDF['CURVE_LEN'].sum()
 
-        tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
-        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | ((tempDF['F_SYSTEM'] == 4)&(tempDF['URBAN_CODE'].astype(float) == 99999))]
+    #     tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].notna()]
+    #     tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | ((tempDF['F_SYSTEM'] == 4)&(tempDF['URBAN_CODE'].astype(float) == 99999))]
 
-        for name,tmpdf in tempDF.groupby("HPMS_SAMPLE_NO"):
-            print(name,tmpdf[['CURVES_A','CURVES_B','CURVES_C','CURVES_D','CURVES_E','RouteID','BMP','EMP']])
+        
+    #     sample_len = tempDF.groupby("HPMS_SAMPLE_NO")['CURVE_LEN'].sum().to_dict()
+    #     tempDF['sample_length'] = tempDF.HPMS_SAMPLE_NO.map(lambda x:sample_len.get(x,''))
+    #     # print(tempDF[['sample_length','HPMS_SAMPLE_NO']])
+    #     curves = ['CURVES_A','CURVES_B','CURVES_C','CURVES_D','CURVES_E','RouteID','BMP','EMP']
+    #     # print(tempDF.groupby('HPMS_SAMPLE_NO')[curves].first())
+    #     eh = tempDF.groupby('HPMS_SAMPLE_NO').agg({'BMP': ['min'], 'EMP': ['max']})
+    #     eh.columns = ['bmp','emp']
+    #     tempDF['curve_sum'] = tempDF[curves].sum(axis=1)
+    #     tempDF['SAMPLE_BEG'] = tempDF['HPMS_SAMPLE_NO'].map(lambda x:eh.loc[x].bmp) 
+    #     tempDF['SAMPLE_END'] = tempDF['HPMS_SAMPLE_NO'].map(lambda x:eh.loc[x].emp) 
+    #     print((tempDF['SAMPLE_END']-tempDF['SAMPLE_BEG']),tempDF[curves].sum(axis=1))
+    #     print(tempDF[['sample_length','curve_sum']])
 
-        # tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'].astype(float) == 99999)]
-        tempDF['SAMPLE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
-        sample_len_sum = tempDF['SAMPLE_LEN'].sum()
+    #     # print(tempDF[curves].sum(axis=1),tempDF['sample_length'],'here')
 
-        if curve_len_sum == sample_len_sum:
-            self.df['SJF43'] = True
-        else:
-            self.df['SJF43'] = False 
+
+    #     # for name,tmpdf in tempDF.groupby("HPMS_SAMPLE_NO"):
+    #     #     print(tmpdf[['CURVES_A','CURVES_B','CURVES_C','CURVES_D','CURVES_E','RouteID','BMP','EMP']])
+
+    #     # tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | (tempDF['URBAN_CODE'].astype(float) == 99999)]
+    #     tempDF['SAMPLE_LEN'] = round(tempDF['EMP'] - tempDF['BMP'], 3)
+    #     sample_len_sum = tempDF['SAMPLE_LEN'].sum()
+
+    #     if curve_len_sum == sample_len_sum:
+    #         self.df['SJF43'] = True
+    #     else:
+    #         self.df['SJF43'] = False 
 
     def sjf44(self):
         #TERRAIN_TYPE must exist on Samples WHERE (URBAN_CODE = 99999 AND F_SYSTEM in (1;2;3;4;5))
@@ -762,8 +780,8 @@ class FullSpatial():
         beginDate_less_20 = datetime.strptime(str(beginDate.year), '%Y')
         tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'], format='%Y',errors='ignore')
         # tmp_df['BEGIN_20_LESS'] = tmp_df['BEGIN_DATE'].apply(lambda x: x-relativedelta(years=20))
-        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < beginDate_less_20)]
-        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT'].isna()]
+        tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10]) | (tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] < (tmp_df['Begin_Date']-pd.Timedelta(weeks=52*20)))]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT_VALUE_DATE'].isna()]
         self.df['SJF55'].iloc[tmp_df.index.tolist()] = False
 
     def sjf56(self):
@@ -773,7 +791,7 @@ class FullSpatial():
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['SURFACE_TYPE'].isin([2,3,4,5,6,7,8,9,10])]
         tmp_df = tmp_df[tmp_df['HPMS_SAMPLE_NO'].notna()]
-        tmp_df = tmp_df[tmp_df['YEAR_LAST_CONSTRUCTION'].isna()]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_CONSTRUCTION_VALUE_DATE'].isna()]
         self.df['SJF56'].iloc[tmp_df.index.tolist()] = False
 
     def sjf57(self):
@@ -782,7 +800,7 @@ class FullSpatial():
         self.df['SJF57'] = True
         tmp_df = self.df.copy()
         tmp_df = tmp_df[tmp_df['HPMS_SAMPLE_NO'].notna()]
-        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT'].notna()]
+        tmp_df = tmp_df[tmp_df['YEAR_LAST_IMPROVEMENT_VALUE_DATE'].notna()]
         tmp_df = tmp_df[tmp_df['LAST_OVERLAY_THICKNESS'].isna()]
         self.df['SJF57'].iloc[tmp_df.index.tolist()] = False
 
@@ -837,9 +855,12 @@ class FullSpatial():
         print("Running rule SJF63...")
         self.df['SJF63'] = True
         tmp_df = self.df.copy()
-        tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
-        tmp_df = tmp_df[(tmp_df['F_SYSTEM'].isin([1,2,3,4,5]))|((tmp_df['F_SYSTEM']==6)&(tmp_df['URBAN_CODE'].astype(float)<99999))|(tmp_df['NHS'].notna())]
+        # tmp_df = tmp_df[tmp_df['FACILITY_TYPE'].isin([1,2])]
+        tmp_df = tmp_df[(tmp_df['FACILITY_TYPE'].isin([1,2])) | \
+            (tmp_df['F_SYSTEM'].isin([1,2,3,4,5]))|((tmp_df['F_SYSTEM']==6)&(tmp_df['URBAN_CODE'].astype(float)<99999))|(tmp_df['NHS'].notna())]
+        print(len(tmp_df))
         tmp_df = tmp_df[tmp_df['COUNTY_ID'].isna()]
+
         self.df['SJF63'].iloc[tmp_df.index.tolist()] = False
 
     def sjf64(self):
@@ -1161,7 +1182,7 @@ class FullSpatial():
         self.df['SJF84'] = True
         tempDF = self.df.copy()
         bv = pd.to_datetime(tempDF.PRS_VALUE_DATE,errors='coerce')>(pd.to_datetime(tempDF.Begin_Date,errors='coerce')-pd.Timedelta(days=1))
-        tempDF = tempDF[tempDF.HPMS_SAMPLE_NO.notna()|((tempDF.F_SYSTEM==1)&(tempDF.NHS.isin(1,2,3,4,5,6,7,8,9)))]
+        tempDF = tempDF[tempDF.HPMS_SAMPLE_NO.notna()|((tempDF.F_SYSTEM==1)&(tempDF.NHS.isin([1,2,3,4,5,6,7,8,9])))]
         tempDF = tempDF[~bv]
         self.df['SJF84'].iloc[tempDF.index.tolist()] = False
         # print(self.df[~self.df['SJF84']][rules_col_used.get(self.df.columns[-1],[])+['RouteID','BMP','EMP']])
@@ -1217,12 +1238,16 @@ class FullSpatial():
         #Begin date is assumed to be last year (from whenever the program is run)
         print("Running rule SJF91...")
         self.df['SJF91'] = True
-        lastYear = datetime.now() - relativedelta(years=1)
-        lastYear = datetime.strptime(str(lastYear.year), '%Y')
+
+        # this is fucked
+        # lastYear = datetime.now() - relativedelta(years=1) 
+        # lastYear = datetime.strptime(str(lastYear.year), '%Y')
         tempDF = self.df.copy()
         tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'].notna()]
-        tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'], format='%Y')
-        tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] > lastYear]
+        tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] = pd.to_datetime(tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'])
+        tempDF['Begin_Date'] = pd.to_datetime(tempDF['Begin_Date'])
+
+        tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] > tempDF.Begin_Date]
         self.df['SJF91'].iloc[tempDF.index.tolist()] = False
 
     def sjf92(self):
@@ -1459,7 +1484,24 @@ class FullSpatial():
 # df = combine_errors(df,'all_submission_data.csv')
 
 # df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str})
-c = FullSpatial(pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str}))  
+# df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str})
+
+
+# errors = pd.read_csv('/Users/charlesbmurphy/Downloads/hpms-validation/7-7-2023_full_spatial_validations.csv')
+# df = combine_errors(errors,'/Users/charlesbmurphy/Downloads/hpms-validation/full_join_taylor.csv',dtype={'UrbanIdVn':str,'SampleId':str})
+# df.to_csv('full_inventory_taylor_with_errors.csv',index=False)
+
+# remapping columns from FHWA to our schema
+df = pd.read_csv('full_inventory_taylor_with_errors.csv',dtype={'UrbanIdVn':str,'SampleId':str})
+df['Begin_Date'] = '01/01/2022'
+df['PRS_VALUE_DATE'] = pd.NA
+rename_dict = {'RouteId': 'RouteID', 'BeginPoint': 'BMP', 'EndPoint': 'EMP','Begin_Date':'Begin_Date', 'RouteNumber': 'ROUTE_NUMBER', 'RouteQualifier': 'ROUTE_QUALIFIER', 'RouteName': 'ROUTE_NAME_VALUE_TEXT', 'RouteSigning': 'ROUTE_SIGNING', 'SampleId': 'HPMS_SAMPLE_NO', 'FsystemVn': 'F_SYSTEM', 'NhsVn': 'NHS', 'StrahnetTypeVn': 'STRAHNET_TYPE', 'NnVn': 'NN', 'NhfnVn': 'NHFN', 'UrbanIdVn': 'URBAN_CODE', 'FacilityTypeVn': 'FACILITY_TYPE', 'StructureTypeVn': 'STRUCTURE_TYPE', 'OwnershipVn': 'OWNERSHIP', 'CountyIdVn': 'COUNTY_ID', 'MaintenanceOperationsVn': 'MAINTENANCE_OPERATIONS', 'IsRestrictedVn': 'IS_RESTRICTED', 'ThroughLanesVn': 'THROUGH_LANES', 'ManagedLanesTypeVn': 'MANAGED_LANES_TYPE', 'ManagedLanesVn': 'MANAGED_LANES', 'PeakLanesVn': 'PEAK_LANES', 'CounterPeakLanesVn': 'COUNTER_PEAK_LANES', 'TollIdVn': 'TOLL_ID', 'LaneWidthVn': 'LANE_WIDTH', 'MedianTypeVn': 'MEDIAN_TYPE', 'MedianWidthVn': 'MEDIAN_WIDTH', 'ShoulderTypeVn': 'SHOULDER_TYPE', 'ShoulderWidthRVn': 'SHOULDER_WIDTH_R', 'ShoulderWidthLVn': 'SHOULDER_WIDTH_L', 'PeakParkingVn': 'PEAK_PARKING', 'DirThroughLanesVn': 'DIR_THROUGH_LANES', 'TurnLanesRVn': 'TURN_LANES_R', 'TurnLanesLVn': 'TURN_LANES_L', 'SignalTypeVn': 'SIGNAL_TYPE', 'PctGreenTimeVn': 'PCT_GREEN_TIME', 'NumberSignalsVn': 'NUMBER_SIGNALS', 'StopSignsVn': 'STOP_SIGNS', 'AtGradeOtherVn': 'AT_GRADE_OTHER', 'AadtVn': 'AADT', 'AadtVt': 'AADT_VALUE_TEXT', 'AadtVd': 'AADT_VALUE_DATE', 'AadtsingleUnitVn': 'AADT_SINGLE_UNIT', 'AadtsingleUnitVt': 'AADT_SINGLE_UNIT_VALUE_TEXT', 'AadtsingleUnitVd': 'AADT_SINGLE_UNIT_VALUE_DATE', 'AadtcombinationVn': 'AADT_COMBINATION', 'AadtcombinationVt': 'AADT_COMBINATION_VALUE_TEXT', 'AadtcombinationVd': 'AADT_COMBINATION_VALUE_DATE', 'PctdhsingleVn': 'PCT_DH_SINGLE_UNIT', 'PctdhcombinationVn': 'PCT_DH_COMBINATION', 'KfactorVn': 'K_FACTOR', 'DirFactorVn': 'DIR_FACTOR', 'FutureAadtVn': 'FUTURE_AADT', 'FutureAadtVd': 'FUTURE_AADT_VALUE_DATE', 'AccessControlVn': 'ACCESS_CONTROL', 'SpeedLimitVn': 'SPEED_LIMIT', 'IriVn': 'IRI', 'IriVt': 'IRI_VALUE_TEXT', 'IriVd': 'IRI_VALUE_DATE', 'PsrVn': 'PSR', 'PsrVt': 'PSR_VALUE_TEXT', 'PsrVd': 'PSR_VALUE_DATE', 'SurfaceTypeVn': 'SURFACE_TYPE', 'RuttingVn': 'RUTTING', 'RuttingVt': 'RUTTING_VALUE_TEXT', 'RuttingVd': 'RUTTING_VALUE_DATE', 'FaultingVn': 'FAULTING', 'FaultingVt': 'FAULTING_VALUE_TEXT', 'FaultingVd': 'FAULTING_VALUE_DATE', 'CrackingPercentVn': 'CRACKING_PERCENT', 'CrackingPercentVt': 'CRACKING_PERCENT_VALUE_TEXT', 'CrackingPercentVd': 'CRACKING_PERCENT_VALUE_DATE', 'YearLastImprovementVd': 'YEAR_LAST_IMPROVEMENT_VALUE_DATE', 'YearLastConstructionVd': 'YEAR_LAST_CONSTRUCTION_VALUE_DATE', 'LastOverlayThicknessVn': 'LAST_OVERLAY_THICKNESS', 'ThicknessRigidVn': 'THICKNESS_RIGID', 'ThicknessFlexibleVn': 'THICKNESS_FLEXIBLE', 'BaseTypeVn': 'BASE_TYPE', 'BaseThicknessVn': 'BASE_THICKNESS', 'SoilTypeVn': 'SOIL_TYPE', 'WideningPotentialVn': 'WIDENING_POTENTIAL', 'WideningPotentialVt': 'WIDENING_POTENTIAL_VALUE_TEXT', 'CurvesAVn': 'CURVES_A', 'CurvesBVn': 'CURVES_B', 'CurvesCVn': 'CURVES_C', 'CurvesDVn': 'CURVES_D', 'CurvesEVn': 'CURVES_E', 'CurvesFVn': 'CURVES_F', 'TerrarinTypeVn': 'TERRARIN_TYPE', 'GradesAVn': 'GRADES_A', 'GradesBVn': 'GRADES_B', 'GradesCVn': 'GRADES_C', 'GradesDVn': 'GRADES_D', 'GradesEVn': 'GRADES_E', 'GradesFVn': 'GRADES_F', 'PctPassSightVn': 'PCT_PASS_SIGHT', 'TravelTimeCodeVt': 'TRAVEL_TIME_CODE_VALUE_TEXT'}
+df.rename(columns=rename_dict,inplace=True) 
+
+
+c = FullSpatial(df) 
 c.run_rules()
+fhwa = c.conflate_fhwa()
+print(fhwa)
 # c.consolidate_errors_rules()
 # w = c.create_output()
