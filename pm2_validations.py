@@ -176,7 +176,7 @@ class pm2_validations():
         print("Running rule SJPM206")
         self.df['SJPM206'] = True
         tempDF = self.df.copy()
-        tempDF = tempDF[tempDF['NHS'].isin([range(1,10)])]
+        tempDF = tempDF[tempDF['NHS'].isin(range(1,10))]
         tempDF = tempDF[tempDF['FACILITY_TYPE'].isin([1,2])]
         tempDF = tempDF[tempDF['SURFACE_TYPE'].isna()]
         self.df['SJPM206'].iloc[tempDF.index.tolist()] = False       

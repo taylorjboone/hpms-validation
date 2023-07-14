@@ -4,3 +4,4 @@ client_secrets.json
 addErrors.py
 full_inventory_taylor_with_errors.csv
 
+full_spat_with_error_columns.csv
