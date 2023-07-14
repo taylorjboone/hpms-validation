@@ -572,6 +572,12 @@ class full_spatial_functions():
         #CURVES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
         print("Running rule SJF41...")
         self.df['SJF41'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | ((tempDF['F_SYSTEM'] == 4) & (tempDF['URBAN_CODE'] == 99999))]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        tempDF = tempDF[tempDF['CURVES_A'].notna() | tempDF['CURVES_B'].notna() | tempDF['CURVES_C'].notna() | tempDF['CURVES_D'].notna() | tempDF['CURVES_E'].notna() | tempDF['CURVES_F'].notna()]
+        tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].isna()]
+        self.df['SJF41'].iloc[tempDF.index.tolist()] = False
 
 
     def sjf42(self):
@@ -622,9 +628,14 @@ class full_spatial_functions():
 
     def sjf45(self):
         #GRADES BP/EP on F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1 Must Align with Sample BP/EP
-        #Rule ignored: If Grades exist according to rule SJF46, then this will always be true (with how all submission data is built)
         print("Running rule SJF45...")
         self.df['SJF45'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].isin([1,2,3]) | ((tempDF['F_SYSTEM'] == 4) & (tempDF['URBAN_CODE'] == 99999))]
+        tempDF = tempDF[tempDF['SURFACE_TYPE'] > 1]
+        tempDF = tempDF[tempDF['GRADES_A'].notna() | tempDF['GRADES_B'].notna() | tempDF['GRADES_C'].notna() | tempDF['GRADES_D'].notna() | tempDF['GRADES_E'].notna() | tempDF['GRADES_F'].notna()]
+        tempDF = tempDF[tempDF['HPMS_SAMPLE_NO'].isna()]
+        self.df['SJF45'].iloc[tempDF.index.tolist()] = False
 
     def sjf46(self):
         #At least one GRADES_A-F must be coded for each Sample WHERE F_SYSTEM in (1;2;3) or F_SYSTEM = 4 and URBAN_CODE = 99999 and SURFACE_TYPE > 1.
