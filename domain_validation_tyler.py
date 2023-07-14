@@ -283,13 +283,182 @@ class domain_validations():
         tempDF = tempDF[~tempDF['AADT_COMBINATION_VALUE_TEXT'].str.contains("[ABCDE]{1}", regex=True)]
         self.df['DRE24'].iloc[tempDF.index.tolist()] = False 
 
+    def dre25(self):
+        print("Running rule DRE25...")
+        self.df['DRE25'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[~tempDF['AADT_COMBINATION'].isin(range(0,51))]
+        self.df['DRE25'].iloc[tempDF.index.tolist()] = False   
+
+    def dre26(self):
+        print("Running rule DRE26...")
+        self.df['DRE26'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['K_FACTOR'] <= 4]
+        self.df['DRE26'].iloc[tempDF.index.tolist()] = False
+
+    def dre27(self):
+        print("Running rule DRE27...")
+        self.df['DRE27'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[~tempDF['DIR_FACTOR'].isin(range(50,101))]
+        self.df['DRE27'].iloc[tempDF.index.tolist()] = False
+
+    def dre28(self):
+        print("Running rule DRE28...")
+        self.df['DRE28'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FUTURE_AADT'].notna()]
+        tempDF = tempDF[(tempDF['FUTURE_AADT'] <= 0) | tempDF['FUTURE_AADT'].astype(str).str.contains('.', regex=False)]
+        self.df['DRE28'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[(tempDF['FUTURE_AADT_VALUE_DATE'] < (tempDF['BEGIN_DATE'].dt.year + 18)) | (tempDF['FUTURE_AADT_VALUE_DATE'] > (tempDF['BEGIN_DATE'] + 25))]
+        self.df['DRE28'].iloc[tempDF.index.tolist()] = False
+
+    def dre29(self):
+        #SIGNAL_Type ValueNumeric must be an integer in the range (1 -5)
+
+        print('Running rule DRE29...')
+        self.df['DRE29'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SIGNAL_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['SIGNAL_TYPE'].isin(range(1,6))]
+        self.df['DRE29'].iloc[tempDF.index.tolist()] = False
+
+    def dre30(self):
+        #PCT_GREEN_TIME ValueNumeric must be a positive integer > 0 and <=100
+
+        print('Running rule DRE30...')
+        self.df['DRE30'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['PCT_GREEN_TIME'].notna()]
+        tempDF = tempDF[~tempDF['PCT_GREEN_TIME'].isin(range(1,101))]
+        self.df['DRE30'].iloc[tempDF.index.tolist()] = False
+
+    def dre31(self):
+        #NUMBER_SIGNALS ValueNumeric must be an integer >=0
+
+        print('Running rule DRE31...')
+        self.df['DRE31'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['NUMBER_SIGNALS'].notna()]
+        tempDF = tempDF[(tempDF['NUMBER_SIGNALS'] < 0) | tempDF['NUMBER_SIGNALS'].astype(str).str.contains('.', regex=False)]
+        self.df['DRE31'].iloc[tempDF.index.tolist()] = False
+
+    def dre32(self):
+        #STOP_SIGNS ValueNumeric must be an integer >=0
+
+        print('Running rule DRE32...')
+        self.df['DRE32'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['STOP_SIGNS'].notna()]
+        tempDF = tempDF[(tempDF['STOP_SIGNS'] < 0) | tempDF[tempDF['STOP_SIGNS'].astype(str).str.contains('.', regex=False)]]
+        self.df['DRE32'].iloc[tempDF.index.tolist()] = False
+
+    def dre33(self):
+        #AT_GRADE_OTHER ValueNumeric must be an integer >=0
+
+        print('Running rule DRE33...')
+        self.df['DRE33'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AT_GRADE_OTHER'].notna()]
+        tempDF = tempDF[(tempDF['AT_GRADE_OTHER'] < 0) | tempDF['AT_GRADE_OTHER'].astype(str).str.contains('.', regex=False)]
+        self.df['DRE33'].iloc[tempDF.index.tolist()] = False
+
+    def dre34(self):
+        #LANE_WIDTH ValueNumberic must be an integer in the range (6-30)
+
+        print('Running rule DRE34...')
+        self.df['DRE34'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['LANE_WIDTH'].notna()]
+        tempDF = tempDF[~tempDF['LANE_WIDTH'].isin(range(6,31))]
+        self.df['DRE34'].iloc[tempDF.index.tolist()] = False
+
+    def dre35(self):
+        #MEDIAN_TYPE ValueNumeric must be an integer in the range (1-7)
+
+        print('Running rule DRE35...')
+        self.df['DRE35'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['MEDIAN_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['MEDIAN_TYPE'].isin(range(1,8))]
+        self.df['DRE35'].iloc[tempDF.index.tolist()] = False
+
+    def dre36(self):
+        #MEDIAN_WIDTH ValueNumeric must be an integer in the range (0-99)
+
+        print('Running rule DRE36...')
+        self.df['DRE36'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['MEDIAN_WIDTH'].notna()]
+        tempDF = tempDF[~tempDF['MEDIAN_WIDTH'].isin(range(0,100))]
+        self.df['DRE36'].iloc[tempDF.index.tolist()] = False
+
+    def dre37(self):
+        #SHOULDER_TYPE ValueNumeric must be an integer in the range (1-6)
+
+        print('Running rule DRE37...')
+        self.df['DRE37'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SHOULDER_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['SHOULDER_TYPE'].isin(range(1,7))]
+        self.df['DRE37'].iloc[tempDF.index.tolist()] = False
+
+    def dre38(self):
+        #SHOULDER_WIDTH_R ValueNumeric must be an integer >=0
+
+        print('Running rule DRE38...')
+        self.df['DRE38'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SHOULDER_WIDTH_R'].notna()]
+        tempDF = tempDF[(tempDF['SHOULDER_WIDTH_R'] < 0) | tempDF['SHOULDER_WIDTH_R'].astype(str).str.contains('.', regex=False)]
+        self.df['DRE38'].iloc[tempDF.index.tolist()] = False
+
+    def dre39(self):
+        #SHOULDER_WIDTH_L ValueNumeric must be an integer >=0
+
+        print('Running rule DRE39...')
+        self.df['DRE39'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SHOULDER_WIDTH_L'].notna()]
+        tempDF = tempDF[(tempDF['SHOULDER_WIDTH_L'] < 0) | tempDF['SHOULDER_WIDTH_L'].astype(str).str.contains('.', regex=False)]
+        self.df['DRE39'].iloc[tempDF.index.tolist()] = False
+
+    def dre40(self):
+        #PEAK_PARKING ValueNumeric must be an integer in the range (1-3)
+
+        print('Running rule DRE40...')
+        self.df['DRE40'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['PEAK_PARKING'].notna()]
+        tempDF = tempDF[~tempDF['PEAK_PARKING'].isin(range(1,4))]
+        self.df['DRE40'].iloc[tempDF.index.tolist()] = False
+
+    def dre42(self):
+        #WIDENING_POTENTIAL ValueNumberic must be an integer in the range (1-4) AND ValueText must be (X) OR (A;B;C;D;E). 
+        #Where ValueText = X; ValueNumeric Must be in (1-4). 
+
+        print('Running rule DRE42...')
+        self.df['DRE42'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['WIDENING_POTENTIAL'].notna()]
+        tempDF = tempDF[~tempDF['WIDENING_POTENTIAL'].isin(range(1,5)) | ~tempDF['WIDENING_POTENTIAL_VALUE_TEXT'].str.contains("[XABCDE]{1}")]
+        self.df['DRE42'].iloc[tempDF.index.tolist()] = False
+
+
+
+
+
 
     # def dre(self):
-    #     print("Running rule DRE...")
+    #     print('Running rule DRE...')
     #     self.df['DRE'] = True
     #     tempDF = self.df.copy()
-
+    #     tempDF = tempDF[tempDF[]]
     #     self.df['DRE'].iloc[tempDF.index.tolist()] = False
+
 
     def run(self):
 
