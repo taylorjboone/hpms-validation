@@ -32,23 +32,9 @@ URBAN_CODE_list = ['06139','15481','21745','36190','40753','59275','67672','9359
 
 column_list = []
 
-# reading in rule information
-# rules = pd.read_excel('new_rules_used.xlsx')
-# rules['UsedColumns'] = rules.UsedColumns.map(lambda x: json.loads(x.replace("'", '"').replace("URBAN_ID",'URBAN_CODE')))
-# rules = rules[(rules.FileName == 'Spatial Join Full')&(rules['Data Item Name'] !='STRUCTURE_TYPE')]
-# rules_col_used = rules.set_index('Rule')['UsedColumns'].to_dict()
-# rules_description = rules.set_index('Rule')['Message'].to_dict()
-# rules_name = rules.set_index('Rule')['Data Item Name'].to_dict()
-
 
 class full_spatial_functions():
-  #if the sjf columsn return false, 
-  # it means the data passes that validation, 
-  # if the sjf column returns True, the
-  # data faios the validation
-  # Comments in the code are the actual rule that is being applied in the function  
-    
-    
+
     def __init__(self,df):
         self.df = df
 
@@ -214,7 +200,6 @@ class full_spatial_functions():
     def sjf07(self):
         #THROUGH_LANES must exist where FACILITY_TYPE in (1;2;4) 
         # AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_CODE <99999) or NHS ValueNumeric <> NULL) and must not be NULL
-        #Q or (R AND S) or T === (Q or R or T) AND (Q or S or T)
         print("Running rule SJF07...")
         self.df['SJF07'] = True
         tempDF = self.df.copy()
@@ -295,7 +280,8 @@ class full_spatial_functions():
         self.df['SJF15'] = True
 
     def sjf16(self):
-        #ROUTE_NUMBER ValueNumeric Must Exist where (F_SYSTEM in (1;2;3;4) or NHS ValueNumeric <> NULL ) and FACILITY_TYPE (1;2) and ROUTE_SIGNING in (2;3;4;5;6;7;8;9)  
+        #ROUTE_NUMBER ValueNumeric Must Exist where (F_SYSTEM in (1;2;3;4) or NHS ValueNumeric <> NULL ) 
+        # and FACILITY_TYPE (1;2) and ROUTE_SIGNING in (2;3;4;5;6;7;8;9)  
         # OR F_SYSTEM=1 AND FACILITY_TYPE=6 AND DIR_THROUGH_LANES > 0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)
         print("Running rule SJF16...")
         self.df['SJF16'] = True
@@ -310,7 +296,6 @@ class full_spatial_functions():
         tempDF = tempDF[tempDF['F_SYSTEM'] == 1 ]
         tempDF = tempDF[tempDF['FACILITY_TYPE'] == 6]
         tempDF = tempDF[tempDF['DIR_THROUGH_LANES'] > 0]
-        # tempDF = tempDF[tempDF['IRI'].notna() | tempDF['PSR'].notna()]
         tempDF = tempDF[tempDF['IRI'].notna()]
         tempDF = tempDF[tempDF['ROUTE_NUMBER'].isna()]
         self.df['SJF16'].iloc[tempDF.index.tolist()] = False
@@ -714,7 +699,8 @@ class full_spatial_functions():
 
 
     def sjf51(self):
-        #SURACE_TYPE|"SURFACE_TYPE ValueNumeric Must Exist Where FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS ValueNumeric <> NULL OR Sample exists) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL) "
+        #SURACE_TYPE|"SURFACE_TYPE ValueNumeric Must Exist Where FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 
+        # OR NHS ValueNumeric <> NULL OR Sample exists) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL) "
         print("Running rule SJF51...")
         self.df['SJF51'] = True
         tempDF = self.df.copy(deep = True)
@@ -733,7 +719,8 @@ class full_spatial_functions():
 
     
     def sjf52(self):
-        #RUTTING|"RUTTING ValueNumeric Must Exist Where SURFACE_TYPE in (2;6;7;8) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR NHS OR Sample) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+        #RUTTING|"RUTTING ValueNumeric Must Exist Where SURFACE_TYPE in (2;6;7;8) AND (FACILITY_TYPE in (1;2) 
+        # AND (F_SYSTEM = 1 OR NHS OR Sample) OR DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
         print("Running rule SJF52...")
         self.df['SJF52'] = True
         tempDF = self.df.copy()
@@ -752,7 +739,8 @@ class full_spatial_functions():
         self.df['SJF52'].iloc[tempDF.index.tolist()] = False
     
     def sjf53(self):
-        # Faulting ValueNumeric Must Exist Where SURFACE_TYPE in (3;4;9;10) AND (FACILITY_TYPE in (1;2)  AND  (F_SYSTEM = 1 OR NHS OR Sample) OR  DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
+        # Faulting ValueNumeric Must Exist Where SURFACE_TYPE in (3;4;9;10) AND (FACILITY_TYPE in (1;2)  
+        # AND  (F_SYSTEM = 1 OR NHS OR Sample) OR  DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL))
         print("Running rule SJF53...")
         self.df['SJF53'] = True
         tempDF = self.df.copy()
@@ -773,7 +761,8 @@ class full_spatial_functions():
     
     def sjf54(self):
         #Data Item:CRACKING_PERCENT
-        #SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
+        #SURFACE_TYPE in (2;3;4;5;6;7;8;9;10) AND (FACILITY_TYPE in (1;2) AND (F_SYSTEM = 1 OR  NHS  OR Sample) 
+        # OR (DIR_THROUGH_LANES >0 AND (IRI IS NOT NULL OR PSR IS NOT NULL)))
         print("Running rule SJF54...")
         self.df['SJF54'] = True
         tempDF = self.df.copy()
@@ -793,7 +782,8 @@ class full_spatial_functions():
 
 
     def sjf55(self):
-        # YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
+        # YEAR_LAST_IMPROVEMENT must exist on Samples where SURFACE_TYPE is in the range (2;3;4;5;6;7;8;9;10) 
+        # OR where  (YEAR_LAST_CONSTRUCTION < BeginDate Year - 20)
         print("Running rule SJF55...")
         self.df['SJF55'] = True
         tempDF = self.df.copy()
@@ -868,7 +858,8 @@ class full_spatial_functions():
         self.df['SJF62'] = True
     
     def sjf63(self):
-        # COUNTY_ID	FACILITY_TYPE in (1;2) AND (F_SYSTEM in (1;2;3;4;5) or (F_SYSTEM = 6 and URBAN_ID <99999) or NHS
+        # COUNTY_ID	FACILITY_TYPE in (1;2) AND (F_SYSTEM in (1;2;3;4;5) 
+        # or (F_SYSTEM = 6 and URBAN_ID <99999) or NHS
         print("Running rule SJF63...")
         self.df['SJF63'] = True
         tempDF = self.df.copy()
@@ -1193,10 +1184,10 @@ class full_spatial_functions():
         Made max_cracking_percent 100% for 6,7 and 40% for 17,18. Needs to be updated if we find out correct values for these
         """
         acValidation = {
-            6.0 : 100.00, #NOT ON AC VALIDATION TABLE
-            7.0 : 100.00, #NOT ON AC VALIDATION TABLE
-            8.0 : 81.30,
-            9.0 : 72.20,
+            6.0  : 100.00, #NOT ON AC VALIDATION TABLE
+            7.0  : 100.00, #NOT ON AC VALIDATION TABLE
+            8.0  : 81.30,
+            9.0  : 72.20,
             10.0 : 65.00,
             11.0 : 59.10,
             12.0 : 54.20,
