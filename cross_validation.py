@@ -154,7 +154,7 @@ class Cross_Validation():
     def traffic_spatial_join(self):
         df = self.df
         spatial_join_checks = {
-            'sjt01': ((df['AADT_SINGLE_UNIT'].isna()) | (df['AADT_SINGLE_UNIT'] > (0.4 * df['AADT']))),
+            'sjt01': ((df['AADT_SINGLE_UNIT'].isna()) | (df['AADT_SINGLE_UNIT'] < (0.4 * df['AADT']))),
             'sjt02': ((df['AADT_SINGLE_UNIT'].isna()) | (((df['AADT'] > 500) & (df['AADT_SINGLE_UNIT'] > 0)) | (df['AADT'] <= 500))),
             'sjt03': ((df['AADT_SINGLE_UNIT'].isna()) | ((df['AADT_SINGLE_UNIT'] + df['AADT_COMBINATION']) < (0.8 * df['AADT']))),
             'sjt04': ((df['AADT_SINGLE_UNIT'].isna()) | (((df['AADT_SINGLE_UNIT'] * 0.01) < (df['AADT'] * (df['PCT_DH_SINGLE_UNIT'] * .01))) & ((df['AADT'] * (df['PCT_DH_SINGLE_UNIT'] * .01)) < (df['AADT_SINGLE_UNIT'] * 0.5)))),
@@ -167,7 +167,7 @@ class Cross_Validation():
             'sjt11': ((df['AADT_COMBINATION'].isna()) | ((df['PCT_DH_COMBINATION'] != 0) | ((df['PCT_DH_COMBINATION'] == 0) & (df['AADT_COMBINATION'] < 50)))),
             'sjt12': ((df['K_FACTOR'].isna()) | ((df['K_FACTOR'] > 4) & (df['K_FACTOR'] < 30))),
             'sjt13': ((df['DIR_FACTOR'].isna()) | ((df['FACILITY_TYPE'] != 1) | ((df['FACILITY_TYPE'] == 1) & (df['DIR_FACTOR'] == 100)))),
-            'sjt14': ((df['DIR_FACTOR'].isna()) | ((df['FACILITY_TYPE'] != 2) | ((df['FACILITY_TYPE'] == 2) & ((df['DIR_FACTOR'] >= 50) & (df['DIR_FACTOR'] <= 75))))),
+            'sjt14': ((df['DIR_FACTOR'].isna()) | ((df['FACILITY_TYPE'] != 2) | ((df['FACILITY_TYPE'] == 2) & ((df['DIR_FACTOR'] > 50) & (df['DIR_FACTOR'] <= 75))))),
             'sjt15': ((df['FUTURE_AADT'].isna()) | ((df['FUTURE_AADT_VALUE_DATE'].isna()) & (((df['FUTURE_AADT'] > df['AADT']) & (df['FUTURE_AADT'] < (df['AADT'] * 4))) | (df['FUTURE_AADT'] < (df['AADT'] * 0.2)))))
         }
 
