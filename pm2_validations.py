@@ -21,6 +21,92 @@ class pm2_validations():
         except KeyError:
             self.df['BEGIN_DATE'] = datetime.datetime(2022,1,1)
 
+        self.df.rename(columns = {
+            "FsystemVn":"F_SYSTEM",
+            "NhsVn":"NHS",
+            "NnVn":"NN",
+            "UrbanIdVn":"URBAN_CODE",
+            "FacilityTypeVn":"FACILITY_TYPE",
+            "StructureTypeVn":"STRUCTURE_TYPE",
+            "OwnershipVn":"OWNERSHIP",
+            "CountyIdVn":"COUNTY_ID",
+            "MaintenanceOperationsVn":"MAINTENANCE_OPERATIONS",
+            "ThroughLanesVn":"THROUGH_LANES",
+            "PeakLanesVn":"PEAK_LANES",
+            "CounterPeakLanesVn":"COUNTER_PEAK_LANES",
+            "LaneWidthVn":"LANE_WIDTH",
+            "MedianTypeVn":"MEDIAN_TYPE",
+            "MedianWidthVn":"MEDIAN_WIDTH",
+            "ShoulderTypeVn":"SHOULDER_TYPE",
+            "ShoulderWidthRVn":"SHOULDER_WIDTH_R",
+            "ShoulderWidthLVn":"SHOULDER_WIDTH_L",
+            "PeakParkingVn":"PEAK_PARKING",
+            "DirThroughLanesVn":"DIR_THROUGH_LANES",
+            "TurnLanesRVn":"TURN_LANES_R",
+            "TurnLanesLVn":"TURN_LANES_L",
+            "SignalTypeVn":"SIGNAL_TYPE",
+            "PctGreenTimeVn":"PCT_GREEN_TIME",
+            "NumberSignalsVn":"NUMBER_SIGNALS",
+            "StopSignsVn":"STOP_SIGNS",
+            "AtGradeOtherVn":"AT_GRADE_OTHER",
+            "AadtVn":"AADT",
+            "AadtVt":"AADT_VALUE_TEXT",
+            "AadtVd":"AADT_VALUE_DATE",
+            "AadtsingleUnitVn":"AADT_SINGLE_UNIT",
+            "AadtsingleUnitVt":"AADT_SINGLE_UNIT_VALUE_TEXT",
+            "AadtsingleUnitVd":"AADT_SINGLE_UNIT_VALUE_DATE",
+            "AadtcombinationVn":"AADT_COMBINATION",
+            "PctdhsingleVn":"PCT_DH_SINGLE_UNIT",
+            "PctdhcombinationVn":"PCT_DH_COMBINATION",
+            "KfactorVn":"K_FACTOR",
+            "DirFactorVn":"DIR_FACTOR",
+            "FutureAadtVn":"FUTURE_AADT",
+            "AccessControlVn":"ACCESS_CONTROL",
+            "SpeedLimitVn":"SPEED_LIMIT",
+            "IriVn":"IRI",
+            "IriVt":"IRI_VALUE_TEXT",
+            "IriVd":"IRI_VALUE_DATE",
+            "SurfaceTypeVn":"SURFACE_TYPE",
+            "RuttingVn":"RUTTING",
+            "RuttingVt":"RUTTING_VALUE_TEXT",
+            "RuttingVd":"RUTTING_VALUE_DATE",
+            "FaultingVn":"FAULTING",
+            "FaultingVt":"FAULTING_VALUE_TEXT",
+            "FaultingVd":"FAULTING_VALUE_DATE",
+            "CrackingPercentVn":"CRACKING_PERCENT",
+            "CrackingPercentVt":"CRACKING_PERCENT_VALUE_TEXT",
+            "CrackingPercentVd":"CRACKING_PERCENT_VALUE_DATE",
+            "YearLastImprovementVd":"YEAR_LAST_IMPROVEMENT_VALUE_DATE",
+            "YearLastConstructionVd":"YEAR_LAST_CONSTRUCTION_VALUE_DATE",
+            "LastOverlayThicknessVn":"LAST_OVERLAY_THICKNESS",
+            "ThicknessRigidVn":"THICKNESS_RIGID",
+            "ThicknessFlexibleVn":"THICKNESS_FLEXIBLE",
+            "BaseTypeVn":"BASE_TYPE",
+            "BaseThicknessVn":"BASE_THICKNESS",
+            "SoilTypeVn":"SOIL_TYPE",
+            "WideningPotentialVn":"WIDENING_POTENTIAL",
+            "CurvesAVn":"CURVES_A",
+            "CurvesBVn":"CURVES_B",
+            "CurvesCVn":"CURVES_C",
+            "CurvesDVn":"CURVES_D",
+            "CurvesEVn":"CURVES_E",
+            "CurvesFVn":"CURVES_F",
+            "TerrarinTypeVn":"TERRAIN_TYPE",
+            "GradesAVn":"GRADES_A",
+            "GradesBVn":"GRADES_B",
+            "GradesCVn":"GRADES_C",
+            "GradesDVn":"GRADES_D",
+            "GradesEVn":"GRADES_E",
+            "GradesFVn":"GRADES_F",
+            "PctPassSightVn":"PCT_PASS_SIGHT",
+            "RouteQualifier":"ROUTE_QUALIFIER",
+            "RouteSigning":"ROUTE_SIGNING",
+            "RouteName":"ROUTE_NAME_VALUE_TEXT",
+            "RouteNumber":"ROUTE_NUMBER",
+            "SampleId":"HPMS_SAMPLE_NO"
+        }, inplace=True)
+        
+
 
 
     def SJPM201(self):
@@ -306,7 +392,7 @@ class pm2_validations():
         print("Running rule SJPM230")
         self.df['SJPM230'] = True
         tempDF = self.df.copy()
-        tempDF = tempDF[(tempDF['CRACKING_PERCENT'].isna() & tempDF['IRI'].notna()) | (tempDF['CRACKING_PERCENT'].notna() & tempDF['IRI'].isna())]
+        tempDF = tempDF[(tempDF['CRACKING_PERCENT'].notna() & tempDF['IRI'].isna())]
         self.df['SJPM230'].iloc[tempDF.index.tolist()] = False
 
     def SJPM231(self):
@@ -315,7 +401,7 @@ class pm2_validations():
         print("Running rule SJPM231")
         self.df['SJPM231'] = True
         tempDF = self.df.copy()
-        tempDF = tempDF[(tempDF['RUTTING'].isna() & tempDF['IRI'].notna()) | (tempDF['RUTTING'].notna() & tempDF['IRI'].isna())]
+        tempDF = tempDF[(tempDF['RUTTING'].notna() & tempDF['IRI'].isna())]
         self.df['SJPM231'].iloc[tempDF.index.tolist()] = False
 
     def SJPM232(self):
@@ -324,7 +410,7 @@ class pm2_validations():
         print("Running rule SJPM232")
         self.df['SJPM232'] = True
         tempDF = self.df.copy()
-        tempDF = tempDF[(tempDF['FAULTING'].isna() & tempDF['IRI'].notna()) | (tempDF['FAULTING'].notna() & tempDF['IRI'].isna())]
+        tempDF = tempDF[(tempDF['FAULTING'].notna() & tempDF['IRI'].isna())]
         self.df['SJPM232'].iloc[tempDF.index.tolist()] = False
 
 
@@ -443,7 +529,7 @@ class pm2_validations():
 
 
 
-df = pd.read_csv(r'all_submission_data.csv')
+df = pd.read_csv(r'full_spat_with_error_columns.csv')
 
 c = pm2_validations(df)
 c.run()
