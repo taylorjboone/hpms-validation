@@ -1,1145 +1,1130 @@
-from distutils.log import error
-import os
 import pandas as pd
-from wvdot_utils import add_routeid_df, add_geom_validation_df
-from os import listdir
-from os.path import isfile, join
+import shutil
+import os
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+import warnings
+from datetime import datetime
 import numpy as np
-import pyodbc
+warnings.filterwarnings("ignore")
 
-# import format_changer_cleaned
+URBAN_CODE_list = ['06139','15481','21745','36190','40753','59275','67672','93592','94726', '99998', '99999']
+#Matches dates in format MM/DD/YYYY
+date_regex = "(0[1-9]|1[012])/(0[1-9]|[12][0-9]|3[01])/(19|20)\d\d"
 
-sql_conn =  pyodbc.connect('''DRIVER={ODBC Driver 17 for SQL Server};
-                            SERVER=dotb6gisdb01;
-                            DATABASE=RIL_LRS;
-                            Trusted_Connection=yes''')
+class domain_validations():
+    
+    def __init__(self,df):
+        self.df = df
+        self.df.rename(columns={'TRUCK':'NN'}, inplace=True)
+
+        try:
+            self.df['BEGIN_DATE']
+        except:
+            self.df['BEGIN_DATE'] = datetime(2022,1,1)
+
+    def drd01(self):
+        #F_SYSTEM ValueNumeric must be a valid integer in the range (1-7)
+        print("Running rule DRD01...")
+        self.df['DRD01'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['F_SYSTEM'].notna()]
+        tempDF = tempDF[~tempDF['F_SYSTEM'].isin(range(1,8))]
+        self.df['DRD01'].iloc[tempDF.index.tolist()] = False
+
+    def drd64(self):
+        #NHS ValueNumeric must be an integer in the range (1-9)
+
+        print("Running rule DRD64...")
+        self.df['DRD64'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['NHS'].notna()]
+        tempDF = tempDF[~tempDF['NHS'].isin(range(1,10))]
+        self.df['DRD64'].iloc[tempDF.index.tolist()] = False
+
+    def drd65(self):
+        #STRAHNET_TYPE ValueNumeric must be an integer in the range (1;2)
+
+        print("Running rule DRD65...")
+        self.df['DRD65'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['STRAHNET_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['STRAHNET_TYPE'].isin([1,2])]
+        self.df['DRD65'].iloc[tempDF.index.tolist()] = False
+
+    def drd66(self):
+        #NN ValueNumeric must be an integer in the range (1;2)
+
+        print("Running rule DRD66...")
+        self.df['DRD66'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['NN'].notna()]
+        tempDF = tempDF[~tempDF['NN'].isin([1,2])]
+        self.df['DRD66'].iloc[tempDF.index.tolist()] = False
+
+    def drd72(self):
+        #NHFN ValueNumeric must be an integer in the range (1;2;3)
+        #NHFN isn't reported, so rule is disabled in the list below
+        print("Running rule DRD72...")
+        self.df['DRD72'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['NHFN'].notna()]
+        tempDF = tempDF[~tempDF['NHFN'].isin([1,2,3])]
+        self.df['DRD72'].iloc[tempDF.index.tolist()] = False
 
 
-correct_format={'County_Code':'CountyID','Pct_MC':'PctMotorcycles','Pct_Lgt_Trucks':'PctLightTrucks','Pct_SU_Trucks':'PctSingleUnit','Pct_CU_Trucks':'PctCombination','YEAR_RECORD':'BeginDate','END_POINT':'EndPoint','STATE_CODE':'StateID','ROUTE_ID':'RouteID','VALUE_DATE':'ValueDate','Data_Item':'DataItem','Value_Numeric':'ValueNumeric','Year_Record':'BeginDate','End_Point':'EndPoint','State_Code':'StateID','Value_Date':'ValueDate','Data_Item':'DataItem','Route_ID':'RouteID','Urban_Code':'UrbanID','Value_Text':'ValueText','VALUE_TEXT':'ValueText','BEGIN_POINT':'BeginPoint','Begin_Point':'BeginPoint'}
-correct_format_inverse = {}
-for k,v in correct_format.items():
-    correct_format_inverse[v] = k
-# print(correct_format_inverse)
+    def drd202(self):
+        #RouteID field must not be blank and can not contain pipe characters 
+        print("Running rule DRD202...")
+        self.df['DRD202'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['RouteID'].isna() | tempDF['RouteID'].str.contains("|", regex=False, na=False)]
+        self.df['DRD202'].iloc[tempDF.index.tolist()] = False
 
-urban_code_list = [99999, 99998, 15481, 6139,
-                   21745, 36190, 40753, 59275, 67672, 93592, 94726]
-facility_type_list = [1, 2, 4, 5, 6, 7]
-functional_class_list = [1, 2, 3, 4, 5, 6, 7]
-ownership_list = [1, 2, 3, 4, 11, 12, 21, 25, 26, 27, 31,
-                  32, 40, 50, 60, 62, 63, 64, 66, 67, 68, 69, 70, 72]
-signal_list=[1,2,3,4,5]
-median_type_list=[1,2,3,4,5,6,7]
-shoulder_type_list=[1,2,3,4,5,6]
-peak_parking_list=[1,2,3]
-widening_potential_list=[1,2,3,4]
-curve_list=['A','B','C','D','E','F']
-terrain_types_list=[1,2,3]
-grades_list=['A','B','C','D','E','F']
-surface_type_list=[1,2,3,4,5,6,7,8,9,10,11]
-base_type_list=[1,2,3,4,5,6,7,8]
-county_id_list=[1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73,75,77,79,91,93,95,97,99,101,103,105,107,109,111]
-strahnet_type_list=[1,2]
-nn_list=[1,2]
-main_ops_list=[1,2,3,4,11,12,21,25,26,27]
-nhfn_list=[1,2,3]
-is_restricted_list=[1]
-access_control_list=[1,2,3]
-route_qualifier_list=[1,2,3,4,5,6,7,8,9,10]
-route_signing_list=[1,2,3,4,5,6,7,8,9,10]
-off_list=[]
+    def drd203(self):
+        #BeginPoint must be in the format Numeric (8;3) AND must be < EndPoint
+        print("Running rule DRD203...")
+        self.df['DRD203'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['BMP'] > tempDF['EMP']]
+        self.df['DRD203'].iloc[tempDF.index.tolist()] = False
 
-mypath = 'hpms_data_items'
+        tempDF = self.df.copy()
+        tempDF['BMP'] = tempDF['BMP'].astype("string")
+        tempDF['BMP'] = tempDF['BMP'].str.split(".")
+        tempDF = tempDF[(tempDF['BMP'].str[0].str.len() > 8) | (tempDF['BMP'].str[1].str.len() > 3)]
+        self.df['DRD203'].iloc[tempDF.index.tolist()] = False
+
+    def drd204(self):
+        #EndPoint must be in the format Numeric (8;3) AND must be > BeginPoint
+
+        print("Running rule DRD204...")
+        self.df['DRD204'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['EMP'] < tempDF['BMP']]
+        self.df['DRD204'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF['EMP'] = tempDF['EMP'].astype("string")
+        tempDF['EMP'] = tempDF['EMP'].str.split(".")
+        tempDF = tempDF[(tempDF['EMP'].str[0].str.len() > 8) | (tempDF['EMP'].str[1].str.len() > 3)]
+        self.df['DRD204'].iloc[tempDF.index.tolist()] = False
+
+    def dre02(self):
+        #URBAN_ID ValueNumeric must be an integer and a valid US Census Urban Code for the applicable state
+
+        print("Running rule DRE02...")
+        self.df['DRE02'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['URBAN_CODE'].notna()]
+        tempDF = tempDF[~tempDF['URBAN_CODE'].isin(URBAN_CODE_list) | tempDF['URBAN_CODE'].str.contains('.', regex=False)]
+        self.df['DRE02'].iloc[tempDF.index.tolist()] = False  
+
+    def dre03(self):
+        #FACILITY_TYPE ValueNumeric must be a valid integer in the range (1;2;4;5;6;7)
+
+        print("Running rule DRE03...")
+        self.df['DRE03'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FACILITY_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['FACILITY_TYPE'].isin([1,2,4,5,6,7])]
+        self.df['DRE03'].iloc[tempDF.index.tolist()] = False
+
+    def dre04(self):
+        #STRUCTURE_TYPE ValueNumeric must be a valid integer within the range (1-3)
+
+        print("Running rule DRE04...")
+        self.df['DRE04'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['STRUCTURE_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['STRUCTURE_TYPE'].isin([1,2,3])]
+        self.df['DRE04'].iloc[tempDF.index.tolist()] = False
+
+    def dre05(self):
+        #ACCESS_CONTROL ValueNumeric must be a valid integer within the range (1-3)
+
+        print("Running rule DRE05...")
+        self.df['DRE05'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['ACCESS_CONTROL'].notna()]
+        tempDF = tempDF[~tempDF['ACCESS_CONTROL'].isin([1,2,3])]
+        self.df['DRE05'].iloc[tempDF.index.tolist()] = False
+
+    def dre06(self):
+        #OWNERSHIP ValueNumeric must be a valid integer within the range (1;2;3;4;11;12;21;25;26;27;31;32;40;50;60;62;63;64;66;67;68;69;70;72;73;74;80)
+
+        print("Running rule DRE06...")
+        self.df['DRE06'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['OWNERSHIP'].notna()]
+        tempDF = tempDF[~tempDF['OWNERSHIP'].isin([1,2,3,4,11,12,21,25,26,27,31,32,40,50,60,62,63,64,66,67,68,69,70,72,73,74,80])]
+        self.df['DRE06'].iloc[tempDF.index.tolist()] = False
+                
+    def dre07(self):
+        #THROUGH_LANES ValueNumeric must be a valid integer > 0 
+
+        print("Running rule DRE07...")
+        self.df['DRE07'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['THROUGH_LANES'].notna()]
+        tempDF = tempDF[(tempDF['THROUGH_LANES'] <= 0) | (tempDF['THROUGH_LANES']%np.floor(tempDF['THROUGH_LANES']) != 0)]
+        self.df['DRE07'].iloc[tempDF.index.tolist()] = False
+
+    def dre10(self):
+        #PEAK_LANES ValueNumeric must be a valid integer > 0
+
+        print("Running rule DRE10...")
+        self.df['DRE10'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['PEAK_LANES'].notna()]
+        tempDF = tempDF[tempDF['PEAK_LANES'] <= 0]
+        self.df['DRE10'].iloc[tempDF.index.tolist()] = False
+
+    def dre11(self):
+        #COUNTER_PEAK_LANES ValueNumeric must be a valid integer > 0 
+
+        print("Running rule DRE11...")
+        self.df['DRE11'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['COUNTER_PEAK_LANES'].notna()]
+        tempDF = tempDF[tempDF['COUNTER_PEAK_LANES'] <= 0]
+        self.df['DRE11'].iloc[tempDF.index.tolist()] = False
+
+    def dre12(self):
+        #TURN_LANES_R ValueNumeric must be a valid integer within the range (1-6)
+
+        print("Running rule DRE12...")
+        self.df['DRE12'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['TURN_LANES_R'].notna()]
+        tempDF = tempDF[~tempDF['TURN_LANES_R'].isin(range(1,7))]
+        self.df['DRE12'].iloc[tempDF.index.tolist()] = False
+
+    def dre13(self):
+        #TURN_LANES_L ValueNumeric must be a valid integer within the range (1-6)
+
+        print("Running rule DRE13...")
+        self.df['DRE13'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['TURN_LANES_L'].notna()]
+        tempDF = tempDF[~tempDF['TURN_LANES_L'].isin(range(1,7))]
+        self.df['DRE13'].iloc[tempDF.index.tolist()] = False
+
+    def dre14(self):
+        #SPEED_LIMIT ValueNumeric must be a valid integer in the range (0-99)
+
+        print("Running rule DRE14...")
+        self.df['DRE14'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SPEED_LIMIT'].notna()]
+        tempDF = tempDF[~tempDF['SPEED_LIMIT'].isin(range(0,100))]
+        self.df['DRE14'].iloc[tempDF.index.tolist()] = False
+
+    def dre15(self):
+        #TOLL_ID ValueNumeric must be a valid Toll ID of no more than 15
+        #Assuming this rule means no more than 15 characters, as most toll IDs are > 15
+
+        print("Running rule DRE15...")
+        self.df['DRE15'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['TOLL_ID'].notna()]
+        tempDF = tempDF[tempDF['TOLL_ID'].astype("string").str.len() > 15]
+        self.df['DRE15'].iloc[tempDF.index.tolist()] = False
+
+    def dre21(self):
+        #AADT ValueNumeric must be positive integer in the range (0-600000); 
+        # ValueText must be in (A;B;C;D;E); 
+        # and ValueDate must not be null; and must be in the format YYYY
+
+        #Writing the date check as must be in the format MM/DD/YYYY as that's current working on the website. Validation rule
+        #and HPMS manual disagree on this on
+        print("Running rule DRE21...")
+        self.df['DRE21'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AADT'].notna()]
+        tempDF = tempDF[~tempDF['AADT'].isin(range(0,600001))]
+        self.df['DRE21'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AADT_VALUE_TEXT'].notna()]
+        tempDF = tempDF[~tempDF['AADT_VALUE_TEXT'].str.fullmatch("[ABCDE]")]
+        self.df['DRE21'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AADT'].notna()]
+        tempDF = tempDF[tempDF['AADT_VALUE_DATE'].isna()]
+        self.df['DRE21'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AADT_VALUE_DATE'].notna()]
+        tempDF = tempDF[~tempDF['AADT_VALUE_DATE'].str.contains(date_regex)]
+        self.df['DRE21'].iloc[tempDF.index.tolist()] = False
+
+    def dre22(self):
+        #AADT_SINGLE_UNIT ValueNumeric must be positive integer in the range (0-500000);
+        #  ValueText must be in (A;B;C;D;E)
+
+        print("Running rule DRE22...")
+        self.df['DRE22'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AADT_SINGLE_UNIT'].notna()]
+        tempDF = tempDF[~tempDF['AADT_SINGLE_UNIT'].isin(range(0,500001))]
+        self.df['DRE22'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AADT_SINGLE_UNIT_VALUE_TEXT'].notna()]
+        tempDF = tempDF[~tempDF['AADT_SINGLE_UNIT_VALUE_TEXT'].str.fullmatch("[ABCDE]")]
+        self.df['DRE22'].iloc[tempDF.index.tolist()] = False
+
+    def dre23(self):
+        #PCT_DH_SINGLE_UNIT ValueNumeric must be in the range (0-50)
+
+        print("Running rule DRE23...")
+        self.df['DRE23'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['PCT_DH_SINGLE_UNIT'].notna()]
+        tempDF = tempDF[(tempDF['PCT_DH_SINGLE_UNIT'] > 50) | (tempDF['PCT_DH_SINGLE_UNIT'] < 0)]
+        self.df['DRE23'].iloc[tempDF.index.tolist()] = False   
+
+    def dre24(self):
+        #AADT_COMBINATION ValueNumeric must be positive integer in the range (0-500000); ValueText must be in (A;B;C;D;E)
+
+        print("Running rule DRE24...")
+        self.df['DRE24'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AADT_COMBINATION'].notna()]
+        tempDF = tempDF[~tempDF['AADT_COMBINATION'].isin(range(0,500001))]
+        self.df['DRE24'].iloc[tempDF.index.tolist()] = False   
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AADT_COMBINATION_VALUE_TEXT'].notna()]
+        tempDF = tempDF[~tempDF['AADT_COMBINATION_VALUE_TEXT'].str.fullmatch("[ABCDE]")]
+        self.df['DRE24'].iloc[tempDF.index.tolist()] = False 
+
+    def dre25(self):
+        #PCT_DH_COMBINATION ValueNumeric must be in the range (0-50)
+        print("Running rule DRE25...")
+        self.df['DRE25'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['PCT_DH_COMBINATION'].notna()]
+        tempDF = tempDF[(tempDF['PCT_DH_COMBINATION'] < 0) | (tempDF['PCT_DH_COMBINATION'] > 50)]
+        self.df['DRE25'].iloc[tempDF.index.tolist()] = False   
+
+    def dre26(self):
+        #K_FACTOR ValueNumeric must be a positive integer > 4
+
+        print("Running rule DRE26...")
+        self.df['DRE26'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['K_FACTOR'] <= 4]
+        self.df['DRE26'].iloc[tempDF.index.tolist()] = False
+
+    def dre27(self):
+        #DIR_FACTOR ValueNumeric must be a postitive integer in the range (50-100)
+
+        print("Running rule DRE27...")
+        self.df['DRE27'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['DIR_FACTOR'].notna()]
+        tempDF = tempDF[~tempDF['DIR_FACTOR'].isin(range(50,101))]
+        self.df['DRE27'].iloc[tempDF.index.tolist()] = False
+
+    def dre28(self):
+        #FUTURE_AADT ValueNumeric must be a positive integer AND ValueDate must be >= BeginDate + 18 AND <= BeginDate +25
+
+        print("Running rule DRE28...")
+        self.df['DRE28'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FUTURE_AADT'].notna()]
+        tempDF = tempDF[(tempDF['FUTURE_AADT'] <= 0) | (tempDF['FUTURE_AADT']%np.floor(tempDF['FUTURE_AADT']) != 0)]
+        self.df['DRE28'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF['FUTURE_AADT_VALUE_DATE'] = pd.to_datetime(tempDF['FUTURE_AADT_VALUE_DATE'])
+        tempDF = tempDF[(tempDF['FUTURE_AADT_VALUE_DATE'].dt.year < (tempDF['BEGIN_DATE'].dt.year + 18)) | (tempDF['FUTURE_AADT_VALUE_DATE'].dt.year > (tempDF['BEGIN_DATE'].dt.year + 25))]
+        self.df['DRE28'].iloc[tempDF.index.tolist()] = False
+
+    def dre29(self):
+        #SIGNAL_Type ValueNumeric must be an integer in the range (1 -5)
+
+        print('Running rule DRE29...')
+        self.df['DRE29'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SIGNAL_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['SIGNAL_TYPE'].isin(range(1,6))]
+        self.df['DRE29'].iloc[tempDF.index.tolist()] = False
+
+    def dre30(self):
+        #PCT_GREEN_TIME ValueNumeric must be a positive integer > 0 and <=100
+
+        print('Running rule DRE30...')
+        self.df['DRE30'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['PCT_GREEN_TIME'].notna()]
+        tempDF = tempDF[~tempDF['PCT_GREEN_TIME'].isin(range(1,101))]
+        self.df['DRE30'].iloc[tempDF.index.tolist()] = False
+
+    def dre31(self):
+        #NUMBER_SIGNALS ValueNumeric must be an integer >=0
+
+        print('Running rule DRE31...')
+        self.df['DRE31'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['NUMBER_SIGNALS'].notna()]
+        tempDF = tempDF[tempDF['NUMBER_SIGNALS']!=0]
+        tempDF = tempDF[(tempDF['NUMBER_SIGNALS'] < 0) | (tempDF['NUMBER_SIGNALS']%np.floor(tempDF['NUMBER_SIGNALS'])!=0)]
+        self.df['DRE31'].iloc[tempDF.index.tolist()] = False
+
+    def dre32(self):
+        #STOP_SIGNS ValueNumeric must be an integer >=0
+
+        print('Running rule DRE32...')
+        self.df['DRE32'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['STOP_SIGNS'].notna()]
+        tempDF = tempDF[tempDF['STOP_SIGNS']!=0]
+        tempDF = tempDF[(tempDF['STOP_SIGNS'] < 0) | (tempDF['STOP_SIGNS']%np.floor(tempDF['STOP_SIGNS']) != 0)]
+        self.df['DRE32'].iloc[tempDF.index.tolist()] = False
+
+    def dre33(self):
+        #AT_GRADE_OTHER ValueNumeric must be an integer >=0
+
+        print('Running rule DRE33...')
+        self.df['DRE33'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['AT_GRADE_OTHER'].notna()]
+        tempDF = tempDF[tempDF['AT_GRADE_OTHER'] != 0]
+        tempDF = tempDF[(tempDF['AT_GRADE_OTHER'] < 0) | (tempDF['AT_GRADE_OTHER']%np.floor(tempDF['AT_GRADE_OTHER'])!=0)]
+        self.df['DRE33'].iloc[tempDF.index.tolist()] = False
+
+    def dre34(self):
+        #LANE_WIDTH ValueNumberic must be an integer in the range (6-30)
+
+        print('Running rule DRE34...')
+        self.df['DRE34'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['LANE_WIDTH'].notna()]
+        tempDF = tempDF[~tempDF['LANE_WIDTH'].isin(range(6,31))]
+        self.df['DRE34'].iloc[tempDF.index.tolist()] = False
+
+    def dre35(self):
+        #MEDIAN_TYPE ValueNumeric must be an integer in the range (1-7)
+
+        print('Running rule DRE35...')
+        self.df['DRE35'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['MEDIAN_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['MEDIAN_TYPE'].isin(range(1,8))]
+        self.df['DRE35'].iloc[tempDF.index.tolist()] = False
+
+    def dre36(self):
+        #MEDIAN_WIDTH ValueNumeric must be an integer in the range (0-99)
+
+        print('Running rule DRE36...')
+        self.df['DRE36'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['MEDIAN_WIDTH'].notna()]
+        tempDF = tempDF[~tempDF['MEDIAN_WIDTH'].isin(range(0,100))]
+        self.df['DRE36'].iloc[tempDF.index.tolist()] = False
+
+    def dre37(self):
+        #SHOULDER_TYPE ValueNumeric must be an integer in the range (1-6)
+
+        print('Running rule DRE37...')
+        self.df['DRE37'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SHOULDER_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['SHOULDER_TYPE'].isin(range(1,7))]
+        self.df['DRE37'].iloc[tempDF.index.tolist()] = False
+
+    def dre38(self):
+        #SHOULDER_WIDTH_R ValueNumeric must be an integer >=0
+
+        print('Running rule DRE38...')
+        self.df['DRE38'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SHOULDER_WIDTH_R'].notna()]
+        tempDF = tempDF[tempDF['SHOULDER_WIDTH_R'] != 0]
+        tempDF = tempDF[(tempDF['SHOULDER_WIDTH_R'] < 0) | (tempDF['SHOULDER_WIDTH_R']%np.floor(tempDF['SHOULDER_WIDTH_R']) != 0)]
+        self.df['DRE38'].iloc[tempDF.index.tolist()] = False
+
+    def dre39(self):
+        #SHOULDER_WIDTH_L ValueNumeric must be an integer >=0
+
+        print('Running rule DRE39...')
+        self.df['DRE39'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SHOULDER_WIDTH_L'].notna()]
+        tempDF = tempDF[tempDF['SHOULDER_WIDTH_L'] != 0]
+        tempDF = tempDF[(tempDF['SHOULDER_WIDTH_L'] < 0) | (tempDF['SHOULDER_WIDTH_L']%np.floor(tempDF['SHOULDER_WIDTH_L']) != 0)]
+        self.df['DRE39'].iloc[tempDF.index.tolist()] = False
+
+    def dre40(self):
+        #PEAK_PARKING ValueNumeric must be an integer in the range (1-3)
+
+        print('Running rule DRE40...')
+        self.df['DRE40'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['PEAK_PARKING'].notna()]
+        tempDF = tempDF[~tempDF['PEAK_PARKING'].isin(range(1,4))]
+        self.df['DRE40'].iloc[tempDF.index.tolist()] = False
+
+    def dre42(self):
+        #WIDENING_POTENTIAL ValueNumberic must be an integer in the range (1-4) AND ValueText must be (X) OR (A;B;C;D;E). 
+        #Where ValueText = X; ValueNumeric Must be in (1-4). 
+
+        print('Running rule DRE42...')
+        self.df['DRE42'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['WIDENING_POTENTIAL'].notna()]
+        tempDF = tempDF[~tempDF['WIDENING_POTENTIAL'].isin(range(1,5)) | ~tempDF['WIDENING_POTENTIAL_VALUE_TEXT'].str.fullmatch("[XABCDE]")]
+        self.df['DRE42'].iloc[tempDF.index.tolist()] = False
+
+    def dre43a(self):
+        #CURVES_A ValueNumeric must be in the format Numeric (3;1) and > 0
+
+        print('Running rule DRE43A...')
+        self.df['DRE43A'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CURVES_A'].notna()]
+        tempDF = tempDF[~tempDF['CURVES_A'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE43A'].iloc[tempDF.index.tolist()] = False
+
+    def dre43b(self):
+        #CURVES_B ValueNumeric must be in the format Numeric (3;1) and > 0
+
+        print('Running rule DRE43B...')
+        self.df['DRE43B'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CURVES_B'].notna()]
+        tempDF = tempDF[~tempDF['CURVES_B'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE43B'].iloc[tempDF.index.tolist()] = False
+
+    def dre43c(self):
+        #CURVES_C ValueNumeric must be in the format Numeric (3;1) and > 0
+
+        print('Running rule DRE43C...')
+        self.df['DRE43C'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CURVES_C'].notna()]
+        tempDF = tempDF[~tempDF['CURVES_C'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE43C'].iloc[tempDF.index.tolist()] = False
+
+    def dre43d(self):
+        #CURVES_D ValueNumeric must be in the format Numeric (3;1) and > 0
+
+        print('Running rule DRE43D...')
+        self.df['DRE43D'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CURVES_D'].notna()]
+        tempDF = tempDF[~tempDF['CURVES_D'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE43D'].iloc[tempDF.index.tolist()] = False
+
+    def dre43e(self):
+        #CURVES_E ValueNumeric must be in the format Numeric (3;1) and > 0
+        print('Running rule DRE43E...')
+        self.df['DRE43E'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CURVES_E'].notna()]
+        tempDF = tempDF[~tempDF['CURVES_E'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE43E'].iloc[tempDF.index.tolist()] = False
+
+    def dre43f(self):
+        #CURVES_F ValueNumeric must be in the format Numeric (3;1) and > 0
+        print('Running rule DRE43F...')
+        self.df['DRE43F'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CURVES_F'].notna()]
+        tempDF = tempDF[~tempDF['CURVES_F'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE43F'].iloc[tempDF.index.tolist()] = False
+
+    def dre44(self):
+        #TERRAIN_TYPE ValueNumeric must be an integer in the range (1-3)
+
+        print('Running rule DRE44...')
+        self.df['DRE44'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['TERRAIN_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['TERRAIN_TYPE'].isin([1,2,3])]
+        self.df['DRE44'].iloc[tempDF.index.tolist()] = False      
+
+    def dre45a(self):
+        #GRADES_A ValueNumeric must be in the format Numeric (3;1) and > 0
+
+        print('Running rule DRE45A...')
+        self.df['DRE45A'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['GRADES_A'].notna()]
+        tempDF = tempDF[~tempDF['GRADES_A'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE45A'].iloc[tempDF.index.tolist()] = False
 
 
+    def dre45b(self):
+        #GRADES_B ValueNumeric must be in the format Numeric (3;1) and > 0
+        print('Running rule DRE45B...')
+        self.df['DRE45B'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['GRADES_B'].notna()]
+        tempDF = tempDF[~tempDF['GRADES_B'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE45B'].iloc[tempDF.index.tolist()] = False
 
-total_errors = pd.DataFrame()
+    def dre45c(self):
+        #GRADES_C ValueNumeric must be in the format Numeric (3;1) and > 0
+        print('Running rule DRE45C...')
+        self.df['DRE45C'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['GRADES_C'].notna()]
+        tempDF = tempDF[~tempDF['GRADES_C'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE45C'].iloc[tempDF.index.tolist()] = False
+
+    def dre45d(self):
+        #GRADES_D ValueNumeric must be in the format Numeric (3;1) and > 0
+        print('Running rule DRE45D...')
+        self.df['DRE45D'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['GRADES_D'].notna()]
+        tempDF = tempDF[~tempDF['GRADES_D'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE45D'].iloc[tempDF.index.tolist()] = False
 
 
-def get_indexes(x):
-    pair_list=[]
-    for n in range(len(x)):
-        for b in range(len(x)):
+    def dre45e(self):
+        #GRADES_E ValueNumeric must be in the format Numeric (3;1) and > 0
+        print('Running rule DRE45E...')
+        self.df['DRE45E'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['GRADES_E'].notna()]
+        tempDF = tempDF[~tempDF['GRADES_E'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE45E'].iloc[tempDF.index.tolist()] = False
+
+
+    def dre45f(self):
+        #GRADES_F ValueNumeric must be in the format Numeric (3;1) and > 0
+        print('Running rule DRE45F...')
+        self.df['DRE45F'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['GRADES_F'].notna()]
+        tempDF = tempDF[~tempDF['GRADES_F'].astype(str).str.fullmatch("[0-9]\.[0-9]{0,3}")]
+        self.df['DRE45F'].iloc[tempDF.index.tolist()] = False
+
+    def dre46(self):
+        #PCT_PASS_SIGHT ValueNumeric must be an integer in the range (0-100)
+
+        print('Running rule DRE46...')
+        self.df['DRE46'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['PCT_PASS_SIGHT'].notna()]
+        tempDF = tempDF[~tempDF['PCT_PASS_SIGHT'].isin(range(0,101))]
+        self.df['DRE46'].iloc[tempDF.index.tolist()] = False
+
+    def dre47(self):
+        #IRI: Where ValueNumeric is not Null; it must be an integer >0; ValueNumeric may be NULL Where ValueText = E; 
+        # ValueDate must have a format of MM/DD/YYYY; Where ValueDate <> BeginDate; ValueText must be in (A;B;C;D;E)
+
+        #Site isn't rejecting non integer IRI values, which is roughly half of the data. Removing the check for whether or not 
+        #Iri is an integer
+
+
+        print('Running rule DRE47...')
+        self.df['DRE47'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['IRI'].notna()]
+        #Checks whether IRI is an integer > 0, not used atm
+        # tempDF = tempDF[(tempDF['IRI'] <= 0) | (tempDF['IRI']%np.floor(tempDF['IRI']) != 0)]
+        tempDF = tempDF[tempDF['IRI'] <= 0]
+        self.df['DRE47'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['IRI_VALUE_TEXT'].notna()]
+        if tempDF.shape[0] != 0:
+            tempDF = tempDF[~tempDF['IRI_VALUE_TEXT'].str.fullmatch("E")]
+        tempDF = tempDF[tempDF['IRI'].isna()]
+        self.df['DRE47'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['IRI_VALUE_DATE'].notna()]
+        tempDF = tempDF[~tempDF['IRI_VALUE_DATE'].astype(str).str.contains(date_regex)]
+        self.df['DRE47'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['IRI_VALUE_DATE'].notna()]
+        tempDF['IRI_VALUE_DATE'] = pd.to_datetime(tempDF['IRI_VALUE_DATE'])
+        tempDF = tempDF[tempDF['IRI_VALUE_DATE'].dt.year != tempDF['BEGIN_DATE'].dt.year]
+        tempDF['IRI_VALUE_TEXT'].fillna("", inplace=True)
+        if tempDF.shape[0] != 0:
+            tempDF = tempDF[~tempDF['IRI_VALUE_TEXT'].str.fullmatch("[ABCDE]")]
+        self.df['DRE47'].iloc[tempDF.index.tolist()] = False
+
+    def dre48(self):
+        #PSR ValueNumeric must be > 0.0 and <= 5.0 and in format Numeric (2;1);
+        #  ValueText must be NULL or = A; ValueDate must have a format of MM/DD/YYYY; Where ValueDate <> BeginDate; ValueText must be in (A;B;C;D;E)
+
+        #Skipping rule, we don't report PSR
+
+        print('Running rule DRE48...')
+        self.df['DRE48'] = True
+
+
+    def dre49(self):
+        #SURFACE_TYPE ValueNumeric must be an integer in the range (1-11)
+
+        print('Running rule DRE49...')
+        self.df['DRE49'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SURFACE_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['SURFACE_TYPE'].isin(range(1,12))]
+        self.df['DRE49'].iloc[tempDF.index.tolist()] = False
+
+    def dre50(self):
+        #RUTTING: Where ValueNumeric is not Null; it must be an integer >=0; ValueNumeric may be NULL Where ValueText = E; 
+        # ValueDate must have a format of MM/DD/YYYY Where ValueDate <> BeginDate ValueText must be in (A;B;C;D;E)
+
+        #Ignoring "must be an integer" as 90% of our data for rutting is not an integer and the HPMS manual states to report to nearest .01 inch
+
+        print('Running rule DRE50...')
+        self.df['DRE50'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['RUTTING'].notna()]
+        tempDF = tempDF[(tempDF['RUTTING'] <= 0)]
+        self.df['DRE50'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['RUTTING_VALUE_TEXT'].notna()]
+        if tempDF.shape[0] != 0:
+            tempDF = tempDF[~tempDF['RUTTING_VALUE_TEXT'].str.fullmatch("E")]
+        tempDF = tempDF[tempDF['RUTTING'].isna()]
+        self.df['DRE50'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['RUTTING_VALUE_DATE'].notna()]
+        tempDF = tempDF[~tempDF['RUTTING_VALUE_DATE'].astype(str).str.contains("\d{1,2}/\d{1,2}/\d{4}")]
+        self.df['DRE50'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['RUTTING_VALUE_DATE'].notna()]
+        tempDF['RUTTING_VALUE_DATE'] = pd.to_datetime(tempDF['RUTTING_VALUE_DATE'])
+        tempDF = tempDF[tempDF['RUTTING_VALUE_DATE'].dt.year != tempDF['BEGIN_DATE'].dt.year]
+        tempDF['RUTTING_VALUE_TEXT'].fillna("", inplace=True)
+        if tempDF.shape[0] != 0:
+            tempDF = tempDF[~tempDF['RUTTING_VALUE_TEXT'].str.fullmatch("[ABCDE]")]
+        self.df['DRE50'].iloc[tempDF.index.tolist()] = False
+
+    def dre51(self):
+        #FAULTING: Where ValueNumeric is not Null; it must be an integer >=0; ValueNumeric may be NULL Where ValueText = E; 
+        # ValueDate must have a format of MM/DD/YYYY; Where ValueDate <> BeginDate; ValueText must be in (A;B;C;D;E)
+
+        #Ignoring "must be an integer" as 90% of our data for faulting is not an integer and the HPMS manual states to report to nearest .01 inch
+
+        print('Running rule DRE51...')
+        self.df['DRE51'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FAULTING'].notna()]
+        tempDF = tempDF[(tempDF['FAULTING'] <= 0)]
+        self.df['DRE51'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FAULTING_VALUE_TEXT'].notna()]
+        if tempDF.shape[0] != 0:
+            tempDF = tempDF[~tempDF['FAULTING_VALUE_TEXT'].str.fullmatch("E")]
+        tempDF = tempDF[tempDF['FAULTING'].isna()]
+        self.df['DRE51'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FAULTING_VALUE_DATE'].notna()]
+        tempDF = tempDF[~tempDF['FAULTING_VALUE_DATE'].astype(str).str.contains("\d{1,2}/\d{1,2}/\d{4}")]
+        self.df['DRE51'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FAULTING_VALUE_DATE'].notna()]
+        tempDF['FAULTING_VALUE_DATE'] = pd.to_datetime(tempDF['FAULTING_VALUE_DATE'])
+        tempDF = tempDF[tempDF['FAULTING_VALUE_DATE'].dt.year != tempDF['BEGIN_DATE'].dt.year]
+        tempDF['FAULTING_VALUE_TEXT'].fillna("", inplace=True)
+        if tempDF.shape[0] != 0:
+            tempDF = tempDF[~tempDF['FAULTING_VALUE_TEXT'].str.fullmatch("[ABCDE]")]
+        self.df['DRE51'].iloc[tempDF.index.tolist()] = False
+
+    def dre52(self):
+        #CRACKING_PERCENT: Where ValueNumeric is not Null; it must be an integer >=0; ValueNumeric may be NULL Where ValueText = E; 
+        # ValueDate must have a format of MM/DD/YYYY; Where ValueDate <> BeginDate; ValueText must be in (A;B;C;D;E)
+
+        #Ignoring "must be an integer" as 90% of our data for cracking_percent is not an integer and the HPMS manual states to report to nearest .01 inch
+
+        print('Running rule DRE52...')
+        self.df['DRE52'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CRACKING_PERCENT'].notna()]
+        tempDF = tempDF[(tempDF['CRACKING_PERCENT'] <= 0)]
+        self.df['DRE52'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CRACKING_PERCENT_VALUE_TEXT'].notna()]
+        if tempDF.shape[0] != 0:
+            tempDF = tempDF[~tempDF['CRACKING_PERCENT_VALUE_TEXT'].str.fullmatch("E")]
+        tempDF = tempDF[tempDF['CRACKING_PERCENT'].isna()]
+        self.df['DRE52'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CRACKING_PERCENT_VALUE_DATE'].notna()]
+        tempDF = tempDF[~tempDF['CRACKING_PERCENT_VALUE_DATE'].astype(str).str.contains("\d{1,2}/\d{1,2}/\d{4}")]
+        self.df['DRE52'].iloc[tempDF.index.tolist()] = False
+
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CRACKING_PERCENT_VALUE_DATE'].notna()]
+        tempDF['CRACKING_PERCENT_VALUE_DATE'] = pd.to_datetime(tempDF['CRACKING_PERCENT_VALUE_DATE'])
+        tempDF = tempDF[tempDF['CRACKING_PERCENT_VALUE_DATE'].dt.year != tempDF['BEGIN_DATE'].dt.year]
+        tempDF['CRACKING_PERCENT_VALUE_TEXT'].fillna("", inplace=True)
+        if tempDF.shape[0] != 0:
+            tempDF = tempDF[~tempDF['CRACKING_PERCENT_VALUE_TEXT'].str.fullmatch("[ABCDE]")]
+        self.df['DRE52'].iloc[tempDF.index.tolist()] = False
+
+    def dre54(self):
+        #YEAR_LAST_IMPROVEMENT ValueDate must not be NULL and must be <= BeginDate
+
+        print('Running rule DRE54...')
+        self.df['DRE54'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['YEAR_LAST_IMPROVEMENT_VALUE_DATE'].isna() | (tempDF['YEAR_LAST_IMPROVEMENT_VALUE_DATE'] > tempDF['BEGIN_DATE'].dt.year)]
+        self.df['DRE54'].iloc[tempDF.index.tolist()] = False
+
+    def dre55(self):
+        #YEAR_LAST_CONSTRUCTION ValueDate must not be NULL and must be <= BeginDate
+
+        print('Running rule DRE55...')
+        self.df['DRE55'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'].isna() | (tempDF['YEAR_LAST_CONSTRUCTION_VALUE_DATE'] > tempDF['BEGIN_DATE'].dt.year)]
+        self.df['DRE55'].iloc[tempDF.index.tolist()] = False
+
+    def dre56(self):
+        #LAST_OVERLAY_THICKNESS ValueNumeric must be > 0 
+
+        print('Running rule DRE56...')
+        self.df['DRE56'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['LAST_OVERLAY_THICKNESS'].notna()]
+        tempDF = tempDF[tempDF['LAST_OVERLAY_THICKNESS'] <= 0]
+        self.df['DRE56'].iloc[tempDF.index.tolist()] = False
+
+    def dre57(self):
+        #THICKNESS_RIGID ValueNumeric must be > 0
+
+        print('Running rule DRE57...')
+        self.df['DRE57'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['THICKNESS_RIGID'].notna()]
+        tempDF = tempDF[tempDF['THICKNESS_RIGID'] <= 0]
+        self.df['DRE57'].iloc[tempDF.index.tolist()] = False
+
+    def dre58(self):
+        #THICKNESS_RIGID ValueNumeric must be > 0
+
+        print('Running rule DRE58...')
+        self.df['DRE58'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['THICKNESS_FLEXIBLE'].notna()]
+        tempDF = tempDF[tempDF['THICKNESS_FLEXIBLE'] <= 0]
+        self.df['DRE58'].iloc[tempDF.index.tolist()] = False
+
+    def dre59(self):
+        #BASE_TYPE ValueNumeric must be an integer in the range (1-8)
+
+        print('Running rule DRE59...')
+        self.df['DRE59'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['BASE_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['BASE_TYPE'].isin(range(1,9))]
+        self.df['DRE59'].iloc[tempDF.index.tolist()] = False
+
+    def dre60(self):
+        #BASE_THICKNESS ValueNumeric must be an integer > 0
+
+        print('Running rule DRE60...')
+        self.df['DRE60'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['BASE_THICKNESS'].notna()]
+        tempDF = tempDF[(tempDF['BASE_THICKNESS'] <= 0) | (tempDF['BASE_THICKNESS']%np.floor(tempDF['BASE_THICKNESS']) != 0)]
+        self.df['DRE60'].iloc[tempDF.index.tolist()] = False
+
+    def dre62(self):
+        #SOIL_TYPE ValueNumeric must be an integer in the range (1;2)
+
+        print('Running rule DRE62...')
+        self.df['DRE62'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['SOIL_TYPE'].notna()]
+        tempDF = tempDF[~tempDF['SOIL_TYPE'].isin([1,2])]
+        self.df['DRE62'].iloc[tempDF.index.tolist()] = False
+
+    def dre63(self):
+        #COUNTY_ID ValueNumeric must be an integer and valid three digit FIPS code
+
+        print('Running rule DRE63...')
+        self.df['DRE63'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[~tempDF['COUNTY_ID'].isin(range(1,110, 2))]
+        self.df['DRE63'].iloc[tempDF.index.tolist()] = False
+
+    def dre68(self):
+        #MAINTENANCE_OPERATIONS must be an integer in (1;2;3;4;11;12;21;25;26;27;31;32;40;50;60;62;63;64;66;67;68;69;70;72;73;74;80) 
+
+        print('Running rule DRE68...')
+        self.df['DRE68'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['MAINTENANCE_OPERATIONS'].notna()]
+        tempDF = tempDF[~tempDF['MAINTENANCE_OPERATIONS'].isin([1,2,3,4,11,12,21,25,26,27,31,32,40,50,60,62,63,64,66,67,68,69,70,72,73,74,80])]
+        self.df['DRE68'].iloc[tempDF.index.tolist()] = False
+
+    def dre70(self):
+        #DIR_THROUGH_LANES ValueNumeric must be an integer > 0 
+
+        print('Running rule DRE70...')
+        self.df['DRE70'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['DIR_THROUGH_LANES'].notna()]
+        tempDF = tempDF[(tempDF['DIR_THROUGH_LANES'] <= 0) | (tempDF['DIR_THROUGH_LANES']%np.floor(tempDF['DIR_THROUGH_LANES']) != 0)]
+        self.df['DRE70'].iloc[tempDF.index.tolist()] = False
+
+    def dre71(self):
+        #TRAVEL_TIME_CODE ValueText must not be NULL
+
+        print('Running rule DRE71...')
+        self.df['DRE71'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['TRAVEL_TIME_CODE_VALUE_TEXT'].isna()]
+        self.df['DRE71'].iloc[tempDF.index.tolist()] = False
+
+    def dre73(self):
+        #IS_RESTRICTED ValueNumeric must = 1 or NULL
+
+        print('Running rule DRE73...')
+        self.df['DRE73'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[(tempDF['IS_RESTRICTED'] != 1) & tempDF['IS_RESTRICTED'].notna()]
+        self.df['DRE73'].iloc[tempDF.index.tolist()] = False
+
+    def dre74(self):
+        #Section Length Must Not Be > 0.11 Miles
+
+        print('Running rule DRE74...')
+        self.df['DRE74'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['IRI'].notna()]
+        tempDF = tempDF[(tempDF['EMP'] - tempDF['BMP']) > 0.11]
+        self.df['DRE74'].iloc[tempDF.index.tolist()] = False
+
+    def dre75(self):
+        #Section Length Must Not Be > 0.11 Miles
+        #Skipped since we don't report PSR
+        print('Running rule DRE75...')
+        self.df['DRE75'] = True
+
+    def dre76(self):
+        #Section Length Must Not Be > 0.11 Miles
+
+        print('Running rule DRE76...')
+        self.df['DRE76'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['RUTTING'].notna()]
+        tempDF = tempDF[(tempDF['EMP'] - tempDF['BMP']) > 0.11]
+        self.df['DRE76'].iloc[tempDF.index.tolist()] = False
+
+    def dre77(self):
+        #Section Length Must Not Be > 0.11 Miles
+
+        print('Running rule DRE77...')
+        self.df['DRE77'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['FAULTING'].notna()]
+        tempDF = tempDF[(tempDF['EMP'] - tempDF['BMP']) > 0.11]
+        self.df['DRE77'].iloc[tempDF.index.tolist()] = False
+
+    def dre78(self):
+        #Section Length Must Not Be > 0.11 Miles
+
+        print('Running rule DRE78...')
+        self.df['DRE78'] = True
+        tempDF = self.df.copy()
+        tempDF = tempDF[tempDF['CRACKING_PERCENT'].notna()]
+        tempDF = tempDF[(tempDF['EMP'] - tempDF['BMP']) > 0.11]
+        self.df['DRE78'].iloc[tempDF.index.tolist()] = False
+
+
+    def run(self):
+
+        self.drd01()
+        self.drd64()
+        self.drd65()
+        self.drd66()
+        # self.drd72() Data item not in all submission data
+        self.drd202()
+        self.drd203()
+        self.drd204()
+        self.dre02()
+        self.dre03()
+        self.dre04()
+        self.dre05()
+        self.dre06()
+        self.dre07()
+        self.dre10()
+        self.dre11()
+        self.dre12()
+        self.dre13()
+        self.dre14()
+        self.dre15()
+        self.dre21()
+        self.dre22()
+        self.dre23()
+        self.dre24()
+        self.dre25()
+        self.dre26()
+        self.dre27()
+        self.dre28()
+        self.dre29()
+        self.dre30()
+        self.dre31()
+        self.dre32()
+        self.dre33()
+        self.dre34()
+        self.dre35()
+        self.dre36()
+        self.dre37()
+        self.dre38()
+        self.dre39()
+        self.dre40()
+        self.dre42()
+        self.dre43a()
+        self.dre43b()
+        self.dre43c()
+        self.dre43d()
+        self.dre43e()
+        self.dre43f()
+        self.dre44()
+        self.dre45a()
+        self.dre45b()
+        self.dre45c()
+        self.dre45d()
+        self.dre45e()
+        self.dre45f()
+        self.dre46()
+        self.dre47()
+        self.dre48()
+        self.dre49()
+        self.dre50()
+        self.dre51()
+        self.dre52()
+        self.dre54()
+        self.dre55()
+        self.dre56()
+        self.dre57()
+        self.dre58()
+        self.dre59()
+        self.dre60()
+        # self.dre62() Data Item not in all submission data
+        self.dre63()
+        self.dre68()
+        self.dre70()
+        # self.dre71() Data Item not in all submission data
+        # self.dre73() Data item not in all submission data
+        self.dre74()
+        self.dre75()
+        self.dre76()
+        self.dre77()
+        self.dre78()
+
+    def create_output(self, template='domain_rules_summary_template.xlsx', outfilename='domain_rules_summary.xlsx'):
+        #Reads sheet on template that list all data items associated with each rule and converts to dictionary
+        dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=86)
+        dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
+        dataItemsDF['Data_Items'] = dataItemsDF['Data_Items'].str.split(",")
+        ruleDict = dict(zip(dataItemsDF['Rule'], dataItemsDF['Data_Items']))
+        fwhaRuleDict = ruleDict.copy()
+        for rule in ruleDict.keys():
+            fwhaRuleDict[rule+"_FHWA"] = fwhaRuleDict.pop(rule)
+
+
+        #Reads the rule descripts off of summary sheet and converts to dictionary
+        ruleDescDF = pd.read_excel(template, sheet_name="Summary", usecols="A,D")
+        ruleDesc = dict(zip(ruleDescDF['Rule'], ruleDescDF['Description']))
+
+        #Create copy of template to write to
+        shutil.copy(template, outfilename)
+
+        with pd.ExcelWriter(outfilename, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             
-
-            pair=[n,b]
-            if pair not in pair_list and n!=b and n<b:
-                pair_list.append(pair)
-
-    print(pair_list)
-    return pair_list
-
-
-def overlap_intersect_check(x):
-    v=False
-    indexes=get_indexes(x)
-    # print(indexes)
-    for i1,i2 in indexes:
-        # print(x[i1],x[i2])
-        
-        # s=x[i1]
-        # s2=x[i2]
-
-        s = x[['Route_ID', 'Begin_Point', 'End_Point']].iloc[i1]
-        s2 = x[['Begin_Point', 'End_Point']].iloc[i2]
-        rid,bmp1,emp1=s['Route_ID'],s['Begin_Point'],s['End_Point']
-        bmp2,emp2=s2['Begin_Point'],s2['End_Point']
-        if _overlap(bmp1,emp1,bmp2,emp2) == True:
-            v=True
-            off_list.append({rid:[[bmp1, emp1],[bmp2, emp2]]})
-    return off_list,v
-               
-def _overlap(bmp1,emp1,bmp2,emp2,debug=False):
-    bmp_overlap1 = bmp2 < bmp1 and emp2 > bmp1
-    emp_overlap1 = bmp2 < emp1 and emp2 > emp1
-    bmp_overlap2 = bmp1 < bmp2 and emp1 > bmp2
-    emp_overlap2 = bmp1 < emp2 and emp1 > emp2
-
-    if debug: print(bmp_overlap1,emp_overlap1,bmp_overlap2,emp_overlap2,[bmp1,emp1,bmp2,emp2])
-    return (bmp_overlap1 or 
-     emp_overlap1 or 
-     bmp_overlap2 or 
-     emp_overlap2)
-
-def rid_overlap(df):
-    for rid in df['Route_ID'].unique():
-        tmp = df[df['Route_ID'] == rid]
-        print(tmp)
-        print(overlap_intersect_check(tmp))
-        # TODO add overlaps to error df
-
-
-# def overlap_checking(df): 
-#     return Overlapping(df)
-
-
-
-
-def add_column_section_length(df):
-    if 'Section_Length' not in df.columns:
-        df['Section_Length']=df['End_Point']-df['Begin_Point']
-        return df
-    else:
-        return df
-
-def add_error_df(df, error_message):
-    global total_errors
-    if len(df) > 0:
-        df['Error'] = error_message
-        total_errors = pd.concat([total_errors, df], ignore_index=True)
-        print('Wrote Errors df with message: %s and size: %s' % (error_message, len(df)))
-    else:
-        print("No errors found for error message | %s" % error_message)
-
-
-# def read_hpms_csv(x): return pd.read_csv(mypath + "/" + x, sep='|')
-def read_hpms_csv(x):
-    df = pd.read_csv(mypath + "/" + x, sep='|')
-    return df.rename(columns=correct_format_inverse)
-
-def get_invalid_geom_name(x):
-    geom_fn = str.split(x, '.')[0]
-    return geom_fn + '_geom_check.xlsx'
-
-
-def output_geom_file(geom_check, fn):
-    geom_fn = get_invalid_geom_name(fn)
-    geom_check[geom_check.IsValid == False].to_excel(geom_fn, index=False)
-    print('Output file made! :)')
-
-
-# def read_hpms_csv(x): return pd.read_csv(mypath + "/" + x, sep='|')
-
-#Beginning of HPMS Validations 
-
-def check_fsystem_valid(x, check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    
-    
-    # print(data2)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'fsystem geometry check invalid!')
-    tmpdf = data2[~data2['Value_Numeric'].isin(functional_class_list)]
-    add_error_df(tmpdf, "Check value numeric for fsystem valid")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    print(rid_overlap(data2))
-    add_error_df(
-        tmpdf2, "Check value numeric for fsystem section length is zero")
-
-   
-
-
-def check_urban_code(x, check_geom):
-    data = read_hpms_csv(x)
-    # data=overlap_intersect_check(data)
-    
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'fsystem geometry check invalid!')
-
-    # output_geom_file(x)
-    # print('Urban_Code',geom_check[geom_check.IsValid==False])
-
-    # if the geometry is invalid pass that invalid geometry df add error df
-
-    tmpdf = data[(data['Value_Numeric'].isna()) | (
-        ~data['Value_Numeric'].isin(urban_code_list))]
-    add_error_df(tmpdf, "Urban Code is not in accepted range")
-    tmpdf2 = data[data['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Urban Code section length is equal to zero")
-
-    
-
-
-def check_facility_type(x, check_geom):
-    data = read_hpms_csv(x)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'fsystem geometry check invalid!')
-
-    tmpdf = data[(data['Value_Numeric'].isna()) | (
-        ~data['Value_Numeric'].isin(facility_type_list))]
-    add_error_df(
-        tmpdf, "Facility type error, not a valid facility type in value_numeric")
-    tmpdf2 = data[data['Section_Length'] == 0]
-    add_error_df(tmpdf2, "facility type section length is equal to zero")
-
-    
-
-def check_ownership(x, check_geom):
-    data = read_hpms_csv(x)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Ownership geometry bad, please fix')
-
-    tmpdf = data[(data['Value_Numeric'] == '') | (
-        ~data['Value_Numeric'].isin(ownership_list))]
-    add_error_df(
-        tmpdf, "Ownership list error, not a valid ownership list in value_numeric")
-    tmpdf2 = data[data['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Ownership section length is zero")
-
-   
-
-
-def check_through_lanes(x, check_geom):
-    data = read_hpms_csv(x)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'fsystem geometry check invalid!')
-
-    tmpdf = data[data.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Through lanes value numeric is nan")
-    tmpdf2 = data[data['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Through laness section length is zero")
-   
-
-
-def nhs_new_check(x,check_geom):
-    data = read_hpms_csv(x)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'NHS geometry check invalid!')
-    tmpdf = data[data.Value_Numeric.isna()]
-    add_error_df(tmpdf, "NHS value numeric is nan")
-    tmpdf2 = data[data['Section_Length'] == 0]
-    add_error_df(tmpdf2, "NHS section length is zero")
-   
-
-
-def check_dir_through_lanes(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Direct through lanes geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Direct through lanes value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Direct Through lanes section length is zero")
-
-
-def check_aadt(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'AADT geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "AADT value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "AADT section length is zero")
-
-
-def check_aadt_single_unit(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'AADT Single Unit geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "AADT Single Unit value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "AADT Single Unit section length is zero")
-
-
-def check_Pct_Peak_Single(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'PCT Peak Single geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "PCT Peak Single value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "PCT Peak Single section length is zero")
-
-
-def check_AADT_Combination(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'AADT Combination geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "AADT Combination value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "AADT Combination section length is zero")
-
-
-def check_pct_peak_combination(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data2.columns)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'PCT Peak Combination geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "PCT Peak Combination value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "PCT Peak Combination section length is zero")
-
-
-def check_k_factor(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'K Factor geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "K Factor value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "K Factor section length is zero")
-
-def dir_factor(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'dir factor geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "dir factor value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "dir factor section length is zero")
-
-def signal_type(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Signal Type geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-        ~data2['Value_Numeric'].isin(signal_list))]
-    add_error_df(tmpdf, "Signal Type is not in accepted range")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Signal Type section length is zero")
-
-def pct_green_time(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Peak green time geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Peak green time numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Peak green time length is zero")
-
-def lane_width(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Lane width geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Lane width numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Lane width section length is zero")
-
-def median_type(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Median type geometry check invalid!')
-        tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-        ~data2['Value_Numeric'].isin(median_type_list))]
-    add_error_df(tmpdf, "Median type is not in accepted range")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Median type section length is zero")
-
-def median_width(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Median width geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Median width numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Median width section length is zero")
-
-def shoulder_type(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Shoulder type geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-    ~data2['Value_Numeric'].isin(shoulder_type_list))]
-    add_error_df(tmpdf, "Shoulder type is not in accepted range")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Shoulder type section length is zero")
-
-def shoulder_width_r(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Shoulder width R geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Shoulder width R value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Shoulder width R section length is zero")
-
-def shoulder_width_l(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Shoulder width L geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Shoulder width L value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Shoulder width L section length is zero")
-
-def peak_parking(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Peak parking geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-        ~data2['Value_Numeric'].isin(peak_parking_list))]
-    add_error_df(tmpdf, "Peak parking is not in accepted range")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Peak parking section length is zero")
-
-def widening_potential(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Widening potential geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-        ~data2['Value_Numeric'].isin(widening_potential_list))]
-    add_error_df(tmpdf, "Widening potential is not in accepted range")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "widening potential section length is zero")
-
-def curves(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'curves geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-        ~data2['Value_Numeric'].isin(curve_list))]
-    add_error_df(tmpdf, "Curves is not in accepted range")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Curves section length is zero")
-
-def terrain_types(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Terrain Type geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-        ~data2['Value_Numeric'].isin(curve_list))]
-    add_error_df(tmpdf, "Terrain Type is not in accepted range")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Terrain section length is zero")
-
-def grades(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'grades geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-    ~data['Value_Numeric'].isin(grades_list))]
-    add_error_df(tmpdf, "Grade is not in accepted range")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "grades section length is zero")
-
-def pct_pass_sight(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'PCT Pass Sight geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "PCT Pass Sight value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "PCT Pass Sight section length is zero")
-
-def iri(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'IRI geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "IRI value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "IRI section length is zero")
-
-def surface_type(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'K Factor geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-        ~data2['Value_Numeric'].isin(surface_type_list))]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "K Factor section length is zero")
-
-def rutting(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Rutting geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Rutting section length is zero")
-
-def faulting(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Faulting geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Faulting value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Faulting section length is zero")
-
-def cracking_percent(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Cracking Percent geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Cracking Percent value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Cracking Percent section length is zero")
-
-def year_last_improvement(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Year Last Improvement geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Year Last Improvement value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Year Last Improvement section length is zero")
-
-def year_last_construction(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Year Last Construction geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Year Last Construction value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Year Last Construction section length is zero")
-
-def last_overlay_thickness(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Last Overlay Thickness geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Last Overlay Thickness value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Last Overlay thickness section length is zero")
-
-def thickness_rigid(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'thickness rigid geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Thickness Rigid value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Thickness Rigid section length is zero")
-
-def thickness_flexible(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'thickness flexible geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Thickness Flexible value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Thickness Flexible section length is zero")
-
-def base_type(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Base Type geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-    ~data['Value_Numeric'].isin(base_type_list))]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Base Type section length is zero")
-
-def base_thickness(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Base thickness geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Base thickness value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Base thickness section length is zero")
-
-def county_id(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'County ID geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-    ~data['Value_Numeric'].isin(county_id_list))]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "County ID value numeric is nan")
-    add_error_df(tmpdf2, "County ID section length is zero")
-
-def strahnet_type(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'STRAHNET geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-    ~data2['Value_Numeric'].isin(strahnet_type_list))]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Strahnet Type value numeric is nan")
-    add_error_df(tmpdf2, "STRAHNET section length is zero")
-
-def nn(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'NN geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-    ~data['Value_Numeric'].isin(nn_list))]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "NN section length is zero")
-
-def maintenance_operations(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Maintence operations geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-    ~data['Value_Numeric'].isin(main_ops_list))]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Main operations section length is zero")
-
-def dir_through_lanes(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Direct Through Lanes geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "DIrect Through Lanes value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Direct Through Lanes section length is zero")
-
-def travel_time_code(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Travel Time Code geometry check invalid!')
-    tmpdf = data2[data2.Value_Numeric.isna()]
-    add_error_df(tmpdf, "Travel Time Code value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Travel Time Code section length is zero")
-
-def nhfn(x,check_geom):
-    data = read_hpms_csv(x)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'NHFN geometry check invalid!')
-    tmpdf = data[(data['Value_Numeric'].isna()) | (
-    ~data['Value_Numeric'].isin(nhfn_list))]
-    add_error_df(tmpdf, "NHFN value numeric is nan")
-    tmpdf2 = data[data['Section_Length'] == 0]
-    add_error_df(tmpdf2, "NHFN section length is zero")
-
-def is_restricted(x,check_geom):
-    data = read_hpms_csv(x)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'K Factor geometry check invalid!')
-    tmpdf = data[(data['Value_Numeric'].isna()) | (
-    ~data['Value_Numeric'].isin(is_restricted_list))]
-    tmpdf2 = data[data['Section_Length'] == 0]
-    add_error_df(tmpdf, "Is Restricted value numeric is nan")
-    add_error_df(tmpdf2, "K Factor section length is zero")
-
-def access_control(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Access Control geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | (
-    ~data2['Value_Numeric'].isin(access_control_list))]
-    add_error_df(tmpdf, "Access Control value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Access Control section length is zero")
-
-
-def peak_lanes(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Peak Lanes geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    add_error_df(tmpdf, "Peak Lanes value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Peak Lanes section length is zero")
-
-def counter_peak_lanes(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Counter Peak Lanes geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    add_error_df(tmpdf, "Counter Peak Lanes value numeric is nan")
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf2, "Counter Peak Lanes section length is zero")
-
-
-def turn_lanes_r(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Turn Lanes R geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Turn Lanes R value numeric is nan")
-    add_error_df(tmpdf2, "Turn Lanes R section length is zero")
-
-def turn_lanes_l(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Turn Lanes L geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Turn Lanes L value numeric is nan")
-    add_error_df(tmpdf2, "Turn Lanes L section length is zero")
-
-def speed_limit(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Speed Limit geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Speed Limit value numeric is nan")
-    add_error_df(tmpdf2, "Speed Limit section length is zero")
-
-def toll_id(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Toll ID geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | data2['Value_Numeric'] != 288]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Toll ID value numeric is nan")
-    add_error_df(tmpdf2, "Toll ID section length is zero")
-
-def route_number(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Toll ID geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Route Number value numeric is nan")
-    add_error_df(tmpdf2, "Route Number section length is zero")
-
-def route_signing(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Route Signing geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())| ~data2['Value_Numeric'].isin(route_qualifier_list)]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Route Signing value numeric is nan or not in list")
-    add_error_df(tmpdf2, "Route Signing section length is zero")
-
-def route_qualifier(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Route Qualifier geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna()) | ~data2['Value_Numeric'].isin(route_signing_list) ]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Route Qualifier value numeric is nan or not in list")
-    add_error_df(tmpdf2, "Route Qualifier section length is zero")
-
-def alternative_route_name(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Alternative Route Name geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Alternative Route Name value numeric is nan or not in list")
-    add_error_df(tmpdf2, "Alternative Route Name section length is zero")
-
-def future_aadt(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Future AADT geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Future AADT value numeric is nan or not in list")
-    add_error_df(tmpdf2, "Future AADT section length is zero")
-
-def number_signals(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Number signals geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Number Signals value numeric is nan or not in list")
-    add_error_df(tmpdf2, "Number Signals section length is zero")
-
-def stop_signs(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'Stop Signs geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "Stop Signs value numeric is nan or not in list")
-    add_error_df(tmpdf2, "Stop Signs section length is zero")  
-
-def at_grade_others(x,check_geom):
-    data = read_hpms_csv(x)
-    data2=add_column_section_length(data)
-    # print(data)
-    if check_geom:
-        geom_check = add_geom_validation_df(
-            data2, routeid_field='Route_ID', bmp_field='Begin_Point', emp_field='End_Point')
-        add_error_df(geom_check[geom_check.IsValid ==
-                     False], 'At Grade Others geometry check invalid!')
-    tmpdf = data2[(data2['Value_Numeric'].isna())]
-    tmpdf2 = data2[data2['Section_Length'] == 0]
-    add_error_df(tmpdf, "At Grade Others value numeric is nan or not in list")
-    add_error_df(tmpdf2, "At Grade Others section length is zero")  
-  
-
-
-
-
-
-
-
-
-def fail_func(): print('shit failed')
-
-
-onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-
-# the key is the filename the value is the function
-validation_dict = {
-    # 'DataItem1_F_System.csv': [check_fsystem_valid,'F_System'],
-    # 'DataItem2_Urban_Code.csv': [check_urban_code,'Urban_Code'],
-    # 'DataItem3_Facility_Type.csv': [check_facility_type,'Facility_Type'],
-    # 'DataItem5-Access_Control.csv' :[access_control,'Access_Control'],
-    # 'DataItem6_Ownership.csv': [check_ownership,'Ownership'],
-    # 'DataItem7_Through_Lanes.csv': [check_through_lanes,'Through_Lanes'],
-    # 'DataItem10_Peak_Lanes.csv' : [peak_lanes,'PEAK_LANES'],
-    # 'DataItem11_Counter_Peak_Lanes.csv' : [counter_peak_lanes,'Counter_Peak_Lanes'],
-    # 'DataItem12-Turn_Lanes_R.csv' : [turn_lanes_r,'Turn_Lanes_R'],
-    # 'DataItem13-Turn_Lanes_L.csv' : [turn_lanes_l,'Turn_Lanes_L'],
-    # 'DataItem14_SpeedLimit.csv' : [speed_limit,'Speed_Limit'],
-    # 'DataItem15_Toll_ID.csv' : [toll_id,'Toll_ID'],
-    # 'DataItem17-RouteNumber.csv' : [route_number,'Route_Number'],
-    # 'DataItem18-Route_Signing.csv' : [route_signing,'Route Signing'],
-    # 'DataItem19-Route_Qualifier.csv' : [route_qualifier,'Route Qualifier'],
-    # 'DataItem20-Alternative_Route_Name.csv' : [alternative_route_name,'Alternative Route Name'],
-    # 'DataItem21-AADT.csv':[check_aadt,'AADT'],
-    # 'DataItem22-AADT_Single_Unit.csv':[check_aadt_single_unit,'AADT_Single_Unit'],
-    # 'DataItem23-Pct_Peak_Single.csv':[check_Pct_Peak_Single,'Pct_Peak_Single'],
-    # 'DataItem24-AADT_Combination.csv':[check_AADT_Combination,'AADT_Combination'],
-    # 'DataItem25-Pct_Peak_Combination.csv':[check_pct_peak_combination,'Pct_Peak_Combination'],
-    # 'DataItem26-K_Factor.csv' : [check_k_factor,'K_Factor'],
-    # 'DataItem27-Dir_Factor.csv' : [dir_factor,'Dir Factor'],
-    # 'DataItem28-Future_AADT.csv' : [future_aadt,'Future AADT'],
-    # 'DataItem29-Signal_Type.csv' : [signal_type,'Signal_Type'],
-    # 'DataItem30-Pct_Green_Time.csv' : [pct_green_time,'Percent_Green_Time'],
-    # 'DataItem31-Number_Signals.csv' : [number_signals,'Number_signals'],
-    # 'DataItem32-Stop_Signs.csv' : [stop_signs,'Stop_Signs'],
-    # 'DataItem33-At_Grade_Other_test.csv' : [at_grade_others,'At_Grade_Others'],
-    # 'DataItem34_Lane_Width.csv' : [lane_width,'Lane Width'],
-    # 'DataItem35_Median_Type.csv' : [median_type,'Median Type'],
-    # 'DataItem36_Median_Width.csv' : [median_width,'Median Width'],
-    # 'DataItem37_Shoulder_Type.csv' : [shoulder_type,'Shoulder Type'],
-    # 'DataItem38_Right_Shoulder_Width.csv' : [shoulder_width_r,'Shoulder Width Right'],
-    # 'DataItem39_Left_Shoulder_Width.csv' : [shoulder_width_l,'Shoulder Width Left'],
-    # 'DataItem40-Peak_Parking.csv' : [peak_parking,'Peak Parking'],
-    # 'DataItem42-Widening_Potential.csv' : [widening_potential,'Widening Potential'],
-    # 'DataItem43_Curve_Classification.csv' : [curves,'Curve Classification'],
-    # 'DataItem44-Terrain_Type.csv' : [terrain_types,'Terrain Types'],
-    # 'DataItem45_Grade_Classifcation.csv' : [grades,'Grade Classification'],
-    # 'DataItem46-Pct_Pass_Sight.csv' : [pct_pass_sight,'Peak Passing Sight'],
-    # 'DataItem47_IRI_non_interstate_NHS.csv' : [iri,'IRI'],
-    # 'DataItem49_Surface_Type.csv' : [surface_type,'Surface Type'],
-    # 'DataItem50_Rutting_non_interstate_NHS.csv' : [rutting,'Rutting'],
-    # 'DataItem51_Faulting_non_interstate_NHS.csv' : [faulting,'Faulting'],
-    # 'DataItem52_Cracking_Percent_non_interstate_NHS.csv' : [cracking_percent,'Cracking Percent'],
-    # 'DataItem54_Year_of_Last_Improvement.csv' : [year_last_improvement,'Year Last Improvement'],
-    # 'DataItem55_Year_of_Last_Construction.csv' : [year_last_construction,'Year Last Construction'],
-    # 'DataItem56_Last_Overlay_Thickness.csv' : [last_overlay_thickness,'Last Overlay Thickness'],
-    # 'DataItem57_Thickness_Rigid.csv' : [thickness_rigid,'Thickness Rigid'],
-    # 'DataItem58_Thickness_Flexible.csv' : [thickness_flexible,'Thickness Flexible'],
-    # 'DataItem59_Base_Type.csv' : [base_type,'Base Type'],
-    # 'DataItem60_Base_Thickness.csv':[base_thickness,'BASE_THICKNESS'],
-    # 'DataItem63-County_Code.csv':[county_id,'County_ID'],
-    # 'DataItem64_NHS.csv':[nhs_new_check,'NHS'],
-    # 'DataItem65-STRAHNET_Type.csv':[strahnet_type,'Strahnet_Type'],
-    # 'DataItem66-NN.csv':[nn,'NN'],
-    # 'DataItem70_Dir_Through_Lanes.csv':[check_dir_through_lanes,'Dir_Through_Lanes'],
-    # 'HPMS_2021_SAMPLES_LANE_WIDTH.csv':[lane_width,'Lane_Width']
-}
-
-def check_columns(fn,col):
-    df = read_hpms_csv(fn)
-    add_error_df(df[df.Data_Item!=col],'%s field not in Data_Item Column' % col)
-
-def check_all(check_geom=True):
-    for fn in onlyfiles:
-        # print(fn, "processing file")
-        vals = validation_dict.get(fn, False)
-        if vals != False:
-            myfunc,col = vals 
-            check_columns(fn,col)
-
-            myfunc(fn, check_geom=check_geom)
-
-
-# check_all(check_geom=True)
-
-cols = ['Error','Year_Record',
-        'State_Code',
-        'Route_ID',
-        'Begin_Point',
-        'End_Point',
-        'Data_Item',
-        'Section_Length',
-        'Value_Numeric',
-        'Value_Text',
-        'Value_Date',
-        'Comments']
-
-
-#problem area for code currently 
-total_errors[cols].to_excel('errors.xlsx', index=False)
-
+            tempDF = self.df.copy()
+            numFailed = []
+            numPassed = []
+            lenFailed = []
+            fwhaFailed = []
+
+            #Get counts for failed/passed/length of failed
+            print("Updating summary sheet on",outfilename,"...")
+            for rule in ruleDict.keys():
+                #Assumes all passes for rules not ran
+                try:
+                    numFailed.append(tempDF[tempDF[rule]==False].shape[0])
+                    numPassed.append(tempDF[tempDF[rule]==True].shape[0])
+                    lenFailed.append((tempDF[tempDF[rule]==False]['EMP'] - tempDF[tempDF[rule]==False]['BMP']).sum())
+                except KeyError:
+                    numFailed.append(0)
+                    numPassed.append(self.df.shape[0])
+                    lenFailed.append(0)
+
+            for rule in fwhaRuleDict.keys():
+                try:
+                    fwhaFailed.append(tempDF[tempDF[rule]==False].shape[0])
+                except KeyError:
+                    fwhaFailed.append(0)
+
+            failedDF = pd.DataFrame(numFailed)
+            passedDF = pd.DataFrame(numPassed)
+            lengthDF = pd.DataFrame(lenFailed)
+            fwhaFailedDF = pd.DataFrame(fwhaFailed)
+
+            #Write counts to Summary sheet
+            failedDF.to_excel(writer, sheet_name='Summary', startcol=4, startrow=1, header=False, index=False)
+            passedDF.to_excel(writer, sheet_name='Summary', startcol=5, startrow=1, header=False, index=False)
+            lengthDF.to_excel(writer, sheet_name='Summary', startcol=6, startrow=1, header=False, index=False)
+            fwhaFailedDF.to_excel(writer, sheet_name='Summary', startcol=7, startrow=1, header=False, index=False)
+
+            #Create sheets for each rule containing all failed rows (using only columns that the specific rule references)
+            for rule in ruleDict.keys():
+                tempDF = self.df.copy()
+                #Checks to make sure rule has data items associated with it (will be a list if dataItems exists, otherwise will be float (np.nan))
+                if type(ruleDict[rule])==list:
+                    #Tries using RULENAME (i.e. SJF01) in dataset which is added if the rule is ran
+                    #If rule is not run, no column will exist with the rulename, catches KeyError and prints message.
+                    try:
+                        if tempDF[tempDF[rule]==False].shape[0] > 0:
+                            print("Creating error sheet for rule:",rule)
+                            dataItems = ['RouteID', 'BMP', 'EMP']
+                            [dataItems.append(x) for x in ruleDict[rule] if x not in dataItems]
+                            tempDF = tempDF[tempDF[rule]==False]
+                            tempDF = tempDF[dataItems]
+                            tempDF.to_excel(writer, sheet_name=rule, startrow=1, index=False)
+                            worksheet = writer.sheets[rule]
+                            worksheet['A1'] = f'=HYPERLINK("#Summary!A1", "Summary Worksheet")'
+                            worksheet['A1'].font = Font(underline='single', color='0000EE')
+                            #Autofit columns
+                            for i in range(1, worksheet.max_column+1):
+                                worksheet.column_dimensions[get_column_letter(i)].width = 20
+                            #Add rule description to sheet
+                            worksheet['B1'] = ruleDesc[rule]
+
+                        else:
+                            print("No failed rows for rule:",rule)
+
+                    except KeyError:
+                        print(rule,"not found in DF. Sheet was not created in rules_summary.xlsx")
+                else:
+                    print("No data items for rule",rule,", Sheet not created.")
+
+
+
+
+
+
+df = pd.read_csv("all_submission_data.csv", dtype={'URBAN_CODE':str, 'AADT_VALUE_DATE':str})
+c = domain_validations(df)
+c.run()
+c.create_output()
+# c.df.to_csv('test_domain_tyler.csv', index=False) 
