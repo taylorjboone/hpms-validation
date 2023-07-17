@@ -147,7 +147,7 @@ class Cross_Validation():
             tmp[k] = v
         tmp2 = pd.DataFrame()
         for rule in spatial_join_checks.keys():
-            tmp2 = tmp2.append(tmp[tmp[rule] == False])
+            tmp2 = pd.concat([tmp2, tmp[tmp[rule] == False]])
         return tmp2.drop_duplicates()
 
 
@@ -176,7 +176,7 @@ class Cross_Validation():
             tmp[k] = v
         tmp2 = pd.DataFrame()
         for rule in spatial_join_checks.keys():
-            tmp2 = tmp2.append(tmp[tmp[rule] == False])
+            tmp2 = pd.concat([tmp2, tmp[tmp[rule] == False]])
         return tmp2.drop_duplicates()
 
 
