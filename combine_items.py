@@ -346,6 +346,8 @@ def combine_errors(df,combined_file,dtype={'URBAN_CODE':str,'HPMS_SAMPLE_NO':str
     with open('myerrors.json','w') as f:
         f.write(json.dumps({'operations':ops}))
 
+    print('rule cols', rule_cols)
+
     os.system('lrsops overlay --operations myerrors.json')
     os.system(f'lrsops overlay -b {combined_file} -s tot_errors.csv -c {",".join(rule_cols)} -o tmpout.csv')
     
