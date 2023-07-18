@@ -483,6 +483,8 @@ class domain_validations():
     def dre43a(self):
         #CURVES_A ValueNumeric must be in the format Numeric (3;1) and > 0
 
+        #Assuming this is meant to be (1;3)
+
         print('Running rule DRE43A...')
         self.df['DRE43A'] = True
         tempDF = self.df.copy()
@@ -493,6 +495,7 @@ class domain_validations():
     def dre43b(self):
         #CURVES_B ValueNumeric must be in the format Numeric (3;1) and > 0
 
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE43B...')
         self.df['DRE43B'] = True
         tempDF = self.df.copy()
@@ -503,6 +506,7 @@ class domain_validations():
     def dre43c(self):
         #CURVES_C ValueNumeric must be in the format Numeric (3;1) and > 0
 
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE43C...')
         self.df['DRE43C'] = True
         tempDF = self.df.copy()
@@ -512,6 +516,7 @@ class domain_validations():
 
     def dre43d(self):
         #CURVES_D ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
 
         print('Running rule DRE43D...')
         self.df['DRE43D'] = True
@@ -522,6 +527,7 @@ class domain_validations():
 
     def dre43e(self):
         #CURVES_E ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE43E...')
         self.df['DRE43E'] = True
         tempDF = self.df.copy()
@@ -531,6 +537,7 @@ class domain_validations():
 
     def dre43f(self):
         #CURVES_F ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE43F...')
         self.df['DRE43F'] = True
         tempDF = self.df.copy()
@@ -550,6 +557,7 @@ class domain_validations():
 
     def dre45a(self):
         #GRADES_A ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
 
         print('Running rule DRE45A...')
         self.df['DRE45A'] = True
@@ -561,6 +569,7 @@ class domain_validations():
 
     def dre45b(self):
         #GRADES_B ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE45B...')
         self.df['DRE45B'] = True
         tempDF = self.df.copy()
@@ -570,6 +579,7 @@ class domain_validations():
 
     def dre45c(self):
         #GRADES_C ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE45C...')
         self.df['DRE45C'] = True
         tempDF = self.df.copy()
@@ -579,6 +589,7 @@ class domain_validations():
 
     def dre45d(self):
         #GRADES_D ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE45D...')
         self.df['DRE45D'] = True
         tempDF = self.df.copy()
@@ -589,6 +600,7 @@ class domain_validations():
 
     def dre45e(self):
         #GRADES_E ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE45E...')
         self.df['DRE45E'] = True
         tempDF = self.df.copy()
@@ -599,6 +611,7 @@ class domain_validations():
 
     def dre45f(self):
         #GRADES_F ValueNumeric must be in the format Numeric (3;1) and > 0
+        #Assuming this is meant to be (1;3)
         print('Running rule DRE45F...')
         self.df['DRE45F'] = True
         tempDF = self.df.copy()
@@ -860,6 +873,7 @@ class domain_validations():
         print('Running rule DRE63...')
         self.df['DRE63'] = True
         tempDF = self.df.copy()
+        #County Ids are odds numbers from 1 - 109
         tempDF = tempDF[~tempDF['COUNTY_ID'].isin(range(1,110, 2))]
         self.df['DRE63'].iloc[tempDF.index.tolist()] = False
 
