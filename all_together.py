@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from full_spatial_join_functions import full_spatial_functions
 from pm2_validations import pm2_validations
 from domain_validation import domain_validations
@@ -7,7 +8,9 @@ from cross_validation_copy_71923 import Cross_Validation
 
 
 class validate():
-    def __init__(self,df,domain=True,full=True,pm2=True,cross=True):
+    def __init__(self,df,create_data,domain=True,full=True,pm2=True,cross=True):
+        if create_data == True:
+            os.system('python combine_submission_data.py')
         if domain ==True:
             print('Running Domain Validations')
             a = domain_validations(df)
@@ -42,4 +45,4 @@ class validate():
 
 
 df = pd.read_csv("all_submission_data.csv", dtype={'URBAN_CODE':str, 'AADT_VALUE_DATE':str})
-valid = validate(df,domain=True,full=True,pm2=True,cross=True)
+valid = validate(df,create_data=True,domain=True,full=True,pm2=True,cross=True)
