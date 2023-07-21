@@ -1137,8 +1137,8 @@ class domain_validations():
 
 
 
-df = pd.read_csv("all_submission_data.csv", dtype={'URBAN_CODE':str, 'AADT_VALUE_DATE':str})
-c = domain_validations(df)
-c.run()
-c.create_output()
+# df = pd.read_csv("all_submission_data.csv", dtype={'URBAN_CODE':str, 'AADT_VALUE_DATE':str})
+# c = domain_validations(df)
+# c.run()
+# c.create_output()
 # c.df.to_csv('test_domain_tyler.csv', index=False) 

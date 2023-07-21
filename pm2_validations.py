@@ -529,8 +529,8 @@ class pm2_validations():
 
 
 
-df = pd.read_csv(r'full_spat_with_error_columns.csv')
+# df = pd.read_csv(r'full_spat_with_error_columns.csv')
 
-c = pm2_validations(df)
-c.run()
-c.create_output()
+# c = pm2_validations(df)
+# c.run()
+# c.create_output()

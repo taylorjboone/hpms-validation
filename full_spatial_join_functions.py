@@ -1505,11 +1505,11 @@ class full_spatial_functions():
     
 
 
-df = pd.read_csv('full_spat_with_error_columns.csv',dtype={'URBAN_CODE':str, 'SampleId':str})
+df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str, 'SampleId':str})
 
-c = full_spatial_functions(df)  
+# c = full_spatial_functions(df)  
+# # c.run()
 # c.run()
-c.run()
-c.create_output()
-print(c.df)
+# c.create_output()
+# print(c.df)
 # c.df.to_csv('test_functions_matt_sucks.csv', index=False)

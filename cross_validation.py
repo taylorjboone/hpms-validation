@@ -1,6 +1,12 @@
 import pandas as pd
 import os
 import geopandas as gpd
+import shutil
+import warnings
+import wvdot_utils
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+warnings.filterwarnings("ignore")
 
 cols_dict_old = {
     'BMP':'BeginPoint',
@@ -123,6 +129,11 @@ class Cross_Validation():
         # self.df = load_defaults(df)
         self.df = df.rename(columns=cols_dict)
 
+    def check_geom(row):
+        value = wvdot_utils.validate_geom.check_seg_valid(row['RouteID'],row['BMP'],row['EMP'])
+        return value[-1]
+
+
     def inventory_spatial_join(self):
         df = self.df
         # Creates a column for each rule, outputs a False for each row that doesn't pass the rule for a column
@@ -174,11 +185,116 @@ class Cross_Validation():
         tmp = df.copy()
         for k,v in spatial_join_checks.items():
             tmp[k] = v
-        tmp2 = pd.DataFrame()
-        for rule in spatial_join_checks.keys():
-            tmp2 = pd.concat([tmp2, tmp[tmp[rule] == False]])
-        return tmp2.drop_duplicates()
+        # tmp2 = pd.DataFrame()
+        # for rule in spatial_join_checks.keys():
+        #     tmp2 = pd.concat([tmp2, tmp[tmp[rule] == False]])
+        return tmp
 
+
+    def create_output(self, template='cross_validation_rules_template.xlsx', outfilename='cross_validation_summary_old.xlsx'):
+        
+
+        isj_errors = self.inventory_spatial_join()
+        tsj_errors = self.traffic_spatial_join()
+
+        self.df = isj_errors.merge(tsj_errors, how="outer")
+        self.df.columns = [x.upper() for x in self.df.columns.tolist()]
+        self.df.rename(columns={"ROUTEID":"RouteID"}, inplace=True)
+
+        
+        #Reads sheet on template that list all data items associated with each rule and converts to dictionary
+        dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=28)
+        dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
+        dataItemsDF['Data_Items'].fillna("",inplace=True)
+        dataItemsDF['Data_Items'] = dataItemsDF['Data_Items'].str.split(",")
+        ruleDict = dict(zip(dataItemsDF['Rule'], dataItemsDF['Data_Items']))
+        fwhaRuleDict = ruleDict.copy()
+        for rule in ruleDict.keys():
+            fwhaRuleDict[rule+"_FHWA"] = fwhaRuleDict.pop(rule)
+
+        for rule in ruleDict.keys():
+            try:
+                self.df[rule].fillna(True, inplace=True)
+            except KeyError:
+                pass
+
+        #Reads the rule descripts off of summary sheet and converts to dictionary
+        ruleDescDF = pd.read_excel(template, sheet_name="Summary", usecols="A,D")
+        ruleDescDF['Rule'] = ruleDescDF['Rule'].str.replace("-", "")
+        ruleDesc = dict(zip(ruleDescDF['Rule'], ruleDescDF['Description']))
+
+        #Create copy of template to write to
+        shutil.copy(template, outfilename)
+
+        with pd.ExcelWriter(outfilename, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            
+            tempDF = self.df.copy()
+            numFailed = []
+            numPassed = []
+            lenFailed = []
+            fwhaFailed = []
+
+            #Get counts for failed/passed/length of failed
+            print("Updating summary sheet on",outfilename,"...")
+            for rule in ruleDict.keys():
+                #Assumes all passes for rules not ran
+                try:
+                    numFailed.append(tempDF[tempDF[rule]==False].shape[0])
+                    numPassed.append(tempDF[tempDF[rule]==True].shape[0])
+                    lenFailed.append((tempDF[tempDF[rule]==False]['EMP'] - tempDF[tempDF[rule]==False]['BMP']).sum())
+                except KeyError:
+                    numFailed.append(0)
+                    numPassed.append(self.df.shape[0])
+                    lenFailed.append(0)
+
+            for rule in fwhaRuleDict.keys():
+                try:
+                    fwhaFailed.append(tempDF[tempDF[rule]==False].shape[0])
+                except KeyError:
+                    fwhaFailed.append(0)
+
+            failedDF = pd.DataFrame(numFailed)
+            passedDF = pd.DataFrame(numPassed)
+            lengthDF = pd.DataFrame(lenFailed)
+            fwhaFailedDF = pd.DataFrame(fwhaFailed)
+
+            #Write counts to Summary sheet
+            failedDF.to_excel(writer, sheet_name='Summary', startcol=4, startrow=1, header=False, index=False)
+            passedDF.to_excel(writer, sheet_name='Summary', startcol=5, startrow=1, header=False, index=False)
+            lengthDF.to_excel(writer, sheet_name='Summary', startcol=6, startrow=1, header=False, index=False)
+            fwhaFailedDF.to_excel(writer, sheet_name='Summary', startcol=7, startrow=1, header=False, index=False)
+
+            #Create sheets for each rule containing all failed rows (using only columns that the specific rule references)
+            for rule in ruleDict.keys():
+                tempDF = self.df.copy()
+                #Checks to make sure rule has data items associated with it (will be a list if dataItems exists, otherwise will be float (np.nan))
+                if type(ruleDict[rule])==list:
+                    #Tries using RULENAME (i.e. SJF01) in dataset which is added if the rule is ran
+                    #If rule is not run, no column will exist with the rulename, catches KeyError and prints message.
+                    try:
+                        if tempDF[tempDF[rule]==False].shape[0] > 0:
+                            print("Creating error sheet for rule:",rule)
+                            dataItems = ['RouteID', 'BMP', 'EMP']
+                            [dataItems.append(x) for x in ruleDict[rule] if x not in dataItems]
+                            tempDF = tempDF[tempDF[rule]==False]
+                            tempDF = tempDF[dataItems]
+                            tempDF.to_excel(writer, sheet_name=rule, startrow=1, index=False)
+                            worksheet = writer.sheets[rule]
+                            worksheet['A1'] = f'=HYPERLINK("#Summary!A1", "Summary Worksheet")'
+                            worksheet['A1'].font = Font(underline='single', color='0000EE')
+                            #Autofit columns
+                            for i in range(1, worksheet.max_column+1):
+                                worksheet.column_dimensions[get_column_letter(i)].width = 20
+                            #Add rule description to sheet
+                            worksheet['B1'] = ruleDesc[rule]
+
+                        else:
+                            print("No failed rows for rule:",rule)
+
+                    except KeyError:
+                        print(rule,"not found in DF. Sheet was not created in rules_summary.xlsx")
+                else:
+                    print("No data items for rule",rule,", Sheet not created.")
 
 input_file = 'all_submission_data.csv'
 data = pd.read_csv(input_file)
@@ -195,9 +311,15 @@ data = pd.read_csv(input_file)
 # print(inventory)
 # print(traffic)
 
-cross_validation = Cross_Validation(data)
-isj_errors = cross_validation.inventory_spatial_join()
-tsj_errors = cross_validation.traffic_spatial_join()
 
-print('ISJ Errors', isj_errors)
-print('TSJ Errors', tsj_errors)
+
+cross_validation = Cross_Validation(data)
+cross_validation.create_output()
+# isj_errors = cross_validation.inventory_spatial_join()
+# tsj_errors = cross_validation.traffic_spatial_join()
+
+# all_errors = isj_errors.merge(tsj_errors, how="outer")
+
+
+# print('ISJ Errors', isj_errors)
+# print('TSJ Errors', tsj_errors)
