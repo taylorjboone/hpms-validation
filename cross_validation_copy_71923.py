@@ -294,8 +294,8 @@ class Cross_Validation():
 
 
 
-    def run(self,switch):
-        if switch==1 or switch==3:
+    def run(self,inventory=True,traffic=True):
+        if inventory==True:
             print('Running Spatial Join Inventory')
             self.sji01()
             self.sji02()
@@ -310,7 +310,7 @@ class Cross_Validation():
             self.sji11()
             self.sji12()
             self.sji13()
-        if switch==2 or switch==3:
+        if traffic==True:
             print('Running Spatial Join Traffic')    
             self.sjt01()
             self.sjt02()
@@ -332,7 +332,7 @@ class Cross_Validation():
 
 
 
-    def create_output(self, template='cross_validation_rules_template.xlsx', outfilename='cross_validation_rules_summary.xlsx'):
+    def create_output(self, template='templates/cross_validation_rules_template.xlsx', outfilename='summary/cross_validation_rules_summary.xlsx'):
         #Reads sheet on template that list all data items associated with each rule and converts to dictionary
         dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=28)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")

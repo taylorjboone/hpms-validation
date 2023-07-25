@@ -1044,7 +1044,7 @@ class domain_validations():
         self.dre77()
         self.dre78()
 
-    def create_output(self, template='domain_rules_summary_template.xlsx', outfilename='domain_rules_summary.xlsx'):
+    def create_output(self, template='templates/domain_rules_summary_template.xlsx', outfilename='summary/domain_rules_summary.xlsx'):
         #Reads sheet on template that list all data items associated with each rule and converts to dictionary
         dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=86)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")

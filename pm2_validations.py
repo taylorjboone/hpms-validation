@@ -439,7 +439,7 @@ class pm2_validations():
         self.SJPM231()
         self.SJPM232()
 
-    def create_output(self, template='pm2_rules_summary_template.xlsx', outfilename='pm2_rules_summary.xlsx'):
+    def create_output(self, template='templates/pm2_rules_summary_template.xlsx', outfilename='summary/pm2_rules_summary.xlsx'):
         #Reads sheet on template that list all data items associated with each rule and converts to dictionary
         dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=23)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")

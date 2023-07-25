@@ -1414,7 +1414,7 @@ class full_spatial_functions():
         self.sjf99()
         self.sjf100()
     
-    def create_output(self, template='sjf_rules_summary_template.xlsx', outfilename='sjf_rules_summary.xlsx'):
+    def create_output(self, template='templates/sjf_rules_summary_template.xlsx', outfilename='summary/sjf_rules_summary.xlsx'):
         #Reads sheet on template that list all data items associated with each rule and converts to dictionary
         dataItemsDF = pd.read_excel(template, sheet_name="ruleDataItems", usecols='A,B', nrows=106)
         dataItemsDF['Rule'] = dataItemsDF['Rule'].str.replace("-", "")
@@ -1505,7 +1505,7 @@ class full_spatial_functions():
     
 
 
-df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str, 'SampleId':str})
+# df = pd.read_csv('all_submission_data.csv',dtype={'URBAN_CODE':str, 'SampleId':str})
 
 # c = full_spatial_functions(df)  
 # # c.run()
