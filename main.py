@@ -8,9 +8,12 @@ from cross_validation_copy_71923 import Cross_Validation
 
 
 class Validate_HPMS():
-    def __init__(self,df,create_data,domain=True,full=True,pm2=True,cross=True):
-        if create_data == True:
+    def __init__(self,filename='',domain=True,full=True,pm2=True,cross=True):
+        if filename == '':
             os.system('python combine_submission_data.py')
+            df = pd.read_csv('all_submission_data.csv', dtype={'URBAN_CODE':str, 'AADT_VALUE_DATE':str})
+        else:
+            df = pd.read_csv(filename, dtype={'URBAN_CODE':str, 'AADT_VALUE_DATE':str})
         if domain ==True:
             print('Running Domain Validations')
             a = domain_validations(df)
@@ -44,5 +47,5 @@ class Validate_HPMS():
 
 
 
-df = pd.read_csv("all_submission_data.csv", dtype={'URBAN_CODE':str, 'AADT_VALUE_DATE':str})
-valid = Validate_HPMS(df,create_data=True,domain=True,full=True,pm2=True,cross=True)
+# 
+# valid = Validate_HPMS(df,create_data=True,domain=True,full=True,pm2=True,cross=True)
