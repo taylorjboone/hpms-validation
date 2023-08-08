@@ -452,6 +452,7 @@ class pm2_validations():
 
         #Reads the rule descripts off of summary sheet and converts to dictionary
         ruleDescDF = pd.read_excel(template, sheet_name="Summary", usecols="A,D")
+        ruleDescDF['Rule'] = ruleDescDF['Rule'].str.replace("-", "")
         ruleDesc = dict(zip(ruleDescDF['Rule'], ruleDescDF['Description']))
 
         #Create copy of template to write to
@@ -518,6 +519,7 @@ class pm2_validations():
                                 worksheet.column_dimensions[get_column_letter(i)].width = 20
                             #Add rule description to sheet
                             worksheet['B1'] = ruleDesc[rule]
+                        
 
                         else:
                             print("No failed rows for rule:",rule)

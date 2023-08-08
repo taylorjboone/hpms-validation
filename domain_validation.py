@@ -1057,6 +1057,7 @@ class domain_validations():
 
         #Reads the rule descripts off of summary sheet and converts to dictionary
         ruleDescDF = pd.read_excel(template, sheet_name="Summary", usecols="A,D")
+        ruleDescDF['Rule'] = ruleDescDF['Rule'].str.replace("-", "")
         ruleDesc = dict(zip(ruleDescDF['Rule'], ruleDescDF['Description']))
 
         #Create copy of template to write to

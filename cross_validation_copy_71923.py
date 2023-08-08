@@ -9,17 +9,16 @@ from openpyxl.utils import get_column_letter
 import datetime
 warnings.filterwarnings("ignore")
 
-cols_dict = {
-    'URBAN_CODE':'URBAN_ID',
-    'STRAHNET_TYPE': 'STRAHNET',
-    'TRUCK':'NN',
-}
-
 
 class Cross_Validation():
+
+    cols_dict = {
+        'TRUCK':'NN',
+    }
+
     def __init__(self, df):
         # self.df = load_defaults(df)
-        self.df = df.rename(columns=cols_dict)
+        self.df = df.rename(columns=self.cols_dict)
         try:
             self.df['BEGIN_DATE']
         except KeyError:
@@ -68,7 +67,7 @@ class Cross_Validation():
         self.df['SJI04'] = True
         self.df['SJI04_GEOM'] = self.df.apply(self.check_geom,axis = 1)
         tmpDF = self.df.copy()
-        tmpDF = tmpDF[tmpDF['URBAN_ID'].notna() & ~(tmpDF['SJI04_GEOM'])]
+        tmpDF = tmpDF[tmpDF['URBAN_CODE'].notna() & ~(tmpDF['SJI04_GEOM'])]
         self.df.drop('SJI04_GEOM',axis = 1, inplace = True)
         self.df['SJI04'].iloc[tmpDF.index.tolist()] = False
 
@@ -133,7 +132,7 @@ class Cross_Validation():
         self.df['SJI11'] = True
         tmpDF = self.df.copy()
         tmpDF = tmpDF[tmpDF['F_SYSTEM']==1]
-        tmpDF = tmpDF[tmpDF['STRAHNET'].isna() | (tmpDF['STRAHNET']!=1)]
+        tmpDF = tmpDF[tmpDF['STRAHNET_TYPE'].isna() | (tmpDF['STRAHNET_TYPE']!=1)]
         self.df['SJI11'].iloc[tmpDF.index.tolist()] = False
     
     def sji12(self):
@@ -141,7 +140,7 @@ class Cross_Validation():
         print('Running rule SJI12...')
         self.df['SJI12'] = True
         tmpDF = self.df.copy()
-        tmpDF = tmpDF[tmpDF['STRAHNET'].isin([1,2])]
+        tmpDF = tmpDF[tmpDF['STRAHNET_TYPE'].isin([1,2])]
         tmpDF = tmpDF[tmpDF['NHS']!=1]
         self.df['SJI12'].iloc[tmpDF.index.tolist()] = False
 
