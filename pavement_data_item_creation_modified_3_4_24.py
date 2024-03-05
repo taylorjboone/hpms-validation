@@ -1,18 +1,18 @@
 import pandas as pd
 
-data_cols = ['RUT_MEAN', 'Fault_Avg', 'Percent_Cracking', 'IRI_MEAN', 'SURF_TYPE', 'SHLD_TYPE']
-route_cols = ['ROUTEID', 'BEG_MP', 'END_MP', 'Date']
+data_cols = ['RUT_MEAN', 'FAULT_AVG', 'PERCENT_CRACKING', 'IRI_MEAN', 'SURF_TYPE', 'SHLD_TYPE']
+route_cols = ['ROADNAME', 'BEG_MP', 'END_MP', 'DATE']
 rename_dict = {
     'ROADNAME': 'RouteID',
     'BEG_MP': 'BeginPoint',
     'END_MP':'EndPoint',
     'RUT_MEAN':'RUTTING',
-    'Fault_Avg':'FAULTING',
-    'Percent_Cracking':'CRACKING_PERCENT',
+    'FAULT_AVG':'FAULTING',
+    'PERCENT_CRACKING':'CRACKING_PERCENT',
     'IRI_MEAN': 'IRI',
     'SURF_TYPE': 'SURFACE_TYPE',
     'SHLD_TYPE': 'SHOULDER_TYPE',
-    'Date': 'ValueDate'
+    'DATE': 'ValueDate'
 }
 
 data_number = {
@@ -40,7 +40,7 @@ def load_defaults(df):
     df['BeginDate'] = '01/01/2023'
     df['StateID'] = '54'
     df['Comments'] = ''
-    df['ValueDate'] = df['ValueDate'].map(convert_date)
+    df['ValueDate'] = '06/24/2023'
     return df
 
 
@@ -74,8 +74,12 @@ def shoulder_mapper(x):
         return 1
     else:
         return x
+    
 
-data_item_dict['SHOULDER_TYPE']['ValueNumeric'] = data_item_dict['SHOULDER_TYPE']['ValueNumeric'].map(shoulder_mapper)
+
+
+shld_dict = {'COMBO':5,'EARTH':6,'GRAVEL':4,'NONE':1,'NULL':1,'PAVED':2,'Curb':99}
+data_item_dict['SHOULDER_TYPE']['ValueNumeric'] = data_item_dict['SHOULDER_TYPE']['ValueNumeric'].map(lambda x : shld_dict[x])
 # data_item_dict['SHOULDER_TYPE'] = data_item_dict['SHOULDER_TYPE'].loc[data_item_dict['SHOULDER_TYPE']['ValueNumeric'].astype('string') != '-1']
 
 
