@@ -36,7 +36,7 @@ master['IRI_MEAN'] = master['IRI_MEAN'].round()
 master['FAULT_AVG'] = master['FAULT_AVG'].round(2)
 # master['PERCENT_CRACKING'] = master['PERCENT_CRACKING'].round(2)
 master.rename(columns=rename_dict, inplace=True)
-# master = master[master['RouteID'].str[2] == '1']
+master = master[master['RouteID'].str[2] == '1']
 
 def convert_date(x):
     day,month,year = x.split('/')
@@ -93,7 +93,7 @@ data_item_dict['SHOULDER_TYPE']['ValueNumeric'] = data_item_dict['SHOULDER_TYPE'
 
 for k,v in data_item_dict.items():
     print(k, '\n', v, '\n\n\n')
-    v.to_csv(f'pavement_output_3_4_24/DataItem{data_number[k]}_{k}.csv', index=False, sep='|')
+    v.to_csv(f'pavement_output_3_4_24/DataItem{data_number[k]}_{k}_interstate.csv', index=False, sep='|')
 
 
 
