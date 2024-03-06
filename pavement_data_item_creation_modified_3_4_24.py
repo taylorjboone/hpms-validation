@@ -1,6 +1,6 @@
 import pandas as pd
 
-data_cols = ['RUT_MEAN', 'FAULT_AVG', 'PERCENT_CRACKING', 'IRI_MEAN', 'SURF_TYPE', 'SHLD_TYPE']
+data_cols = ['RUT_MEAN', 'FAULT_AVG', 'HPMS_Cracking_Percent', 'IRI_MEAN', 'SURF_TYPE', 'SHLD_TYPE']
 route_cols = ['ROADNAME', 'BEG_MP', 'END_MP', 'DATE']
 rename_dict = {
     'ROADNAME': 'RouteID',
@@ -8,7 +8,7 @@ rename_dict = {
     'END_MP':'EndPoint',
     'RUT_MEAN':'RUTTING',
     'FAULT_AVG':'FAULTING',
-    'PERCENT_CRACKING':'CRACKING_PERCENT',
+    'HPMS_Cracking_Percent':'CRACKING_PERCENT',
     'IRI_MEAN': 'IRI',
     'SURF_TYPE': 'SURFACE_TYPE',
     'SHLD_TYPE': 'SHOULDER_TYPE',
@@ -28,6 +28,13 @@ data_number = {
 data_items = ['RUTTING', 'FAULTING', 'CRACKING_PERCENT', 'IRI', 'SURFACE_TYPE', 'SHOULDER_TYPE']
 master = pd.read_excel(r'C:\Users\e104200\Documents\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\pavement_output_3_4_24\2023_COMBINED_ROUTES_DATA_ALL_3_4_24.xlsx', usecols=data_cols + route_cols)
 master = master[master['SHLD_TYPE'].notna()]
+master = master[master['SHLD_TYPE']!='CURB']
+master = master[master['SHLD_TYPE']!='Curb']
+master = master[master['IRI_MEAN']!='0.0']
+master = master[master['IRI_MEAN']!=0.0]
+master['IRI_MEAN'] = master['IRI_MEAN'].round()
+master['FAULT_AVG'] = master['FAULT_AVG'].round(2)
+# master['PERCENT_CRACKING'] = master['PERCENT_CRACKING'].round(2)
 master.rename(columns=rename_dict, inplace=True)
 # master = master[master['RouteID'].str[2] == '1']
 
