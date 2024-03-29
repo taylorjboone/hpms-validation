@@ -93,8 +93,10 @@ def format_df(df_result):
     df_result['StateID']= 54
     df_result['DataItem']= 'STRUCTURE_TYPE'
     df_result['ValueDate']= ''
-    df_result['ValueNumeric']= ''
+    df_result['ValueNumeric']= '1'
     df_result['Comments']= ''
+
+    df_result.sort_values(by=['RouteID', 'bmp', 'barsid'],inplace=True)
 
     df_result.rename(columns={'bmp':'BeginPoint','emp':'EndPoint','barsid':'ValueText'}, inplace=True)
     return df_result[['BeginDate','StateID','RouteID','BeginPoint','EndPoint','DataItem', 'ValueNumeric','ValueText','ValueDate', 'Comments']]
@@ -110,7 +112,7 @@ print(df_result)
 
 
 # df_result = format_df(df_result)
-df_result.to_csv('result_DataItem_4_structure_type.csv', sep='|')
+df_result.to_csv('result_DataItem_4_structure_type.csv', sep='|', index=False)
 
 
 
