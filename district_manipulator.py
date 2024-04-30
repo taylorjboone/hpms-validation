@@ -58,6 +58,7 @@ for i in column_list:
         tmp_base[i] = tmp_base[i].replace(['Asphalt','Concrete','Base II','Base 2',' ','Unknown','Superpave TY 25','Superpave'],[3,6,2,2,25,26,27,28])
         # print('after repalcing',tmp_base[i].unique())
         tmp_base[i] = tmp_base[i].astype(int)
+
         # print('after turning into int ',tmp_base[i].unique())
         tmp_base.rename(columns={i:'ValueNumeric'},inplace=True)
         tmp_base['ValueDate'] = ''
@@ -65,6 +66,7 @@ for i in column_list:
         tmp_base['BeginDate'] = '01/01/2023'
         tmp_base['ValueText'] = ''
         tmp_base['DataItem'] = 'BASE_TYPE'
+        tmp_base = tmp_base[tmp_base['ValueNumeric']< 25]
         # print('base type',tmp_base)
         tmp_base.to_csv(f'{i}.csv',sep = '|',index=False)
     
@@ -86,6 +88,8 @@ for i in column_list:
         tmp_basethick['DataItem'] = 'BASE_THICKNESS'
         # tmp_basethick = tmp_basethick.dropna(subset=['ValueNumeric'])
         tmp_basethick = tmp_basethick[tmp_basethick['ValueNumeric']!='nan']
+        tmp_basethick = tmp_basethick[tmp_basethick['ValueNumeric']!='> 4']
+        tmp_basethick =tmp_basethick[tmp_basethick['ValueNumeric']!='']
         # print('after droppping na,second time',tmp_basethick['ValueNumeric'].unique())
         tmp_basethick['ValueNumeric'] = tmp_basethick['ValueNumeric'].map(mapme)
 
@@ -114,6 +118,8 @@ for i in column_list:
         # print('Thickness flexible',tmp_thickflex)
         # tmp_thickflex[i] = tmp_thickflex['ValueNumeric'].astype(float)
         tmp_thickflex['ValueNumeric'] = tmp_thickflex['ValueNumeric'].map(mapme)
+        tmp_thickflex = tmp_thickflex.drop_duplicates(subset=['RouteID','BMP','EMP'])
+        tmp_thickflex = tmp_thickflex[tmp_thickflex['ValueNumeric']!=0]
         # print('after float change?',tmp_thickflex['ValueNumeric'].unique())
         # tmp_thickflex[i] = tmp_thickflex['ValueNumeric'].astype(int)
         tmp_thickflex.to_csv(f'{i}.csv',sep='|',index=False)
