@@ -36,7 +36,7 @@ def convert_and_export_v9(df_result, file_name, dataitemv9):
 
 
 def main():
-    df = pd.read_csv('samples/samples_april11.csv')
+    df = pd.read_csv('samples/Samples.csv')
     df1 = pd.read_excel('district/district_template.xlsx', dtype={'Sample_ID':str})
     samples = df1.Sample_ID.unique()
     df[df['29_HPMS_SAMPLE_NO'].isin(samples)]
