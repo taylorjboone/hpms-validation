@@ -28,7 +28,7 @@ data_number = {
 
 
 data_items = ['RUTTING', 'FAULTING', 'CRACKING_PERCENT', 'IRI', 'SURFACE_TYPE', 'SHOULDER_TYPE']
-master = pd.read_excel(f'pavement_output_3_4_24\\2023_COMBINED_ROUTES_DATA_ALL_3_4_24.xlsx', usecols=data_cols + route_cols)
+master = pd.read_csv(f'pavement_output_3_4_24\\2023_COMBINED_ROUTES_DATA_ALL.csv', usecols=data_cols + route_cols)
 master = master[master['SHLD_TYPE'].notna()]
 # master = master[master['SHLD_TYPE']!='CURB']
 # master = master[master['SHLD_TYPE']!='Curb']
@@ -91,7 +91,7 @@ def shoulder_mapper(x):
 
 
 
-shld_dict = {'COMBO':5,'EARTH':6,'GRAVEL':4,'NONE':1,'NULL':1,'PAVED':2,'Curb':1,'CURB':1}
+shld_dict = {'COMBO':5,'EARTH':6,'GRAVEL':4,'NONE':1,'NULL':1,'PAVED':2,'Curb':1,'CURB':1, '0':1}
 data_item_dict['SHOULDER_TYPE']['ValueNumeric'] = data_item_dict['SHOULDER_TYPE']['ValueNumeric'].map(lambda x : shld_dict[x])
 # data_item_dict['SHOULDER_TYPE'] = data_item_dict['SHOULDER_TYPE'].loc[data_item_dict['SHOULDER_TYPE']['ValueNumeric'].astype('string') != '-1']
 
