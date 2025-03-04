@@ -98,7 +98,7 @@ data_item_dict['SHOULDER_TYPE']['ValueNumeric'] = data_item_dict['SHOULDER_TYPE'
 
 for k,v in data_item_dict.items():
     print(k, '\n', v, '\n\n\n')
-    v.to_csv(f'pavement_output_3_4_24/DataItem{data_number[k]}_{k}.csv', index=False, sep='|')
+    v.to_csv(f'pavement_output/DataItem{data_number[k]}_{k}.csv', index=False, sep='|')
 
 
 

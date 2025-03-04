@@ -1,5 +1,3 @@
-from fileinput import filename
-from matplotlib.pyplot import axis
 import pandas as pd
 import os 
 from os import listdir
@@ -62,7 +60,7 @@ for i in column_list:
         tmp_base.rename(columns={i:'ValueNumeric'},inplace=True)
         tmp_base['ValueDate'] = ''
         tmp_base['StateID'] = '54'
-        tmp_base['BeginDate'] = '01/01/2023'
+        tmp_base['BeginDate'] = '01/01/2024'
         tmp_base['ValueText'] = ''
         tmp_base['DataItem'] = 'BASE_TYPE'
         # print('base type',tmp_base)
@@ -81,7 +79,7 @@ for i in column_list:
         # print('columns of basethick',tmp_basethick.columns)
         tmp_basethick['ValueDate'] = ''
         tmp_basethick['StateID'] = '54'
-        tmp_basethick['BeginDate'] = '01/01/2023'
+        tmp_basethick['BeginDate'] = '01/01/2024'
         tmp_basethick['ValueText'] = ''
         tmp_basethick['DataItem'] = 'BASE_THICKNESS'
         # tmp_basethick = tmp_basethick.dropna(subset=['ValueNumeric'])
@@ -108,7 +106,7 @@ for i in column_list:
         tmp_thickflex.rename(columns={i:'ValueNumeric'},inplace=True)
         tmp_thickflex['ValueDate'] = ''
         tmp_thickflex['StateID'] = '54'
-        tmp_thickflex['BeginDate'] = '01/01/2023'
+        tmp_thickflex['BeginDate'] = '01/01/2024'
         tmp_thickflex['ValueText'] = ''
         tmp_thickflex['DataItem'] = 'THICKNESS_FLEXIBLE'
         # print('Thickness flexible',tmp_thickflex)
@@ -131,7 +129,7 @@ for i in column_list:
         tmp_thickrig.rename(columns={i:'ValueNumeric'},inplace = True)
         tmp_thickrig['ValueDate'] = ''
         tmp_thickrig['StateID'] = '54'
-        tmp_thickrig['BeginDate'] = '01/01/2023'
+        tmp_thickrig['BeginDate'] = '01/01/2024'
         tmp_thickrig['ValueText'] = ''
         tmp_thickrig['DataItem'] = 'THICKNESS_RIGID'
         print('after remanaming',tmp_thickrig['ValueNumeric'].unique())
@@ -158,7 +156,7 @@ for i in column_list:
         # print('after rename',tmp_lastthick)
         tmp_lastthick['ValueDate'] = ''
         tmp_lastthick['StateID'] = '54'
-        tmp_lastthick['BeginDate'] = '01/01/2023'
+        tmp_lastthick['BeginDate'] = '01/01/2024'
         tmp_lastthick['ValueText'] = ''
         tmp_lastthick['DataItem'] = 'LAST_OVERLAY_THICKNESS'
         tmp_lastthick = tmp_lastthick.dropna(subset=['ValueNumeric'])
@@ -189,7 +187,7 @@ for i in column_list:
                 print('lambda failed',a)
         tmp_yearcon['ValueNumeric'] = ''
         tmp_yearcon['StateID'] = '54'
-        tmp_yearcon['BeginDate'] = '01/01/2023'
+        tmp_yearcon['BeginDate'] = '01/01/2024'
         tmp_yearcon['ValueText'] = ''
         tmp_yearcon['DataItem'] = 'YEAR_LAST_CONSTRUCTION'
         
@@ -214,13 +212,13 @@ for i in column_list:
         # print('after first drop na',tmp_yearimp[i].unique())
         tmp_yearimp.rename(columns={i:'ValueDate'},inplace=True)
         # print('after rename',tmp_yearimp['ValueDate'].unique())
-        tmp_yearimp['ValueDate'] = tmp_yearimp['ValueDate'].map(lambda x: '2023' if x=='2024' else x)
+        tmp_yearimp['ValueDate'] = tmp_yearimp['ValueDate'].map(lambda x: '2024' if x=='2023' else x)
         for a in tmp_yearimp['ValueDate']:
-            if a=='2024':
+            if a=='2023':
                 print('lambda failed',a)
         tmp_yearimp['ValueNumeric'] = ''
         tmp_yearimp['StateID'] = '54'
-        tmp_yearimp['BeginDate'] = '01/01/2023'
+        tmp_yearimp['BeginDate'] = '01/01/2024'
         tmp_yearimp['ValueText'] = ''
         tmp_yearimp['DataItem'] = 'YEAR_LAST_IMPROVEMENT'
         tmp_yearimp = tmp_yearimp.dropna()
