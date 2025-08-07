@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 from datetime import date
 import os
-from wvdot_utils import geom_to_measures_progressive_tolerance
+import wvdot_utils as wu
+
 
 # from ..._util import printProgressBar
 
@@ -14,7 +15,7 @@ df_lastSub.rename(columns={'BeginPoint':'bmp','EndPoint':'emp','RouteID':'RouteI
 
 
 # --- NBI File, sheet "All Structures (7,609)" 
-df_NBI_all = pd.read_excel('Inventory_HPMS_Summary_Data_Bridges_2024 reformatted with LRS data_V1.xlsx', sheet_name="All Structures (7,609)") 
+df_NBI_all = pd.read_excel('Inventory_HPMS_SUMMARY_DATA_BRIDGE_3-25-2025_Submitted.xlsx', sheet_name="Vehicular Bridges (7,275)") 
 df_NBI_all.rename(columns={'LRS Milepoint':'mp','NBI 49: Structure Length':'len_feet','LRS RouteID':'RouteID','BARS Number':'barsid','NBI 16: Latitude':'latitude','NBI 17: Longitude':'longitude'}, inplace=True)
 # From the Bridge file, drop NAN,'0 - Other','2 - Railroad','3 - Pedestrian Exclusively'
 df_NBI_all.drop(df_NBI_all[df_NBI_all['NBI 42A: Type of Service: ON Bridge'].isna()].index, inplace=True)
@@ -22,9 +23,10 @@ df_NBI_all.drop(df_NBI_all[df_NBI_all['NBI 42A: Type of Service: ON Bridge'].isi
 
 
 # --- NBI File, sheet "Archived BARS" 
-df_NBI_archiveBars = pd.read_excel('Inventory_HPMS_Summary_Data_Bridges_2024 reformatted with LRS data_V1.xlsx', sheet_name="Archived BARS") 
+df_NBI_archiveBars = pd.read_excel('Inventory_HPMS_SUMMARY_DATA_BRIDGE_3-25-2025_Submitted.xlsx', sheet_name="Archived BARS") 
 
-df_arnold = pd.read_csv('Routes_Arnold_2024.csv')
+# df_arnold = pd.read_csv('Routes_Arnold_2025.csv')
+df_arnold = pd.read_csv('Arnold_25.csv')
 
 def drop_archived_bridges(df_lastSub, df_NBI_archiveBars):
     # 'NBI 8' has a lot of leading 0, solve it by extracting the last 6 digits of the string.
@@ -100,17 +102,35 @@ def convert_len_feet_to_miles(df):
     
     return df
 
-def calcutate_bmp_emp(df):
+# def calcutate_bmp_emp(df):
+#     '''
+#         Calculate the BMP and EMP, assume MP is in the middle of the Bridge.
+#         \n - create the columns "bmp" and "emp".
+#         \n
+#         @param df dataframe with Brige information - require the columns "mp" and "len_mile_half"
+
+#         @return df with the created columns "bmp" and "emp"
+#     '''
+#     df['bmp'] = round(df['mp'] - df['len_mile_half'],3)
+#     df['emp'] = round(df['mp'] + df['len_mile_half'],3)
+    
+#     df['bmp'] = np.where(df['bmp'] < 0, 0 , df['bmp'])
+#     df['emp'] = np.where(df['emp'] < 0, 0 , df['emp'])
+
+#     return df
+
+def calculate_bmp_emp(df):
     '''
         Calculate the BMP and EMP, assume MP is in the middle of the Bridge.
+        Please note this year (2025) MP is now assumed to be at the beginning of the bridge
         \n - create the columns "bmp" and "emp".
         \n
         @param df dataframe with Brige information - require the columns "mp" and "len_mile_half"
 
         @return df with the created columns "bmp" and "emp"
     '''
-    df['bmp'] = round(df['mp'] - df['len_mile_half'],3)
-    df['emp'] = round(df['mp'] + df['len_mile_half'],3)
+    df['bmp'] = round(df['mp'],3)
+    df['emp'] = round(df['mp'] + (df['len_feet']*(1/5280)),3)
     
     df['bmp'] = np.where(df['bmp'] < 0, 0 , df['bmp'])
     df['emp'] = np.where(df['emp'] < 0, 0 , df['emp'])
@@ -186,7 +206,7 @@ def validations(df, in_progress):
     if(not in_progress): 
         # Call wvdot_utils conflate point df to get the closest dominant road from the point
         df.rename(columns={'RouteID':'RouteID_original', 'mp':'mp_original'},inplace=True)
-        df = geom_to_measures_progressive_tolerance.conflate_point_df(df, 'latitude','longitude')
+        df = wu.geom_to_measures_progressive_tolerance.conflate_point_df(df, 'latitude','longitude')
         df.rename(columns={'RouteID':'suggest_RouteID', 'mp':'suggest_mp','RouteID_original':'RouteID', 'mp_original':'mp'},inplace=True)
 
 
@@ -272,7 +292,7 @@ def main():
 
     df_NBI_new_bridges = filter_new_bridges()
     df_NBI_new_bridges = convert_len_feet_to_miles(df_NBI_new_bridges)
-    df_NBI_new_bridges = calcutate_bmp_emp(df_NBI_new_bridges)
+    df_NBI_new_bridges = calculate_bmp_emp(df_NBI_new_bridges)
     print(df_NBI_new_bridges.columns)
     
     # exit()
