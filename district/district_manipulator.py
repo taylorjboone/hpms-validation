@@ -19,8 +19,8 @@ def mapme_float(x):
     return tmp
 
 
-mypath_sample = r'C:\Users\e104200\Documents\PythonTest\Voltron\district_chrystal_report_website\hpms-validation\samples_2025\samples_2024_added_comments.csv'
-mypath = r'C:\Users\e104200\Documents\PythonTest\2025_raw_district_data'
+mypath_sample = f'hpms-validation\samples_2025\samples_2024_added_comments.csv'
+mypath = f'./2025_raw_district_data'
 onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
 df = pd.DataFrame(columns=[
         'BeginDate', 'RouteID', 'Route #', 'SampleId', 'BMP', 'EMP', 'County',

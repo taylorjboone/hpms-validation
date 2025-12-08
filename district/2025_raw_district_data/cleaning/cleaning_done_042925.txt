@@ -1,0 +1,10 @@
+Cleaned District 9 by removing the following:
+"4(shoulders)"
+"done by the WV Toll Authority"
+"done by D10"
+
+Cleaned District 2 by removing the following:
+"No Info"
+
+Cleaned District 1 by adding the following:
+"Added last year's data to district 1"
