@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from datetime import date
 
-df1 = pd.read_excel('district/district_template.xlsx', dtype={'Sample_ID':str})
+df1 = pd.read_excel('district_template.xlsx', dtype={'Sample_ID':str})
 samples = df1.Sample_ID.unique()
 
 lrs_surf_dict = {0:0, 1:1, 2:1, 3:1, 4:1, 5:1, 6:6, 7:6, 8:6, 9:6, 10:6, 11:6, 12:3, 13:11}
@@ -40,10 +40,10 @@ pave_lrs = {
 # os.system(f'lrsops rhoverlay -l "70,97,49" -o district/Surface_type.csv')
 
 # os.system(f'lrsops overlay -b pavement_output_3_4_24/2023_COMBINED_ROUTES_DATA_ALL_3_4_24.csv -s district/Surface_type.csv -c 70_SURFACE_TYPE -o district/compare_surfaceType.csv')
-os.system(f'lrsops overlay -b district/Samples.csv -s district/2023_COMBINED_ROUTES_DATA_ALL_3_4_24.csv -c SURF_TYPE -o district/temp.csv')
-os.system(f'lrsops overlay -b district/temp.csv -s district/Surface_type.csv -c 70_SURFACE_TYPE -o district/temp.csv')
+os.system(f'lrsops overlay -b Samples.csv -s 2023_COMBINED_ROUTES_DATA_ALL_3_4_24.csv -c SURF_TYPE -o temp.csv')
+os.system(f'lrsops overlay -b temp.csv -s Surface_type.csv -c 70_SURFACE_TYPE -o temp.csv')
 
-df = pd.read_csv('district/temp.csv', dtype={'29_HPMS_SAMPLE_NO':str})
+df = pd.read_csv('temp.csv', dtype={'29_HPMS_SAMPLE_NO':str})
 df.rename(columns={'29_HPMS_SAMPLE_NO':'Sample_ID', 'SURF_TYPE':'FUGRO_SURFACE_TYPE', '70_SURFACE_TYPE':'LRS_SURFACE_TYPE'}, inplace=True)
 
 
@@ -95,7 +95,7 @@ df['Base Thickness'] = ''
 
 print(df)
 
-df.to_excel('district/District_template_2024.xlsx', index=False)
+df.to_excel('District_template_2024.xlsx', index=False)
 
 # test sampples
 

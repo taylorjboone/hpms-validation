@@ -19,7 +19,7 @@ def mapme_float(x):
     return tmp
 
 
-mypath_sample = f'hpms-validation\samples_2025\samples_2024_added_comments.csv'
+mypath_sample = f'../samples/samples_2025/samples_2024_added_comments.csv'
 mypath = f'./2025_raw_district_data'
 onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
 df = pd.DataFrame(columns=[
@@ -40,7 +40,7 @@ for a in onlyfiles:
 df = pd.concat(df,ignore_index=True)
 df['Comments'] = ''
 
-print(len(df),"SHIT")
+# print(len(df),"SHIT")
 
 # df.to_csv('C:\\Users\\e104200\\Documents\\PythonTest\\master_data.csv',sep='|',index=False)
 tmp_df = pd.DataFrame(columns = ['RouteID','BeginDate','StateID','BMP','EMP','ValueNumeric','ValueDate','ValueText','Comments'])
@@ -182,7 +182,7 @@ for i in column_list:
         tmp_lastthick['RouteID'] = tmp_lastthick['RouteID'].astype(str)
         tmp_lastthick = tmp_lastthick[tmp_lastthick['RouteID'] !='940003000000']
         tmp_lastthick = tmp_lastthick[tmp_lastthick['RouteID'] !=940003000000]
-        print('All of your unique ROUTEID,',tmp_lastthick['RouteID'].unique())
+        # print('All of your unique ROUTEID,',tmp_lastthick['RouteID'].unique())
         tmp_lastthick = tmp_lastthick[tmp_lastthick['RouteID'] !='940011000000']
         tmp_lastthick = tmp_lastthick[tmp_lastthick['RouteID'] !=940011000000]
         # print('second time',tmp_lastthick['ValueNumeric'].value_counts())
@@ -218,7 +218,7 @@ for i in column_list:
         tmp_yearcon = tmp_yearcon.drop_duplicates(['RouteID','BMP','EMP'])
         # print('after drop na \n',tmp_yearcon['ValueDate'].value_counts())
         tmp_yearcon = tmp_yearcon[tmp_yearcon['ValueDate']!=' ']
-        print('unique values of year_last_construction',tmp_yearcon['ValueDate'].unique())
+        # print('unique values of year_last_construction',tmp_yearcon['ValueDate'].unique())
         tmp_yearcon.to_csv(f'{i}.csv',sep ='|',index=False)
 
     elif i=='Year Last Improvement':
@@ -251,7 +251,7 @@ for i in column_list:
         tmp_yearimp = tmp_yearimp[tmp_yearimp['RouteID'] !='940011000000']
         tmp_yearimp = tmp_yearimp[tmp_yearimp['RouteID'] !=940003000000]
         tmp_yearimp = tmp_yearimp[tmp_yearimp['RouteID'] !=940011000000]
-        print('final drop',tmp_yearimp['ValueDate'].unique())
+        # print('final drop',tmp_yearimp['ValueDate'].unique())
         # print('year improvement',tmp_yearimp)
         tmp_yearimp.to_csv(f'{i}.csv', sep='|',index=False)
     else:
