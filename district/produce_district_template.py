@@ -61,7 +61,7 @@ print(df['District'].unique())
 df['LRS_SURFACE_TYPE'] = df['LRS_SURFACE_TYPE']
 df[df['Sample_ID'].isin(samples)]
 del df['county']
-df['Section_Length'] = round(abs(df.EMP - df.BMP),3)
+df['Section_Length'] = round(abs(df.EMP - df.BMP),4)
 
 '''
 ### Result columns

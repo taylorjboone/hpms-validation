@@ -5,33 +5,58 @@ import os
 import wvdot_utils as wu
 
 
+#mapping lat and long to the main excel file
+
+lat_long_file = pd.read_excel(r'./input/test_bridge_con.xlsx')
+temp= lat_long_file[['BridgeNumber','Latitude','Longitude']]
+temp['BridgeNumber'] = temp['BridgeNumber'].str[-6:]
+coord_dict = temp.set_index('BridgeNumber').T.to_dict('list')
+
+zac_layer = pd.read_excel(r'./input/zac_layer_bridge_lrs.xlsx')
+ztemp = zac_layer[['BARSid','MP']]
+ztemp_rid = zac_layer[['BARSid','RouteID']]
+ztemp_rid_dict = dict(zip(ztemp_rid['BARSid'], ztemp_rid['RouteID']))
+bridge_dict =dict(zip(ztemp['BARSid'], ztemp['MP']))
+print(bridge_dict)
+
+
 # from ..._util import printProgressBar
 
 IN_PROGRESS = os.path.exists('Bridges_in_progress.xlsx')
 
 # --- Last year submision file
-df_lastSub = pd.read_csv('LastYearSubmitted\DataItem_4_structure_type.csv', sep="|")
+df_lastSub = pd.read_csv('LastYearSubmitted\DataItem_4_structure_type_25.csv', sep="|")
 df_lastSub.rename(columns={'BeginPoint':'bmp','EndPoint':'emp','RouteID':'RouteID','ValueText':'barsid'}, inplace=True)
 
 
 # --- NBI File, sheet "All Structures (7,609)" 
-df_NBI_all = pd.read_excel('Inventory_HPMS_SUMMARY_DATA_BRIDGE_3-25-2025_Submitted.xlsx', sheet_name="Vehicular Bridges (7,275)") 
-df_NBI_all.rename(columns={'LRS Milepoint':'mp','NBI 49: Structure Length':'len_feet','LRS RouteID':'RouteID','BARS Number':'barsid','NBI 16: Latitude':'latitude','NBI 17: Longitude':'longitude'}, inplace=True)
+df_NBI_all = pd.read_excel(r'./input/FullSubmission Excel Conversion 2026 HPMS Submission_unmodified.xlsx',sheet_name='2026-3-13 JSON (7236)')
+# df_NBI_all = df_NBI_all.drop('MPStart',axis = 1)
+df_NBI_all['BarsID'] = df_NBI_all['BarsID'].str[-6:]
+df_NBI_all['MPStart'] = df_NBI_all['BarsID'].map(bridge_dict).fillna(df_NBI_all['MPStart'])
+df_NBI_all['RouteID'] = df_NBI_all['BarsID'].map(ztemp_rid_dict).fillna(df_NBI_all['RouteID'])
+print(df_NBI_all['RouteID'])
+# df_NBI_all.loc['MPStart'] = df_NBI_all.BarsID.map(bridge_dict)
+temp_check = df_NBI_all[df_NBI_all['MPStart'].isna()]
+print('test test test test',temp_check[['BarsID','MPStart']])
+df_NBI_all['NBI 16: Latitude'] = df_NBI_all.BarsID.map(lambda x :coord_dict[x][0])
+df_NBI_all['NBI 17: Longitude'] = df_NBI_all.BarsID.map(lambda x : coord_dict[x][1]) 
+df_NBI_all.rename(columns={'MPStart':'mp','NBI_49_Structure_Length':'len_feet','RouteID':'RouteID','BarsID':'barsid','NBI 16: Latitude':'latitude','NBI 17: Longitude':'longitude'}, inplace=True)
 # From the Bridge file, drop NAN,'0 - Other','2 - Railroad','3 - Pedestrian Exclusively'
-df_NBI_all.drop(df_NBI_all[df_NBI_all['NBI 42A: Type of Service: ON Bridge'].isna()].index, inplace=True)
-df_NBI_all.drop(df_NBI_all[df_NBI_all['NBI 42A: Type of Service: ON Bridge'].isin(['0 - Other','2 - Railroad','3 - Pedestrian Exclusively'])].index, inplace=True)
+df_NBI_all.drop(df_NBI_all[df_NBI_all['NBI_42A_Type_of_Service_ON_Bridge'].isna()].index, inplace=True)
+df_NBI_all.drop(df_NBI_all[df_NBI_all['NBI_42A_Type_of_Service_ON_Bridge'].isin(['0 - Other','2 - Railroad','3 - Pedestrian Exclusively'])].index, inplace=True)
 
 
 # --- NBI File, sheet "Archived BARS" 
-df_NBI_archiveBars = pd.read_excel('Inventory_HPMS_SUMMARY_DATA_BRIDGE_3-25-2025_Submitted.xlsx', sheet_name="Archived BARS") 
+df_NBI_archiveBars = pd.read_excel(r'./input/FullSubmission Excel Conversion 2026 HPMS Submission_unmodified.xlsx',sheet_name='Removed All (102)_Added (63)') 
 
 # df_arnold = pd.read_csv('Routes_Arnold_2025.csv')
-df_arnold = pd.read_csv('Arnold_25.csv')
+df_arnold = pd.read_csv('./input/arnold_26.csv')
 
 def drop_archived_bridges(df_lastSub, df_NBI_archiveBars):
     # 'NBI 8' has a lot of leading 0, solve it by extracting the last 6 digits of the string.
-    df_NBI_archiveBars['NBI 8'] = df_NBI_archiveBars['NBI 8'].str[-6:] # the barsid on this file looks like this 00000000006A322
-    barsidToDelete = df_NBI_archiveBars['NBI 8'].unique()
+    df_NBI_archiveBars['2025 Structure Number (102 Removed)'] = df_NBI_archiveBars['2025 Structure Number (102 Removed)'].str[-6:] # the barsid on this file looks like this 00000000006A322
+    barsidToDelete = df_NBI_archiveBars['2025 Structure Number (102 Removed)'].unique()
     barsidLastSub = df_lastSub['ValueText'].unique()
     for d in barsidToDelete:
         if d in barsidLastSub:
@@ -129,8 +154,8 @@ def calculate_bmp_emp(df):
 
         @return df with the created columns "bmp" and "emp"
     '''
-    df['bmp'] = round(df['mp'],3)
-    df['emp'] = round(df['mp'] + (df['len_feet']*(1/5280)),3)
+    df['bmp'] = round(df['mp'],4)
+    df['emp'] = round(df['mp'] + (df['len_feet']*(1/5280)),4)
     
     df['bmp'] = np.where(df['bmp'] < 0, 0 , df['bmp'])
     df['emp'] = np.where(df['emp'] < 0, 0 , df['emp'])
@@ -153,7 +178,7 @@ def validations_bmp_emp_same_seg(row):
 
     for i, r in df_arnold_byRowRouteID.iterrows():
         from_measure,to_measure = float(r.BMP),float(r.EMP)
-        from_measure,to_measure = round(from_measure,3),round(to_measure,3)
+        from_measure,to_measure = round(from_measure,4),round(to_measure,4)
 
         # if find a valid record finish the validation
         if (row.bmp >= from_measure and row.emp <= to_measure):

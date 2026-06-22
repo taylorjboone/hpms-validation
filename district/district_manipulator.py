@@ -19,8 +19,8 @@ def mapme_float(x):
     return tmp
 
 
-mypath_sample = f'../samples/samples_2025/samples_2024_added_comments.csv'
-mypath = f'./2025_raw_district_data'
+mypath_sample = f'../samples/samples_2026/2025_sample_limits.csv'
+mypath = f'./2026_raw_district_data'
 onlyfiles = [os.path.join(mypath,f) for f in listdir(mypath) if isfile(join(mypath, f))]
 df = pd.DataFrame(columns=[
         'BeginDate', 'RouteID', 'Route #', 'SampleId', 'BMP', 'EMP', 'County',
@@ -51,7 +51,9 @@ for i in column_list:
     # di_df = df[['RouteID','BMP','EMP',i]]
 
     #start of modifying district data creation
-    di_df = di_df.dropna(subset=['BMP','EMP',i])
+    di_df = di_df.dropna(subset=['RouteID','BMP','EMP',i])
+    di_df = di_df.drop(di_df.loc[di_df['BMP'] == di_df['EMP']].index)
+
     di_df = di_df[di_df[i] != '*']
     if i=='Base Type':
         tmp_base = di_df.copy(deep=True)
@@ -59,20 +61,21 @@ for i in column_list:
         # print('initial base type',tmp_base[i].unique())
         # tmp_base[i] = tmp_base[i].astype(str).map(lambda x: x.strip('.0'))
         # print('base type values',tmp_base[i].unique())
-        tmp_base[i] = tmp_base[i].replace(['Asphalt','Asphalt ','HMA','Concrete','PCC','Base II','Base 2',' ','Unknown','Superpave TY 25','Superpave','by D10','by the '],[3,3,5,6,8,2,2,25,26,27,28,29,30])
+        tmp_base[i] = tmp_base[i].replace(['Asphalt','Asphalt ','HMA','Concrete','PCC','Base II','Base 2',' ','Unknown','Superpave TY 25','Superpave','by D10','by the ','2/3','5/7','2/5','2/3/5','2/5/7','2/7'],[3,3,5,6,8,2,2,25,26,27,28,29,30,3,7,5,2,2,2])
         # print('after repalcing',tmp_base[i].unique())
         tmp_base[i] = tmp_base[i].astype(int)
         # print('after turning into int ',tmp_base[i].unique())
         tmp_base.rename(columns={i:'ValueNumeric'},inplace=True)
         tmp_base['ValueDate'] = ''
         tmp_base['StateID'] = '54'
-        tmp_base['BeginDate'] = '01/01/2024'
+        tmp_base['BeginDate'] = '01/01/2025'
         tmp_base['ValueText'] = ''
         tmp_base['DataItem'] = 'BASE_TYPE'
         # print('base type',tmp_base)
         tmp_base = tmp_base[tmp_base['ValueNumeric'].isin([1,2,3,4,5,6,7,8])]
         tmp_base = tmp_base[tmp_base['RouteID'] != '940003000000']
         tmp_base = tmp_base[tmp_base['RouteID'] != 940003000000]
+        tmp_base = tmp_base.drop_duplicates(['RouteID','BMP','EMP'])
         tmp_base.to_csv(f'{i}.csv',sep = '|',index=False)
     
     elif i=='Base Thickness':
@@ -88,7 +91,7 @@ for i in column_list:
         # print('columns of basethick',tmp_basethick.columns)
         tmp_basethick['ValueDate'] = ''
         tmp_basethick['StateID'] = '54'
-        tmp_basethick['BeginDate'] = '01/01/2024'
+        tmp_basethick['BeginDate'] = '01/01/2025'
         tmp_basethick['ValueText'] = ''
         tmp_basethick['DataItem'] = 'BASE_THICKNESS'
         # tmp_basethick = tmp_basethick.dropna(subset=['ValueNumeric'])
@@ -98,6 +101,7 @@ for i in column_list:
 
         # print('After turning into int',tmp_basethick['ValueNumeric'].unique())
         tmp_basethick = tmp_basethick[tmp_basethick['ValueNumeric']!=0]
+        tmp_basethick = tmp_basethick.drop_duplicates(['RouteID','BMP','EMP'])
         # print('basethick df',tmp_basethick)
         tmp_basethick.to_csv(f'{i}.csv',sep='|',index=False)
     
@@ -106,6 +110,7 @@ for i in column_list:
         #thickness flexible manipulation
         # print(tmp_thickflex[i].unique())
         # tmp_thickflex[i] = tmp_thickflex[i].astype(str).map(lambda x: x.rstrip('"'))
+        tmp_thickflex[i] = tmp_thickflex[i].replace(['2 / 1.5'],[1.33])
         tmp_thickflex[i] = tmp_thickflex[i].loc[(tmp_thickflex[i] !='Microsurface') & (tmp_thickflex[i] !='Varies') & (tmp_thickflex[i] !='2 / 1.5') & (tmp_thickflex[i] !='  ')]
         tmp_thickflex[i] = tmp_thickflex[i].astype(str).map(lambda x: x.replace('"', ''))
         # print('after strip',tmp_thickflex[i].unique())
@@ -116,7 +121,7 @@ for i in column_list:
         tmp_thickflex.rename(columns={i:'ValueNumeric'},inplace=True)
         tmp_thickflex['ValueDate'] = ''
         tmp_thickflex['StateID'] = '54'
-        tmp_thickflex['BeginDate'] = '01/01/2024'
+        tmp_thickflex['BeginDate'] = '01/01/2025'
         tmp_thickflex['ValueText'] = ''
         tmp_thickflex['DataItem'] = 'THICKNESS_FLEXIBLE'
         # print('Thickness flexible',tmp_thickflex)
@@ -125,6 +130,7 @@ for i in column_list:
         # print('after float change?',tmp_thickflex['ValueNumeric'].unique())
         # tmp_thickflex[i] = tmp_thickflex['ValueNumeric'].astype(int)
         tmp_thickflex = tmp_thickflex[tmp_thickflex['ValueNumeric'] != 'nan']
+        tmp_thickflex = tmp_thickflex.drop_duplicates(['RouteID','BMP','EMP'])
         # print('Here are your unique values -->',tmp_thickflex['ValueNumeric'].unique())
         tmp_thickflex.to_csv(f'{i}.csv',sep='|',index=False)
     
@@ -142,13 +148,14 @@ for i in column_list:
         tmp_thickrig.rename(columns={i:'ValueNumeric'},inplace = True)
         tmp_thickrig['ValueDate'] = ''
         tmp_thickrig['StateID'] = '54'
-        tmp_thickrig['BeginDate'] = '01/01/2024'
+        tmp_thickrig['BeginDate'] = '01/01/2025'
         tmp_thickrig['ValueText'] = ''
         tmp_thickrig['DataItem'] = 'THICKNESS_RIGID'
         # print('after remanaming',tmp_thickrig['ValueNumeric'].unique())
         tmp_thickrig = tmp_thickrig.dropna(subset=['ValueNumeric'])
         # tmp_thickrig['ValueNumeric'] = tmp_thickrig['ValueNumeric'].loc[(tmp_thickrig['ValueNumeric']!='nan')]
         tmp_thickrig = tmp_thickrig[tmp_thickrig['ValueNumeric'] != 'nan']
+        tmp_thickrig = tmp_thickrig.drop_duplicates(['RouteID','BMP','EMP'])
         # print('After filtering final',tmp_thickrig['ValueNumeric'].unique())
         tmp_thickrig.to_csv(f'{i}.csv',sep = '|',index = False)
     
@@ -157,7 +164,8 @@ for i in column_list:
         # print(tmp_lastthick[i],'Unmutated')
         #Last Overlay Thickness manipulation
         # print('lastOverlayThick',tmp_lastthick[i])
-        tmp_lastthick[i] = tmp_lastthick[i].loc[(tmp_lastthick[i] !='Unknown')  & (tmp_lastthick[i]!='Micro') & (tmp_lastthick[i]!='nan') & (tmp_lastthick[i]!=' nan ') & (tmp_lastthick[i]!='Microsurface') & (tmp_lastthick[i]!='2 / 1.5')]
+        tmp_lastthick[i] = tmp_lastthick[i].replace(['1.5 / 2'],[.75])
+        tmp_lastthick[i] = tmp_lastthick[i].loc[(tmp_lastthick[i] !='Unknown')  & (tmp_lastthick[i]!='Micro') & (tmp_lastthick[i]!='nan') & (tmp_lastthick[i]!=' nan ') & (tmp_lastthick[i]!='Microsurface') & (tmp_lastthick[i]!='1.5 / 2')]
         # print('after filter',tmp_lastthick[i].unique())
         tmp_lastthick[i] = tmp_lastthick[i].astype(str).map(lambda x : x.rstrip('"'))
         # print('after rstrip',tmp_lastthick[i].unique())
@@ -169,7 +177,7 @@ for i in column_list:
         # print('after rename',tmp_lastthick)
         tmp_lastthick['ValueDate'] = ''
         tmp_lastthick['StateID'] = '54'
-        tmp_lastthick['BeginDate'] = '01/01/2024'
+        tmp_lastthick['BeginDate'] = '01/01/2025'
         tmp_lastthick['ValueText'] = ''
         tmp_lastthick['DataItem'] = 'LAST_OVERLAY_THICKNESS'
         tmp_lastthick = tmp_lastthick.dropna(subset=['ValueNumeric'])
@@ -202,13 +210,13 @@ for i in column_list:
         # print('after replacing',tmp_yearcon[i].unique())
         # tmp_yearcon = tmp_yearcon.dropna(subset = [i])
         tmp_yearcon.rename(columns={i:'ValueDate'},inplace=True)
-        tmp_yearcon['ValueDate'] = tmp_yearcon['ValueDate'].map(lambda x: '2024' if x=='2025' else x)
+        tmp_yearcon['ValueDate'] = tmp_yearcon['ValueDate'].map(lambda x: '2025' if x=='2026' else x)
         for a in tmp_yearcon['ValueDate']:
-            if a=='2025':
+            if a=='2026':
                 print('lambda failed',a)
         tmp_yearcon['ValueNumeric'] = ''
         tmp_yearcon['StateID'] = '54'
-        tmp_yearcon['BeginDate'] = '01/01/2024'
+        tmp_yearcon['BeginDate'] = '01/01/2025'
         tmp_yearcon['ValueText'] = ''
         tmp_yearcon['DataItem'] = 'YEAR_LAST_CONSTRUCTION'
         
@@ -236,13 +244,13 @@ for i in column_list:
         # print('after first drop na',tmp_yearimp[i].unique())
         tmp_yearimp.rename(columns={i:'ValueDate'},inplace=True)
         # print('after rename',tmp_yearimp['ValueDate'].unique())
-        tmp_yearimp['ValueDate'] = tmp_yearimp['ValueDate'].map(lambda x: '2024' if x=='2025' else x)
+        tmp_yearimp['ValueDate'] = tmp_yearimp['ValueDate'].map(lambda x: '2025' if x=='2026' else x)
         for a in tmp_yearimp['ValueDate']:
-            if a=='2025':
+            if a=='2026':
                 print('lambda failed',a)
         tmp_yearimp['ValueNumeric'] = ''
         tmp_yearimp['StateID'] = '54'
-        tmp_yearimp['BeginDate'] = '01/01/2024'
+        tmp_yearimp['BeginDate'] = '01/01/2025'
         tmp_yearimp['ValueText'] = ''
         tmp_yearimp['DataItem'] = 'YEAR_LAST_IMPROVEMENT'
         tmp_yearimp = tmp_yearimp.dropna()
